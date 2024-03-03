@@ -1,20 +1,25 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import * as fs from 'fs';
 import * as csv from 'fast-csv';
 import { VariantCreateDto } from '../dto/variant.dto';
 import { Attribute } from '../models/Attribute.entity';
 import { Product } from '../models/Product.entity';
 import { ImportTemplate, ProductFromFile } from '../types';
 import { AttributesService } from './attributes.service';
+import { FilesService } from 'src/files/files.service';
+import { FileTypes } from 'src/files/types';
+import { createReadStream } from 'fs';
 
 @Injectable()
 export class ImportService {
-	constructor(private readonly attributesService: AttributesService) {}
+	constructor(
+		private readonly attributesService: AttributesService,
+		private readonly filesService: FilesService,
+	) {}
 
 	async parseCsvFile<T>(path: string): Promise<T[]> {
 		return new Promise((res, rej) => {
 			const results: T[] = [];
-			fs.createReadStream(path)
+			createReadStream(path)
 				.pipe(csv.parse({ headers: true }))
 				.on('error', (error) => {
 					rej(error);
@@ -59,8 +64,16 @@ export class ImportService {
 				attributesToAdd.push(attribute);
 			}
 
+			const url = variant[imgPathKey];
+			const imgPath = await this.filesService.getOrLoadFile({
+				url,
+				fileType: FileTypes.IMG,
+			});
+
+			const imgUrl = this.filesService.convertImagePathToUrl(imgPath);
+
 			const variantResult: VariantCreateDto = {
-				imgPath: variant[imgPathKey],
+				imgPath: imgUrl,
 				attributeIds: attributesToAdd.map((a) => a.id),
 				price: variant[priceKey] ? parseInt(variant[priceKey]) : undefined,
 				productId: product.id,

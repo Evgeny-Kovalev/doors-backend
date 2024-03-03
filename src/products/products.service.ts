@@ -109,10 +109,18 @@ export class ProductsService {
 			const { imgPathKey, nameKey } = template.info;
 			// TODO: check for keys in file
 
+			const url = mainVariant[imgPathKey];
+			const imgPath = await this.filesService.getOrLoadFile({
+				url,
+				fileType: FileTypes.IMG,
+			});
+
+			const imgUrl = this.filesService.convertImagePathToUrl(imgPath);
+
 			const productDto: ProductCreateDto = {
 				// TODO: desc
 				description: 'test desc',
-				imgPath: mainVariant[imgPathKey],
+				imgPath: imgUrl,
 				name: mainVariant[nameKey],
 			};
 
