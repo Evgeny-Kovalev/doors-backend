@@ -16,21 +16,9 @@ export class Attribute {
 	@Column()
 	name: string;
 
-	@OneToMany(() => AttributeValue, (attribute) => attribute.value)
-	values: AttributeValue[];
-}
-
-@Entity()
-export class AttributeValue {
-	@PrimaryGeneratedColumn()
-	id: number;
+	@Column()
+	value: string;
 
 	@ManyToMany(() => ProductVariant, (variant) => variant.attributes)
 	variants: ProductVariant[];
-
-	@ManyToOne(() => Attribute, (attribute) => attribute.values)
-	attribute: Attribute;
-
-	@Column()
-	value: string;
 }

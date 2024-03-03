@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AttributeValue } from '../models/Attribute.entity';
+import { Attribute } from '../models/Attribute.entity';
 
 export class AttributeDto {
 	@ApiProperty()
@@ -11,11 +11,11 @@ export class AttributeDto {
 	@ApiProperty()
 	value: string;
 
-	public static fromEntity(v: AttributeValue): AttributeDto {
+	public static fromEntity(attribute: Attribute): AttributeDto {
 		const dto: AttributeDto = {
-			id: v.id,
-			name: v.attribute.name,
-			value: v.value,
+			id: attribute.id,
+			name: attribute.name,
+			value: attribute.value,
 		};
 		return dto;
 	}

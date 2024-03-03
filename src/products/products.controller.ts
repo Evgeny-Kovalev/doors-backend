@@ -4,10 +4,12 @@ import { ProductsService } from './products.service';
 import {
 	ProductCreateDto,
 	ProductDto,
+	ProductImportDto,
 	ProductQueryDto,
 	ProductUpdateDto,
 } from './dto/product.dto';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ImportTemplate } from './types';
 
 @ApiTags('Products')
 @Controller({
@@ -55,5 +57,27 @@ export class ProductsController {
 	@Delete(':id')
 	delete(@Param('id') id: number) {
 		return this.productsService.delete(id);
+	}
+
+	// @ApiCreatedResponse({ type: ProductDto })
+	@Post('/import')
+	async importProduct(@Body() dto: ProductImportDto) {
+		// !FIX
+		const MOCK_TEMPLATE: ImportTemplate = {
+			info: {
+				nameKey: 'name',
+				imgPathKey: 'imagePath',
+				priceKey: 'price',
+				discountPriceKey: 'discountPrice',
+			},
+			paramsKeysInDoc: ['covering', 'material', 'doorThickness', 'height', 'width'],
+			attributesKeysInDoc: ['color', 'glassVariant'],
+		};
+
+		const createdProducts = await this.productsService.importFromFile(
+			dto,
+			MOCK_TEMPLATE,
+		);
+		return createdProducts;
 	}
 }

@@ -38,7 +38,7 @@ export class VariantCreateDto {
 	imgPath: string;
 
 	@ApiProperty({ example: 100 })
-	price: number;
+	price?: number;
 
 	@ApiProperty({ example: 10 })
 	discountPrice?: number;

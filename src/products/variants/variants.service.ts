@@ -7,23 +7,23 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { VariantCreateDto, VariantUpdateDto } from '../dto/variant.dto';
-import { AttributeValue } from '../models/Attribute.entity';
 import { ProductVariant } from '../models/ProductVariant.entity';
 import { Product } from '../models/Product.entity';
+import { Attribute } from '../models/Attribute.entity';
 
 @Injectable()
 export class VariantsService {
 	constructor(
 		@InjectRepository(ProductVariant)
 		private readonly productVariantsRepository: Repository<ProductVariant>,
-		@InjectRepository(AttributeValue)
-		private readonly attributeValuesRepository: Repository<AttributeValue>,
+		@InjectRepository(Attribute)
+		private readonly attributeRepository: Repository<Attribute>,
 	) {}
 
 	async getAll(product: Product): Promise<ProductVariant[]> {
 		const variants = await this.productVariantsRepository.find({
 			where: { product },
-			relations: { attributes: { attribute: true } },
+			relations: { attributes: true },
 		});
 		return variants;
 	}
@@ -31,7 +31,7 @@ export class VariantsService {
 	async getById(id: number): Promise<ProductVariant> {
 		const variant = await this.productVariantsRepository.findOne({
 			where: { id },
-			relations: { attributes: { attribute: true } },
+			relations: { attributes: true },
 		});
 		//TODO
 		if (!variant)
@@ -46,7 +46,7 @@ export class VariantsService {
 		const variant = this.productVariantsRepository.create({
 			...dto,
 			product,
-			attributes: await this.attributeValuesRepository.findBy({
+			attributes: await this.attributeRepository.findBy({
 				id: In(dto.attributeIds),
 			}),
 		});
@@ -60,10 +60,7 @@ export class VariantsService {
 		// TODO  change to attributesService
 		const newAttributes =
 			dto.attributeIds &&
-			(await this.attributeValuesRepository.find({
-				relations: { attribute: true },
-				where: { id: In(dto.attributeIds) },
-			}));
+			(await this.attributeRepository.find({ where: { id: In(dto.attributeIds) } }));
 		if (newAttributes?.length !== dto.attributeIds?.length)
 			throw new BadRequestException(
 				'Attributes with these IDs are missing or there are duplicate ID.',

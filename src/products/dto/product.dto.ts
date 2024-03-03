@@ -67,3 +67,11 @@ export class ProductQueryDto {
 	@ApiProperty({ example: 'Product name 1', required: false })
 	q?: string;
 }
+
+export class ProductImportDto {
+	// @ApiProperty({ example: 3, required: false })
+	// categoryId: number;
+
+	@ApiProperty({ example: 'test.csv', required: true })
+	fileName: string;
+}

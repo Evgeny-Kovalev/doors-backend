@@ -7,7 +7,7 @@ import {
 	JoinTable,
 } from 'typeorm';
 import { Product } from './Product.entity';
-import { AttributeValue } from './Attribute.entity';
+import { Attribute } from './Attribute.entity';
 
 @Entity()
 export class ProductVariant {
@@ -17,16 +17,16 @@ export class ProductVariant {
 	@Column()
 	imgPath: string;
 
-	@Column()
+	@Column({ nullable: true })
 	price: number;
 
 	@Column({ nullable: true })
 	discountPrice: number;
 
-	@ManyToOne(() => Product, (product) => product.variants)
+	@ManyToOne(() => Product, (product) => product.variants, { onDelete: 'CASCADE' })
 	product: Product;
 
-	@ManyToMany(() => AttributeValue, (attribute) => attribute.variants)
+	@ManyToMany(() => Attribute, (attribute) => attribute.variants)
 	@JoinTable()
-	attributes: AttributeValue[];
+	attributes: Attribute[];
 }

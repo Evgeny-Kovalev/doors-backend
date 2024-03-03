@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Attribute, AttributeValue } from './products/models/Attribute.entity';
+import { Attribute } from './products/models/Attribute.entity';
 import { Product } from './products/models/Product.entity';
 import { ProductVariant } from './products/models/ProductVariant.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -24,7 +24,7 @@ import { join } from 'path';
 				username: configService.get('database.username') || 'postgres1',
 				password: configService.get('database.password') || 'postgres1',
 				database: configService.get('database.name') || 'postgres1',
-				entities: [Product, Attribute, AttributeValue, ProductVariant],
+				entities: [Product, Attribute, ProductVariant],
 				synchronize: true,
 			}),
 		}),
