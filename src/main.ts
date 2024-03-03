@@ -3,10 +3,13 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
+import { ExceptionsLoggerFilter } from './exceptionsLogger.filter';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
-	app.enableCors();
+	const app = await NestFactory.create(AppModule, { cors: true });
+
+	app.useGlobalFilters(new ExceptionsLoggerFilter());
+
 	app.setGlobalPrefix('api');
 	app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 

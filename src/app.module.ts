@@ -7,6 +7,9 @@ import { Product } from './products/models/Product.entity';
 import { ProductVariant } from './products/models/ProductVariant.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
+import { FilesModule } from './files/files.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
 	imports: [
@@ -14,19 +17,25 @@ import configuration from './config/configuration';
 		TypeOrmModule.forRootAsync({
 			inject: [ConfigService],
 			imports: [ConfigModule],
-			useFactory: async (configService: ConfigService) => ({
+			useFactory: (configService: ConfigService) => ({
 				type: 'postgres',
-				host: configService.get('database.host') || 'localhost',
+				host: configService.get('database.host') || 'localhost1',
 				port: +configService.get('database.port') || 5432,
-				username: (await configService.get('database.username')) || 'postgres',
-				password: (await configService.get('database.password')) || 'postgres',
-				database: (await configService.get('database.name')) || 'postgres',
+				username: configService.get('database.username') || 'postgres1',
+				password: configService.get('database.password') || 'postgres1',
+				database: configService.get('database.name') || 'postgres1',
 				entities: [Product, Attribute, AttributeValue, ProductVariant],
 				synchronize: true,
 			}),
 		}),
+		ServeStaticModule.forRoot({
+			rootPath: join(__dirname, '..', 'files', 'images'),
+			serveRoot: '/images',
+			exclude: ['/api*'],
+		}),
 		ProductsModule,
 		CategoriesModule,
+		FilesModule,
 	],
 	providers: [],
 })
