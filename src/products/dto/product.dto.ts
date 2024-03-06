@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Product } from '../models/Product.entity';
-import { VariantDto } from './variant.dto';
+import { ProductFullData } from '../types';
+import { VariantDto } from '../modules/variants/variant.dto';
 
-export class ProductDto {
+export class ProductDto implements ProductFullData {
 	@ApiProperty()
 	id: number;
 
@@ -10,7 +10,7 @@ export class ProductDto {
 	name: string;
 
 	@ApiProperty()
-	imgPath: string;
+	imgUrl: string;
 
 	@ApiProperty()
 	description: string;
@@ -18,18 +18,11 @@ export class ProductDto {
 	@ApiProperty()
 	isVisible: boolean;
 
+	@ApiProperty()
+	categoryId: number;
+
 	@ApiProperty({ type: [VariantDto] })
 	variants: VariantDto[];
-
-	public static fromEntity(p: Product): ProductDto {
-		const dto: ProductDto = {
-			...p,
-			variants: p.variants.map((v) => VariantDto.fromEntity(v)),
-		};
-		return dto;
-	}
-
-	// attributes: AttributeDto[];
 }
 
 export class ProductCreateDto {
@@ -37,13 +30,16 @@ export class ProductCreateDto {
 	name: string;
 
 	@ApiProperty({ example: 'test image path' })
-	imgPath: string;
+	imgUrl: string;
 
 	@ApiProperty({ example: 'test product desc' })
 	description: string;
 
 	@ApiProperty({ example: false })
-	isVisible?: boolean;
+	isVisible?: boolean = true;
+
+	@ApiProperty()
+	categoryId: number;
 }
 
 export class ProductUpdateDto {
@@ -51,13 +47,16 @@ export class ProductUpdateDto {
 	name?: string;
 
 	@ApiProperty({ example: 'New Product image path' })
-	imgPath?: string;
+	imgUrl?: string;
 
 	@ApiProperty({ example: 'New Product desc' })
 	description?: string;
 
 	@ApiProperty({ example: false })
 	isVisible?: boolean;
+
+	@ApiProperty()
+	categoryId?: number;
 }
 
 export class ProductQueryDto {

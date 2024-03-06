@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id    Int     @default(autoincrement()) @id
+  name String  @unique
+  imgUrl String
+  description String
+
+  parentCategory Category? @relation("ParentSubCategories", fields: [parentCategoryId], references: [id])
+  parentCategoryId Int?
+  subCategories Category[] @relation("ParentSubCategories")
+
+  isVisible Boolean @default(true)
+
+
+  products Product[]
+}
+
+model Product {
+  id    Int     @default(autoincrement()) @id
+  name String  @unique
+  imgUrl String
+  description String
+  isVisible Boolean @default(true)
+
+  category Category @relation(fields: [categoryId],  references: [id])
+  categoryId Int
+
+  variants ProductVariant[]
+}
+
+model ProductVariant {
+  id        Int      @default(autoincrement()) @id
+  imgUrl String
+  price Int?
+  discountPrice Int?
+
+  product    Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  Int
+
+  attributes Attribute[]
+}
+
+model Attribute {
+  id        Int      @default(autoincrement()) @id
+  name     String
+  value   String
+  @@unique([name, value])
+
+  variants    ProductVariant[]
+}

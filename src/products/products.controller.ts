@@ -1,4 +1,14 @@
-import { Controller, Delete, Get, Param, Patch, Post, Body, Query } from '@nestjs/common';
+import {
+	Controller,
+	Delete,
+	Get,
+	Param,
+	Patch,
+	Post,
+	Body,
+	Query,
+	ParseIntPipe,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 
 import {
@@ -21,48 +31,48 @@ export class ProductsController {
 
 	@ApiOkResponse({ type: [ProductDto] })
 	@Get('/')
-	async getAllProducts(@Query() q: ProductQueryDto): Promise<ProductDto[]> {
-		const products = await this.productsService.getAll(q);
-		const dtos = products.map((p) => ProductDto.fromEntity(p));
-		return dtos;
+	async getAllProducts(@Query() q: ProductQueryDto) {
+		const products: ProductDto[] = await this.productsService.getAll(q);
+		return products;
 	}
 
 	@ApiOkResponse({ type: ProductDto })
 	@Get(':id')
-	async getProduct(@Param('id') id: number): Promise<ProductDto> {
+	async getProduct(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {
 		const product = await this.productsService.getById(id);
-		return ProductDto.fromEntity(product);
+		return product;
 	}
 
 	@ApiCreatedResponse({ type: ProductDto })
 	@Post('/')
 	async createProduct(@Body() dto: ProductCreateDto): Promise<ProductDto> {
 		const product = await this.productsService.createOne(dto);
-		return ProductDto.fromEntity(product);
+		return product;
 	}
 
 	@ApiOkResponse({ type: ProductDto })
 	@Patch(':id')
 	async update(
-		@Param('id') productId: number,
+		@Param('id', ParseIntPipe) productId: number,
 		@Body() productUpdateDto: ProductUpdateDto,
 	): Promise<ProductDto> {
 		const updatedProduct = await this.productsService.update(
 			productId,
 			productUpdateDto,
 		);
-		return ProductDto.fromEntity(updatedProduct);
+		return updatedProduct;
 	}
 
 	@Delete(':id')
-	delete(@Param('id') id: number) {
-		return this.productsService.delete(id);
+	async delete(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {
+		return await this.productsService.delete(id);
 	}
 
 	// @ApiCreatedResponse({ type: ProductDto })
 	@Post('/import')
 	async importProduct(@Body() dto: ProductImportDto) {
 		// !FIX
+
 		const MOCK_TEMPLATE: ImportTemplate = {
 			info: {
 				nameKey: 'name',

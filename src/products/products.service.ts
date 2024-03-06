@@ -1,4 +1,4 @@
-import { VariantsService } from './variants/variants.service';
+import { VariantsService } from './modules/variants/variants.service';
 import { FilesService } from 'src/files/files.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
@@ -6,81 +6,108 @@ import {
 	ProductUpdateDto,
 	ProductQueryDto,
 	ProductImportDto,
+	ProductDto,
 } from './dto/product.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
-import { Product } from './models/Product.entity';
+import { Product } from '@prisma/client';
 import { FileTypes } from 'src/files/types';
 import { ImportService } from './services/import.service';
 import { groupBy } from 'src/utils';
-import { ImportTemplate, ProductFromFile } from './types';
+import { ImportTemplate, ProductFromFile, ProductFullData } from './types';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CategoriesService } from 'src/categories/categories.service';
 
 @Injectable()
 export class ProductsService {
 	constructor(
-		@InjectRepository(Product)
-		private readonly productsRepository: Repository<Product>,
+		private readonly prismaService: PrismaService,
 		private readonly filesService: FilesService,
+		private readonly categoriesService: CategoriesService,
 		private readonly variantsService: VariantsService,
 		private readonly importService: ImportService,
 	) {}
 
-	async getAll(query?: ProductQueryDto): Promise<Product[]> {
-		const products = await this.productsRepository.find({
-			where:
-				(query?.q && {
-					name: Like(`%${query.q.trim().toLowerCase()}%`),
-				}) ||
-				undefined,
-			relations: { variants: { attributes: true } },
+	async getAll(query?: ProductQueryDto): Promise<ProductDto[]> {
+		const products: ProductFullData[] = await this.prismaService.product.findMany({
+			include: { variants: { include: { attributes: true } } },
+			where: {
+				name: {
+					contains: query?.q,
+				},
+			},
 		});
 		return products;
 	}
 
-	async getById(id: number): Promise<Product> {
-		const product = await this.productsRepository.findOne({
+	async getById(id: number): Promise<ProductDto> {
+		const product: ProductFullData | null = await this.prismaService.product.findFirst({
+			include: { variants: { include: { attributes: true } } },
 			where: { id },
-			relations: { variants: { attributes: true } },
 		});
 
 		if (!product) throw new BadRequestException('Product with this id not found');
 		return product;
 	}
 
-	async createOne(dto: ProductCreateDto): Promise<Product> {
+	async createOne(dto: ProductCreateDto): Promise<ProductDto> {
 		try {
-			const product = this.productsRepository.create({ ...dto });
-			await this.productsRepository.save(product);
-			return this.getById(product.id);
+			const { name, categoryId, description, imgUrl, isVisible } = dto;
+			const product: ProductDto = await this.prismaService.product.create({
+				data: {
+					name,
+					description,
+					imgUrl,
+					isVisible,
+					category: { connect: { id: categoryId } },
+				},
+				include: { variants: { include: { attributes: true } } },
+			});
+			return product;
 		} catch (e) {
-			//TODO
-			throw Error('cannot create product');
+			throw new BadRequestException('Cannot create product');
 		}
 	}
 
-	async update(productId: number, dto: ProductUpdateDto) {
-		const product = await this.getById(productId);
-		const updatedProduct = await this.productsRepository.save({
-			...product,
-			...dto,
-		});
-		return updatedProduct;
+	async update(productId: number, dto: ProductUpdateDto): Promise<ProductDto> {
+		try {
+			const product = await this.getById(productId);
+			const { name, categoryId, description, imgUrl, isVisible } = dto;
+			const updatedProduct: ProductFullData = await this.prismaService.product.update({
+				where: { id: product.id },
+				data: {
+					name,
+					description,
+					imgUrl,
+					isVisible,
+					category: categoryId ? { connect: { id: categoryId } } : undefined,
+				},
+				include: { variants: { include: { attributes: true } } },
+			});
+			return updatedProduct;
+		} catch (e) {
+			throw new BadRequestException('Cannot update product');
+		}
 	}
 
-	async delete(productId: number) {
+	async delete(id: number): Promise<ProductDto> {
 		try {
-			const p = await this.getById(productId);
-			return await this.productsRepository.delete(p.id);
-			// TODO success delete response
+			await this.getById(id);
+			return await this.prismaService.product.delete({
+				where: { id },
+				include: {
+					variants: { include: { attributes: true } },
+				},
+			});
 		} catch (e) {
-			// TODO: error msg
-			throw new BadRequestException(e + 'product deletion error');
+			throw new BadRequestException('Product deletion error');
 		}
 	}
 
 	async importFromFile(dto: ProductImportDto, template: ImportTemplate) {
 		const filePath = this.filesService.getPathToFile(dto.fileName, FileTypes.DOC);
 		const groupByKey = 'name';
+
+		//!FIX
+		// const category = this.categoriesService.getById(categoryId);
 
 		let productsFromFile: ProductFromFile[] = [];
 
@@ -120,8 +147,11 @@ export class ProductsService {
 			const productDto: ProductCreateDto = {
 				// TODO: desc
 				description: 'test desc',
-				imgPath: imgUrl,
+				imgUrl: imgUrl,
 				name: mainVariant[nameKey],
+				// category: category.id,
+				// !FIX
+				categoryId: 1,
 			};
 
 			const newProduct = await this.createOne({ ...productDto });

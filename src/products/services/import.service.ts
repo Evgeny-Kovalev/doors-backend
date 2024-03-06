@@ -1,13 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as csv from 'fast-csv';
-import { VariantCreateDto } from '../dto/variant.dto';
-import { Attribute } from '../models/Attribute.entity';
-import { Product } from '../models/Product.entity';
+import { VariantCreateDto } from '../modules/variants/variant.dto';
+import { Product, Attribute } from '@prisma/client';
 import { ImportTemplate, ProductFromFile } from '../types';
-import { AttributesService } from './attributes.service';
 import { FilesService } from 'src/files/files.service';
 import { FileTypes } from 'src/files/types';
 import { createReadStream } from 'fs';
+import { AttributesService } from 'src/products/modules/attributes/attributes.service';
 
 @Injectable()
 export class ImportService {
@@ -73,7 +72,7 @@ export class ImportService {
 			const imgUrl = this.filesService.convertImagePathToUrl(imgPath);
 
 			const variantResult: VariantCreateDto = {
-				imgPath: imgUrl,
+				imgUrl,
 				attributeIds: attributesToAdd.map((a) => a.id),
 				price: variant[priceKey] ? parseInt(variant[priceKey]) : undefined,
 				productId: product.id,

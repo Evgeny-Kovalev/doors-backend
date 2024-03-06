@@ -1,33 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductVariant } from '../models/ProductVariant.entity';
-import { AttributeDto } from './attribute.dto';
+import { AttributeDto } from '../attributes/attribute.dto';
+import { VariantFullData } from './types';
 
-export class VariantDto {
+export class VariantDto implements VariantFullData {
 	@ApiProperty()
 	id: number;
 
 	@ApiProperty()
-	imgPath: string;
+	productId: number;
 
 	@ApiProperty()
-	price: number;
+	imgUrl: string;
 
-	@ApiProperty({ type: Number, nullable: true })
-	discountPrice?: number | null = null;
+	@ApiProperty()
+	price: number | null;
+
+	@ApiProperty()
+	discountPrice: number | null;
 
 	@ApiProperty({ type: [AttributeDto] })
 	attributes: AttributeDto[];
-
-	public static fromEntity(v: ProductVariant): VariantDto {
-		const dto: VariantDto = {
-			id: v.id,
-			imgPath: v.imgPath,
-			price: v.price,
-			discountPrice: v.discountPrice,
-			attributes: v.attributes.map((a) => AttributeDto.fromEntity(a)),
-		};
-		return dto;
-	}
 }
 
 export class VariantCreateDto {
@@ -35,7 +27,7 @@ export class VariantCreateDto {
 	productId: number;
 
 	@ApiProperty({ example: 'image path 1' })
-	imgPath: string;
+	imgUrl: string;
 
 	@ApiProperty({ example: 100 })
 	price?: number;
@@ -49,7 +41,7 @@ export class VariantCreateDto {
 
 export class VariantUpdateDto {
 	@ApiProperty({ example: 'new image path' })
-	imgPath?: string;
+	imgUrl?: string;
 
 	@ApiProperty({ example: 300 })
 	price?: number;
