@@ -7,4 +7,17 @@ export default () => ({
 		password: process.env.DATABASE_PASSWORD,
 		name: process.env.DATABASE_NAME,
 	},
+	app: {
+		url: process.env.APP_URL,
+		port: process.env.PORT,
+	},
+	files: {
+		images: {
+			path: process.env.STATIC_IMAGES_PATH,
+			apiPath: process.env.STATIC_IMAGES_PATH_API,
+		},
+		docs: {
+			path: process.env.STATIC_DOCS_PATH,
+		},
+	},
 });

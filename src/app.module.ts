@@ -14,7 +14,8 @@ import { PrismaModule } from './prisma/prisma.module';
 		ConfigModule.forRoot({ load: [configuration] }),
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', 'files', 'images'),
-			serveRoot: '/images',
+			// TODO
+			serveRoot: process.env.STATIC_IMAGES_PATH_API,
 			exclude: ['/api*'],
 		}),
 		ProductsModule,

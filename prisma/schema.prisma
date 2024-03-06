@@ -15,23 +15,22 @@ datasource db {
 
 model Category {
   id    Int     @default(autoincrement()) @id
-  name String  @unique
+  name String
   imgUrl String
   description String
 
-  parentCategory Category? @relation("ParentSubCategories", fields: [parentCategoryId], references: [id])
+  parentCategory Category?  @relation("ParentSubCategories", fields: [parentCategoryId], references: [id], onDelete: SetNull)
   parentCategoryId Int?
   subCategories Category[] @relation("ParentSubCategories")
 
   isVisible Boolean @default(true)
-
 
   products Product[]
 }
 
 model Product {
   id    Int     @default(autoincrement()) @id
-  name String  @unique
+  name String
   imgUrl String
   description String
   isVisible Boolean @default(true)
