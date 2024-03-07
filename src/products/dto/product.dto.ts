@@ -75,9 +75,12 @@ export class ProductQueryDto {
 }
 
 export class ProductImportDto {
-	// @ApiProperty({ example: 3, required: false })
-	// categoryId: number;
+	@ApiProperty({ example: 3 })
+	@Type(() => Number)
+	@IsInt()
+	categoryId: number;
 
 	@ApiProperty({ example: 'test.csv', required: true })
+	@IsString()
 	fileName: string;
 }

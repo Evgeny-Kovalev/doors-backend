@@ -109,8 +109,7 @@ export class ProductsService {
 		const filePath = this.filesService.getPathToFile(dto.fileName, FileTypes.DOC);
 		const groupByKey = 'name';
 
-		//!FIX
-		// const category = this.categoriesService.getById(categoryId);
+		const category = await this.categoriesService.getById(dto.categoryId);
 
 		let productsFromFile: ProductFromFile[] = [];
 
@@ -152,9 +151,7 @@ export class ProductsService {
 				description: 'test desc',
 				imgUrl: imgUrl,
 				name: mainVariant[nameKey],
-				// category: category.id,
-				// !FIX
-				categoryId: 1,
+				categoryId: category.id,
 			};
 
 			const newProduct = await this.createOne({ ...productDto });
