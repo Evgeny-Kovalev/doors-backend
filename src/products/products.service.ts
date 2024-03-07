@@ -27,15 +27,18 @@ export class ProductsService {
 	) {}
 
 	async getAll(query?: ProductQueryDto): Promise<ProductDto[]> {
-		const products: ProductFullData[] = await this.prismaService.product.findMany({
-			include: { variants: { include: { attributes: true } } },
-			where: {
-				name: {
-					contains: query?.q,
+		try {
+			const products: ProductFullData[] = await this.prismaService.product.findMany({
+				include: { variants: { include: { attributes: true } } },
+				where: {
+					name: { contains: query?.q },
+					categoryId: query?.categoryId,
 				},
-			},
-		});
-		return products;
+			});
+			return products;
+		} catch (e) {
+			throw new BadRequestException('Cannot get products');
+		}
 	}
 
 	async getById(id: number): Promise<ProductDto> {

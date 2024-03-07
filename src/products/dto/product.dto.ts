@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductFullData } from '../types';
 import { VariantDto } from '../modules/variants/variant.dto';
+import { IsInt, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class ProductDto implements ProductFullData {
 	@ApiProperty()
@@ -61,9 +63,14 @@ export class ProductUpdateDto {
 
 export class ProductQueryDto {
 	@ApiProperty({ required: false })
+	@Type(() => Number)
+	@IsInt()
+	@IsOptional()
 	categoryId?: number;
 
 	@ApiProperty({ example: 'Product name 1', required: false })
+	@IsString()
+	@IsOptional()
 	q?: string;
 }
 

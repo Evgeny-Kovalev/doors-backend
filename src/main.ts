@@ -4,10 +4,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
 import { ExceptionsLoggerFilter } from './exceptionsLogger.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, { cors: true });
 
+	app.useGlobalPipes(new ValidationPipe({ transform: true }));
 	app.useGlobalFilters(new ExceptionsLoggerFilter());
 
 	app.setGlobalPrefix('api');
