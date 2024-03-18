@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import * as csv from 'fast-csv';
 import { VariantCreateDto } from '../modules/variants/variant.dto';
 import { Product, Attribute } from '@prisma/client';
-import { ImportTemplate, ProductFromFile } from '../types';
+import { ImportTemplate, ProductVariantFromFile } from '../types';
 import { FilesService } from 'src/files/files.service';
 import { FileTypes } from 'src/files/types';
 import { createReadStream } from 'fs';
@@ -32,36 +32,22 @@ export class ImportService {
 		});
 	}
 
-	async getVariantsDtosFileObj(
+	async getVariantDtosFromFile(
 		product: Product,
-		variantsRows: ProductFromFile[],
+		variantsRows: ProductVariantFromFile[],
 		template: ImportTemplate,
 	): Promise<VariantCreateDto[]> {
 		const productVariantsDtos: VariantCreateDto[] = [];
 
+		//TODO: check keys existing
 		const { imgPathKey, priceKey, discountPriceKey } = template.info;
 
 		for (const variant of variantsRows) {
-			const attributesToAdd: Attribute[] = [];
-
-			for (const attrKey of template.attributesKeysInDoc) {
-				if (variant[attrKey] === undefined)
-					throw new BadRequestException(
-						`There is no attribute '${attrKey}' in file`,
-					);
-				const valueInDoc = variant[attrKey];
-
-				const isAllEmpty =
-					variantsRows.findIndex((v) => v[attrKey] !== '') >= 0 ? false : true;
-
-				if (valueInDoc === '' && isAllEmpty) continue;
-
-				const attribute = await this.attributesService.getOrCreate(
-					attrKey,
-					valueInDoc,
-				);
-				attributesToAdd.push(attribute);
-			}
+			const attributesToAdd = await this.attributesService.getOrCreateMany(
+				template.attributesKeysInDoc,
+				variant,
+				variantsRows,
+			);
 
 			const url = variant[imgPathKey];
 			const imgPath = await this.filesService.getOrLoadFile({

@@ -3,6 +3,7 @@ import { ProductFullData } from '../types';
 import { VariantDto } from '../modules/variants/variant.dto';
 import { IsInt, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { AttributeDto } from '../modules/attributes/attribute.dto';
 
 export class ProductDto implements ProductFullData {
 	@ApiProperty()
@@ -25,6 +26,9 @@ export class ProductDto implements ProductFullData {
 
 	@ApiProperty({ type: [VariantDto] })
 	variants: VariantDto[];
+
+	@ApiProperty({ type: [AttributeDto] })
+	params: AttributeDto[];
 }
 
 export class ProductCreateDto {
@@ -42,6 +46,9 @@ export class ProductCreateDto {
 
 	@ApiProperty()
 	categoryId: number;
+
+	@ApiProperty({ type: [Number], example: [1, 3] })
+	paramIds: number[];
 }
 
 export class ProductUpdateDto {
@@ -59,6 +66,9 @@ export class ProductUpdateDto {
 
 	@ApiProperty()
 	categoryId?: number;
+
+	@ApiProperty({ type: [Number], example: [1, 3] })
+	paramIds?: number[];
 }
 
 export class ProductQueryDto {

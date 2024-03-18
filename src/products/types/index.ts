@@ -13,10 +13,10 @@ export type ImportTemplate = {
 	attributesKeysInDoc: string[];
 };
 
-export type ProductFromFile = { [key: string]: string };
+export type ProductVariantFromFile = { [key: string]: string };
 
 const productAllData = Prisma.validator<Prisma.ProductDefaultArgs>()({
-	include: { variants: { include: { attributes: true } } },
+	include: { params: true, variants: { include: { attributes: true } } },
 });
 
 export interface ProductFullData

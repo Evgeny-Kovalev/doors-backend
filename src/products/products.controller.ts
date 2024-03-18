@@ -19,7 +19,7 @@ import {
 	ProductUpdateDto,
 } from './dto/product.dto';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { ImportTemplate } from './types';
+import { ImportTemplate, ProductFullData } from './types';
 
 @ApiTags('Products')
 @Controller({
@@ -84,7 +84,7 @@ export class ProductsController {
 			attributesKeysInDoc: ['color', 'glassVariant'],
 		};
 
-		const createdProducts = await this.productsService.importFromFile(
+		const createdProducts: ProductDto[] = await this.productsService.importFromFile(
 			dto,
 			MOCK_TEMPLATE,
 		);

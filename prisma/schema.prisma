@@ -39,6 +39,7 @@ model Product {
   categoryId Int
 
   variants ProductVariant[]
+  params Attribute[]
 }
 
 model ProductVariant {
@@ -60,4 +61,5 @@ model Attribute {
   @@unique([name, value])
 
   variants    ProductVariant[]
+  products    Product[]
 }

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Attribute } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ProductVariantFromFile } from 'src/products/types';
 
 @Injectable()
 export class AttributesService {
@@ -26,7 +27,7 @@ export class AttributesService {
 		return await this.prismaServise.attribute.findMany({ where: { id: { in: ids } } });
 	}
 
-	async getOrCreate(name: string, value: string): Promise<Attribute> {
+	async getOrCreateOne(name: string, value: string): Promise<Attribute> {
 		const isAttributeExist = await this.isExist(name);
 
 		if (isAttributeExist) {
@@ -53,6 +54,29 @@ export class AttributesService {
 			});
 			return newAttribute;
 		}
+	}
+
+	async getOrCreateMany(
+		keys: string[],
+		variantFromFile: ProductVariantFromFile,
+		allVariants: ProductVariantFromFile[],
+	): Promise<Attribute[]> {
+		const attributes: Attribute[] = [];
+
+		for (const attrKey of keys) {
+			const valueInDoc = variantFromFile[attrKey];
+
+			if (valueInDoc === undefined)
+				throw new BadRequestException(`There is no attribute '${attrKey}' in file`);
+
+			const isAllEmpty = allVariants.every((variant) => variant[attrKey] === '');
+
+			if (valueInDoc === '' && isAllEmpty) continue;
+
+			const attribute = await this.getOrCreateOne(attrKey, valueInDoc);
+			attributes.push(attribute);
+		}
+		return attributes;
 	}
 
 	async getValuesByName(name: string): Promise<string[]> {
