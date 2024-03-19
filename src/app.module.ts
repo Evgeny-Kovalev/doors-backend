@@ -1,22 +1,31 @@
 import { Module } from '@nestjs/common';
 import { ProductsModule } from './products/products.module';
 import { CategoriesModule } from './categories/categories.module';
-
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import configuration from './config/configuration';
+import { ConfigModule } from '@nestjs/config';
 import { FilesModule } from './files/files.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
+import { envSchema } from './env/env';
+import { EnvModule } from './env/env.module';
+import { EnvService } from './env/env.service';
 
 @Module({
 	imports: [
-		ConfigModule.forRoot({ load: [configuration] }),
-		ServeStaticModule.forRoot({
-			rootPath: join(__dirname, '..', 'files', 'images'),
-			// TODO
-			serveRoot: process.env.STATIC_IMAGES_PATH_API,
-			exclude: ['/api*'],
+		ConfigModule.forRoot({
+			validate: (env) => envSchema.parse(env),
+			isGlobal: true,
+		}),
+		ServeStaticModule.forRootAsync({
+			imports: [EnvModule],
+			inject: [EnvService],
+			useFactory: (envService: EnvService) => [
+				{
+					rootPath: join(__dirname, '..', 'files', 'images'),
+					serveRoot: envService.get('STATIC_IMAGES_PATH_API'),
+					exclude: ['/api*'],
+				},
+			],
 		}),
 		ProductsModule,
 		CategoriesModule,

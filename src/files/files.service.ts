@@ -1,3 +1,4 @@
+import { EnvService } from './../env/env.service';
 import {
 	BadRequestException,
 	Injectable,
@@ -11,12 +12,15 @@ import { join as joinPath } from 'node:path/posix';
 
 @Injectable()
 export class FilesService {
-	constructor(private readonly httpService: HttpService) {}
+	constructor(
+		private readonly httpService: HttpService,
+		private readonly envService: EnvService,
+	) {}
 
 	private getFilesMap() {
 		const FILES_MAP: FileTypeInfoMap = {
-			DOC: { path: process.env.STATIC_DOCS_PATH },
-			IMG: { path: process.env.STATIC_IMAGES_PATH },
+			DOC: { path: this.envService.get('STATIC_DOCS_PATH') },
+			IMG: { path: this.envService.get('STATIC_IMAGES_PATH') },
 		};
 		return FILES_MAP;
 	}
@@ -123,13 +127,18 @@ export class FilesService {
 	}
 
 	convertImagePathToUrl(path: string) {
-		//!FIX: env vars
 		const fileName = path.substring(path.lastIndexOf('/') + 1);
-		if (!process.env.APP_URL || !process.env.STATIC_IMAGES_PATH_API)
+		if (
+			!this.envService.get('APP_URL') ||
+			!this.envService.get('STATIC_IMAGES_PATH_API')
+		)
 			throw new InternalServerErrorException();
 
-		const fullUrl = new URL(process.env.APP_URL);
-		fullUrl.pathname = joinPath(process.env.STATIC_IMAGES_PATH_API, fileName);
+		const fullUrl = new URL(this.envService.get('APP_URL'));
+		fullUrl.pathname = joinPath(
+			this.envService.get('STATIC_IMAGES_PATH_API'),
+			fileName,
+		);
 
 		return fullUrl.toString();
 	}

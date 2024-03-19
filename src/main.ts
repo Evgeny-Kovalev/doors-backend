@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
+import { EnvService } from './env/env.service';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
 import { ExceptionsLoggerFilter } from './exceptionsLogger.filter';
 import { ValidationPipe } from '@nestjs/common';
@@ -15,8 +15,8 @@ async function bootstrap() {
 	app.setGlobalPrefix('api');
 	app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
-	const configService = app.get(ConfigService);
-	const port = configService.get('port');
+	const envService = app.get(EnvService);
+	const port = envService.get('PORT');
 
 	const config = new DocumentBuilder()
 		.setTitle('Shop backend')
