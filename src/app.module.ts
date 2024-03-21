@@ -6,6 +6,7 @@ import { FilesModule } from './files/files.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
 import { envSchema } from './env/env';
 import { EnvModule } from './env/env.module';
 import { EnvService } from './env/env.service';
@@ -31,6 +32,7 @@ import { EnvService } from './env/env.service';
 		CategoriesModule,
 		FilesModule,
 		PrismaModule,
+		AuthModule,
 	],
 	providers: [],
 })

@@ -13,6 +13,10 @@ export const envSchema = z.object({
 	STATIC_IMAGES_PATH_API: z.string(),
 
 	SECRET_JWT: z.string(),
+
+	TOKEN_EXPIRES_IN: z.string(),
+	AT_SECRET: z.string(),
+	RT_SECRET: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;
