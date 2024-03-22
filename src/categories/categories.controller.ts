@@ -1,5 +1,10 @@
 import { Public } from './../auth/decorators/public.decorator';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiCreatedResponse,
+	ApiOkResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import {
 	Controller,
@@ -37,6 +42,7 @@ export class CategoriesController {
 		return category;
 	}
 
+	@ApiBearerAuth()
 	@ApiCreatedResponse({ type: CategoryDto })
 	@Post('/')
 	async createCategory(@Body() dto: CategoryCreateDto) {
@@ -44,6 +50,7 @@ export class CategoriesController {
 		return createdCategory;
 	}
 
+	@ApiBearerAuth()
 	@ApiOkResponse({ type: CategoryDto })
 	@Patch(':id')
 	async update(
@@ -57,6 +64,7 @@ export class CategoriesController {
 		return updatedCategory;
 	}
 
+	@ApiBearerAuth()
 	@Delete(':id')
 	delete(@Param('id', ParseIntPipe) id: number) {
 		return this.categoriesService.delete(id);

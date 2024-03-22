@@ -7,7 +7,7 @@ import {
 	Post,
 	UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto';
 import { Public } from './decorators/public.decorator';
@@ -38,13 +38,14 @@ export class AuthController {
 		return this.authService.signIn(dto);
 	}
 
+	@ApiBearerAuth()
 	@Get('logout')
 	@HttpCode(HttpStatus.OK)
 	logout(@GetCurrentUserId() userId: number): Promise<boolean> {
 		return this.authService.logout(userId);
 	}
 
-	@Public()
+	@ApiBearerAuth()
 	@UseGuards(RtGuard)
 	@Get('refresh')
 	@HttpCode(HttpStatus.OK)

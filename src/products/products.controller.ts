@@ -18,8 +18,13 @@ import {
 	ProductQueryDto,
 	ProductUpdateDto,
 } from './dto/product.dto';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { ImportTemplate, ProductFullData } from './types';
+import {
+	ApiBearerAuth,
+	ApiCreatedResponse,
+	ApiOkResponse,
+	ApiTags,
+} from '@nestjs/swagger';
+import { ImportTemplate } from './types';
 import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Products')
@@ -46,6 +51,7 @@ export class ProductsController {
 		return product;
 	}
 
+	@ApiBearerAuth()
 	@ApiCreatedResponse({ type: ProductDto })
 	@Post('/')
 	async createProduct(@Body() dto: ProductCreateDto): Promise<ProductDto> {
@@ -53,6 +59,7 @@ export class ProductsController {
 		return product;
 	}
 
+	@ApiBearerAuth()
 	@ApiOkResponse({ type: ProductDto })
 	@Patch(':id')
 	async update(
@@ -66,12 +73,14 @@ export class ProductsController {
 		return updatedProduct;
 	}
 
+	@ApiBearerAuth()
 	@Delete(':id')
 	async delete(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {
 		return await this.productsService.delete(id);
 	}
 
-	// @ApiCreatedResponse({ type: ProductDto })
+	@ApiBearerAuth()
+	@ApiCreatedResponse({ type: [ProductDto] })
 	@Post('/import')
 	async importProduct(@Body() dto: ProductImportDto) {
 		// !FIX

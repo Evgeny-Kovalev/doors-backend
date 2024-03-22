@@ -10,7 +10,13 @@ import {
 	Query,
 } from '@nestjs/common';
 import { VariantsService } from './variants.service';
-import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiBody,
+	ApiCreatedResponse,
+	ApiOkResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { ProductsService } from '../../products.service';
 import {
 	VariantCreateDto,
@@ -48,6 +54,7 @@ export class VariantsController {
 		return variant;
 	}
 
+	@ApiBearerAuth()
 	@ApiCreatedResponse({ type: VariantDto })
 	@Post('/')
 	@ApiBody({ type: VariantCreateDto })
@@ -57,6 +64,7 @@ export class VariantsController {
 		return variant;
 	}
 
+	@ApiBearerAuth()
 	@ApiOkResponse({ type: VariantDto })
 	@Patch(':id')
 	async update(
@@ -70,6 +78,7 @@ export class VariantsController {
 		return updatedVariant;
 	}
 
+	@ApiBearerAuth()
 	@Delete(':id')
 	async deleteOne(@Param('id', ParseIntPipe) id: number): Promise<VariantDto> {
 		return await this.variantsService.deleteById(id);

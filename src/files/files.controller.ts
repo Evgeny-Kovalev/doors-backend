@@ -1,10 +1,11 @@
 import { Controller, Delete, Param, Post, UploadedFile } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FilesService } from './files.service';
 import { ApiCsvFile, ApiImageFile } from './decorators/api-file.decorator';
 import { ParseFile } from './pipes/parse-file.pipe';
 import { FileTypes } from './types';
 
+@ApiBearerAuth()
 @ApiTags('Media Files')
 @Controller({ path: 'files', version: '1' })
 export class FilesController {
