@@ -20,6 +20,7 @@ import {
 } from './dto/product.dto';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ImportTemplate, ProductFullData } from './types';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Products')
 @Controller({
@@ -29,6 +30,7 @@ import { ImportTemplate, ProductFullData } from './types';
 export class ProductsController {
 	constructor(private readonly productsService: ProductsService) {}
 
+	@Public()
 	@ApiOkResponse({ type: [ProductDto] })
 	@Get('/')
 	async getAllProducts(@Query() q: ProductQueryDto) {
@@ -36,6 +38,7 @@ export class ProductsController {
 		return products;
 	}
 
+	@Public()
 	@ApiOkResponse({ type: ProductDto })
 	@Get(':id')
 	async getProduct(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {

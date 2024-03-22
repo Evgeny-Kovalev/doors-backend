@@ -1,3 +1,4 @@
+import { Public } from './../auth/decorators/public.decorator';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import {
@@ -20,6 +21,7 @@ import { CategoryCreateDto, CategoryDto, CategoryUpdateDto } from './dto';
 export class CategoriesController {
 	constructor(private readonly categoriesService: CategoriesService) {}
 
+	@Public()
 	@ApiOkResponse({ type: [CategoryDto] })
 	@Get('/')
 	async getAllCategories() {
@@ -27,6 +29,7 @@ export class CategoriesController {
 		return categories;
 	}
 
+	@Public()
 	@ApiOkResponse({ type: CategoryDto })
 	@Get(':id')
 	async getCategory(@Param('id', ParseIntPipe) id: number) {

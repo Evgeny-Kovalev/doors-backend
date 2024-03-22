@@ -18,6 +18,7 @@ import {
 	VariantQueryDto,
 	VariantUpdateDto,
 } from './variant.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @ApiTags('Product variants')
 @Controller({
@@ -30,6 +31,7 @@ export class VariantsController {
 		private readonly productsService: ProductsService,
 	) {}
 
+	@Public()
 	@ApiOkResponse({ type: [VariantDto] })
 	@Get('/')
 	async getAll(@Query() query: VariantQueryDto): Promise<VariantDto[]> {
@@ -38,6 +40,7 @@ export class VariantsController {
 		return variants;
 	}
 
+	@Public()
 	@ApiOkResponse({ type: VariantDto })
 	@Get(':id')
 	async getOne(@Param('id', ParseIntPipe) variantId: number): Promise<VariantDto> {
