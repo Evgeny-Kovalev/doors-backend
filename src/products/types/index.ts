@@ -1,5 +1,3 @@
-import { Prisma } from '@prisma/client';
-
 export type MainProductKeys = {
 	nameKey: string;
 	imgPathKey: string;
@@ -14,10 +12,3 @@ export type ImportTemplate = {
 };
 
 export type ProductVariantFromFile = { [key: string]: string };
-
-const productAllData = Prisma.validator<Prisma.ProductDefaultArgs>()({
-	include: { params: true, variants: { include: { attributes: true } } },
-});
-
-export interface ProductFullData
-	extends Prisma.ProductGetPayload<typeof productAllData> {}

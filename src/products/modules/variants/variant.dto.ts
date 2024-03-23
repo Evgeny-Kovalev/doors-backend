@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AttributeDto } from '../attributes/attribute.dto';
-import { VariantFullData } from './types';
+import { AttributeDto } from '../attributes/dto/attribute.dto';
 
-export class VariantDto implements VariantFullData {
+export class VariantDto {
 	@ApiProperty()
 	id: number;
 

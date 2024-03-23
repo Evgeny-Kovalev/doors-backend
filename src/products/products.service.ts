@@ -13,7 +13,7 @@ import { Category } from '@prisma/client';
 import { FileTypes } from 'src/files/types';
 import { ImportService } from './services/import.service';
 import { groupBy } from 'src/utils';
-import { ImportTemplate, ProductVariantFromFile, ProductFullData } from './types';
+import { ImportTemplate, ProductVariantFromFile } from './types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CategoriesService } from 'src/categories/categories.service';
 
@@ -30,8 +30,20 @@ export class ProductsService {
 
 	async getAll(query?: ProductQueryDto): Promise<ProductDto[]> {
 		try {
-			const products: ProductFullData[] = await this.prismaService.product.findMany({
-				include: { params: true, variants: { include: { attributes: true } } },
+			const products: ProductDto[] = await this.prismaService.product.findMany({
+				include: {
+					params: { include: { key: true, value: true } },
+					variants: {
+						include: {
+							attributes: {
+								include: {
+									key: true,
+									value: true,
+								},
+							},
+						},
+					},
+				},
 				where: {
 					name: { contains: query?.q },
 					categoryId: query?.categoryId,
@@ -44,8 +56,20 @@ export class ProductsService {
 	}
 
 	async getById(id: number): Promise<ProductDto> {
-		const product: ProductFullData | null = await this.prismaService.product.findFirst({
-			include: { params: true, variants: { include: { attributes: true } } },
+		const product: ProductDto | null = await this.prismaService.product.findFirst({
+			include: {
+				params: { include: { key: true, value: true } },
+				variants: {
+					include: {
+						attributes: {
+							include: {
+								key: true,
+								value: true,
+							},
+						},
+					},
+				},
+			},
 			where: { id },
 		});
 
@@ -65,7 +89,19 @@ export class ProductsService {
 					category: { connect: { id: categoryId } },
 					params: { connect: paramIds.map((id) => ({ id })) },
 				},
-				include: { params: true, variants: { include: { attributes: true } } },
+				include: {
+					params: { include: { key: true, value: true } },
+					variants: {
+						include: {
+							attributes: {
+								include: {
+									key: true,
+									value: true,
+								},
+							},
+						},
+					},
+				},
 			});
 			return product;
 		} catch (e) {
@@ -89,7 +125,7 @@ export class ProductsService {
 					'Params with these IDs are missing or there are duplicate ID.',
 				);
 
-			const updatedProduct: ProductFullData = await this.prismaService.product.update({
+			const updatedProduct: ProductDto = await this.prismaService.product.update({
 				where: { id: product.id },
 				data: {
 					name,
@@ -99,7 +135,19 @@ export class ProductsService {
 					category: categoryId ? { connect: { id: categoryId } } : undefined,
 					params: newParams ? { set: newParams } : undefined,
 				},
-				include: { params: true, variants: { include: { attributes: true } } },
+				include: {
+					params: { include: { key: true, value: true } },
+					variants: {
+						include: {
+							attributes: {
+								include: {
+									key: true,
+									value: true,
+								},
+							},
+						},
+					},
+				},
 			});
 			return updatedProduct;
 		} catch (e) {
@@ -113,8 +161,17 @@ export class ProductsService {
 			return await this.prismaService.product.delete({
 				where: { id },
 				include: {
-					params: true,
-					variants: { include: { attributes: true } },
+					params: { include: { key: true, value: true } },
+					variants: {
+						include: {
+							attributes: {
+								include: {
+									key: true,
+									value: true,
+								},
+							},
+						},
+					},
 				},
 			});
 		} catch (e) {

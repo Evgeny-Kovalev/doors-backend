@@ -1,13 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AttributeFullData } from './types';
 
-export class AttributeDto implements AttributeFullData {
+export class AttributeValueDto {
 	@ApiProperty()
 	id: number;
 
 	@ApiProperty()
-	name: string;
+	value: string;
+}
 
+export class AttributeValueCreateDto {
 	@ApiProperty()
 	value: string;
 }

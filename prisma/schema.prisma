@@ -14,14 +14,14 @@ datasource db {
 }
 
 model Category {
-  id    Int     @default(autoincrement()) @id
-  name String
-  imgUrl String
+  id          Int    @id @default(autoincrement())
+  name        String
+  imgUrl      String
   description String
 
-  parentCategory Category?  @relation("ParentSubCategories", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  parentCategory   Category?  @relation("ParentSubCategories", fields: [parentCategoryId], references: [id], onDelete: SetNull)
   parentCategoryId Int?
-  subCategories Category[] @relation("ParentSubCategories")
+  subCategories    Category[] @relation("ParentSubCategories")
 
   isVisible Boolean @default(true)
 
@@ -29,45 +29,65 @@ model Category {
 }
 
 model Product {
-  id    Int     @default(autoincrement()) @id
-  name String
-  imgUrl String
+  id          Int     @id @default(autoincrement())
+  name        String
+  imgUrl      String
   description String
-  isVisible Boolean @default(true)
+  isVisible   Boolean @default(true)
 
-  category Category @relation(fields: [categoryId],  references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
   categoryId Int
 
   variants ProductVariant[]
-  params Attribute[]
+  params   Attribute[]
 }
 
 model ProductVariant {
-  id        Int      @default(autoincrement()) @id
-  imgUrl String
-  price Int?
+  id            Int    @id @default(autoincrement())
+  imgUrl        String
+  price         Int?
   discountPrice Int?
 
-  product    Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId  Int
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
 
   attributes Attribute[]
 }
 
 model Attribute {
-  id        Int      @default(autoincrement()) @id
-  name     String
-  value   String
-  @@unique([name, value])
+  id Int @id @default(autoincrement())
 
-  variants    ProductVariant[]
-  products    Product[]
+  key   AttributeKey @relation(fields: [keyId], references: [id])
+  keyId Int
+
+  value   AttributeValue @relation(fields: [valueId], references: [id])
+  valueId Int
+
+  variants ProductVariant[]
+  products Product[]
+
+  @@unique([keyId, valueId])
+}
+
+model AttributeKey {
+  id     Int     @id @default(autoincrement())
+  value  String  @unique
+  label  String
+  imgUrl String?
+
+  attribute Attribute[]
+}
+
+model AttributeValue {
+  id    Int    @id @default(autoincrement())
+  value String @unique
+
+  attribute Attribute[]
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-
-  email    String  @unique
+  id           Int     @id @default(autoincrement())
+  email        String  @unique
   password     String
   refreshToken String?
 }

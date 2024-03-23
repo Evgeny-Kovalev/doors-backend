@@ -3,11 +3,10 @@ import {
 	Injectable,
 	InternalServerErrorException,
 } from '@nestjs/common';
-import { VariantCreateDto, VariantUpdateDto } from './variant.dto';
+import { VariantCreateDto, VariantDto, VariantUpdateDto } from './variant.dto';
 import { Product } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AttributesService } from 'src/products/modules/attributes/attributes.service';
-import { VariantFullData } from './types';
 
 @Injectable()
 export class VariantsService {
@@ -16,28 +15,27 @@ export class VariantsService {
 		private readonly attributesService: AttributesService,
 	) {}
 
-	async getAll(product: Product): Promise<VariantFullData[]> {
-		const variants: VariantFullData[] =
-			await this.prismaService.productVariant.findMany({
-				where: { product },
-				include: { attributes: true },
-			});
+	async getAll(product: Product): Promise<VariantDto[]> {
+		const variants: VariantDto[] = await this.prismaService.productVariant.findMany({
+			where: { product },
+			include: { attributes: { include: { key: true, value: true } } },
+		});
 		return variants;
 	}
 
-	async getById(id: number): Promise<VariantFullData> {
+	async getById(id: number): Promise<VariantDto> {
 		const variant = await this.prismaService.productVariant.findFirst({
 			where: { id },
-			include: { attributes: true },
+			include: { attributes: { include: { key: true, value: true } } },
 		});
 		if (!variant) throw new BadRequestException('Variant with this id not found');
 		return variant;
 	}
 
-	async createOne(product: Product, dto: VariantCreateDto): Promise<VariantFullData> {
+	async createOne(product: Product, dto: VariantCreateDto): Promise<VariantDto> {
 		const { imgUrl, attributeIds, productId, price, discountPrice } = dto;
 		try {
-			const createdVariant: VariantFullData =
+			const createdVariant: VariantDto =
 				await this.prismaService.productVariant.create({
 					data: {
 						imgUrl,
@@ -46,7 +44,7 @@ export class VariantsService {
 						attributes: { connect: attributeIds.map((id) => ({ id })) },
 						product: { connect: { id: productId } },
 					},
-					include: { attributes: true },
+					include: { attributes: { include: { key: true, value: true } } },
 				});
 			return createdVariant;
 		} catch (e) {
@@ -54,7 +52,7 @@ export class VariantsService {
 		}
 	}
 
-	async update(variantId: number, dto: VariantUpdateDto): Promise<VariantFullData> {
+	async update(variantId: number, dto: VariantUpdateDto): Promise<VariantDto> {
 		await this.getById(variantId);
 		const { imgUrl, attributeIds, price, discountPrice } = dto;
 
@@ -78,7 +76,7 @@ export class VariantsService {
 					discountPrice,
 					attributes: newAttributes ? { set: newAttributes } : undefined,
 				},
-				include: { attributes: true },
+				include: { attributes: { include: { key: true, value: true } } },
 			});
 			return updatedVariant;
 		} catch (e) {
@@ -86,12 +84,12 @@ export class VariantsService {
 		}
 	}
 
-	async deleteById(id: number): Promise<VariantFullData> {
+	async deleteById(id: number): Promise<VariantDto> {
 		await this.getById(id);
 		try {
 			return this.prismaService.productVariant.delete({
 				where: { id },
-				include: { attributes: true },
+				include: { attributes: { include: { key: true, value: true } } },
 			});
 		} catch (e) {
 			throw new InternalServerErrorException('Cannot delete the product variant');

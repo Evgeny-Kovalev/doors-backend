@@ -1,11 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductFullData } from '../types';
 import { VariantDto } from '../modules/variants/variant.dto';
 import { IsInt, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AttributeDto } from '../modules/attributes/attribute.dto';
+import { AttributeDto } from '../modules/attributes/dto/attribute.dto';
 
-export class ProductDto implements ProductFullData {
+export class ProductDto {
 	@ApiProperty()
 	id: number;
 

@@ -3,9 +3,10 @@ import {
 	Injectable,
 	InternalServerErrorException,
 } from '@nestjs/common';
-import { Attribute } from '@prisma/client';
+import { Attribute, AttributeValue } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProductVariantFromFile } from 'src/products/types';
+import { AttributeCreateDto, AttributeDto } from './dto/attribute.dto';
 
 @Injectable()
 export class AttributesService {
@@ -15,42 +16,54 @@ export class AttributesService {
 		return await this.prismaServise.attribute.findFirst({ where: { id } });
 	}
 
-	async getOne(name: string, value: string): Promise<Attribute | null> {
-		return await this.prismaServise.attribute.findFirst({ where: { name, value } });
+	async getOne(key: string, value: string): Promise<AttributeDto | null> {
+		return await this.prismaServise.attribute.findFirst({
+			where: { key: { value: key }, value: { value } },
+			include: { key: true, value: true },
+		});
 	}
 
-	async getManyByName(name: string): Promise<Attribute[]> {
-		return await this.prismaServise.attribute.findMany({ where: { name } });
+	async getManyByKey(key: string): Promise<AttributeDto[]> {
+		return await this.prismaServise.attribute.findMany({
+			where: { key: { value: key } },
+			include: { key: true, value: true },
+		});
 	}
 
-	async getManyByIds(ids: number[]): Promise<Attribute[]> {
-		return await this.prismaServise.attribute.findMany({ where: { id: { in: ids } } });
+	async getManyByIds(ids: number[]): Promise<AttributeDto[]> {
+		return await this.prismaServise.attribute.findMany({
+			where: { id: { in: ids } },
+			include: { key: true, value: true },
+		});
 	}
 
-	async getOrCreateOne(name: string, value: string): Promise<Attribute> {
-		const isAttributeExist = await this.isExist(name);
+	async getOrCreateOne(dto: AttributeCreateDto): Promise<AttributeDto> {
+		const key = dto.key.value;
+		const value = dto.value.value;
+
+		const isAttributeExist = await this.isExist(key);
 
 		if (isAttributeExist) {
-			const attributeValues = await this.getValuesByName(name);
+			const attributeValues = await this.getValuesByKey(key);
 
-			if (attributeValues.includes(value)) {
+			if (attributeValues.find((attr) => attr.value === value)) {
 				// attribute with the same value already exists, just push
-				const existedAttribute = await this.getOne(name, value);
+				const existedAttribute = await this.getOne(key, value);
 				if (!existedAttribute) throw new InternalServerErrorException();
 				return existedAttribute;
 			} else {
 				// add value to existing attribute
 				const newAttribute = await this.createOne({
-					name: name,
-					value: value,
+					key: { ...dto.key },
+					value: { ...dto.value },
 				});
 				return newAttribute;
 			}
 		} else {
 			// create new attribute
 			const newAttribute = await this.createOne({
-				name: name,
-				value: value,
+				key: { ...dto.key },
+				value: { ...dto.value },
 			});
 			return newAttribute;
 		}
@@ -60,8 +73,8 @@ export class AttributesService {
 		keys: string[],
 		variantFromFile: ProductVariantFromFile,
 		allVariants: ProductVariantFromFile[],
-	): Promise<Attribute[]> {
-		const attributes: Attribute[] = [];
+	): Promise<AttributeDto[]> {
+		const attributes: AttributeDto[] = [];
 
 		for (const attrKey of keys) {
 			const valueInDoc = variantFromFile[attrKey];
@@ -73,32 +86,67 @@ export class AttributesService {
 
 			if (valueInDoc === '' && isAllEmpty) continue;
 
-			const attribute = await this.getOrCreateOne(attrKey, valueInDoc);
+			const attribute = await this.getOrCreateOne({
+				key: {
+					value: attrKey,
+					label: attrKey,
+					imgUrl: null,
+				},
+				value: {
+					value: valueInDoc,
+				},
+			});
 			attributes.push(attribute);
 		}
 		return attributes;
 	}
 
-	async getValuesByName(name: string): Promise<string[]> {
-		const attributesWithName = await this.getManyByName(name);
-		if (!attributesWithName)
-			throw new BadRequestException('There is no attribute with this name');
+	async getValuesByKey(key: string): Promise<AttributeValue[]> {
+		const attributes = await this.getManyByKey(key);
+		if (!attributes)
+			throw new BadRequestException('There is no attribute with this key');
 
-		return attributesWithName.reduce((acc: string[], attr) => {
+		return attributes.reduce((acc: AttributeValue[], attr) => {
 			acc.push(attr.value);
 			return acc;
 		}, []);
 	}
 
-	async createOne({ name, value }: { name: string; value: string }) {
-		const newAttribute = await this.prismaServise.attribute.create({
-			data: { name, value },
+	async createOne(dto: AttributeCreateDto): Promise<AttributeDto> {
+		const newAttribute: AttributeDto = await this.prismaServise.attribute.create({
+			data: {
+				key: {
+					connectOrCreate: {
+						where: {
+							value: dto.key.value,
+						},
+						create: {
+							value: dto.key.value,
+							label: dto.key.label,
+							imgUrl: dto.key.imgUrl,
+						},
+					},
+				},
+				value: {
+					connectOrCreate: {
+						where: {
+							value: dto.value.value,
+						},
+						create: {
+							value: dto.value.value,
+						},
+					},
+				},
+			},
+			include: { key: true, value: true },
 		});
 		return newAttribute;
 	}
 
-	async isExist(name: string): Promise<boolean> {
-		return !!(await this.prismaServise.attribute.findFirst({ where: { name } }));
+	async isExist(key: string): Promise<boolean> {
+		return !!(await this.prismaServise.attribute.findFirst({
+			where: { key: { value: key } },
+		}));
 	}
 
 	async update() {}
