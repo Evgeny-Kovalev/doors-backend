@@ -26,6 +26,9 @@ import {
 } from '@nestjs/swagger';
 import { ImportTemplate } from './types';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { PaginatedDto } from './../shared/pagination/dto/index';
+import { PaginationParamsDto } from 'src/shared/pagination/dto';
+import { ApiPaginatedResponse } from 'src/shared/pagination/decorators';
 
 @ApiTags('Products')
 @Controller({
@@ -36,10 +39,16 @@ export class ProductsController {
 	constructor(private readonly productsService: ProductsService) {}
 
 	@Public()
-	@ApiOkResponse({ type: [ProductDto] })
+	@ApiPaginatedResponse(ProductDto)
 	@Get('/')
-	async getAllProducts(@Query() q: ProductQueryDto) {
-		const products: ProductDto[] = await this.productsService.getAll(q);
+	async getAllProducts(
+		@Query() q: ProductQueryDto,
+		@Query() dto: PaginationParamsDto,
+	): Promise<PaginatedDto<ProductDto>> {
+		const products: PaginatedDto<ProductDto> = await this.productsService.getAll(
+			q,
+			dto,
+		);
 		return products;
 	}
 

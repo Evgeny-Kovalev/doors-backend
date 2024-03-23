@@ -16,6 +16,7 @@ import { groupBy } from 'src/utils';
 import { ImportTemplate, ProductVariantFromFile } from './types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CategoriesService } from 'src/categories/categories.service';
+import { PaginatedDto, PaginationParamsDto } from 'src/shared/pagination/dto';
 
 @Injectable()
 export class ProductsService {
@@ -28,28 +29,42 @@ export class ProductsService {
 		private readonly attributesService: AttributesService,
 	) {}
 
-	async getAll(query?: ProductQueryDto): Promise<ProductDto[]> {
+	async getAll(
+		query: ProductQueryDto,
+		{ limit, page }: PaginationParamsDto,
+	): Promise<PaginatedDto<ProductDto>> {
 		try {
-			const products: ProductDto[] = await this.prismaService.product.findMany({
-				include: {
-					params: { include: { key: true, value: true } },
-					variants: {
-						include: {
-							attributes: {
-								include: {
-									key: true,
-									value: true,
+			const [products, count] = await this.prismaService.$transaction([
+				this.prismaService.product.findMany({
+					include: {
+						params: { include: { key: true, value: true } },
+						variants: {
+							include: {
+								attributes: {
+									include: {
+										key: true,
+										value: true,
+									},
 								},
 							},
 						},
 					},
-				},
-				where: {
-					name: { contains: query?.q },
-					categoryId: query?.categoryId,
-				},
-			});
-			return products;
+					where: {
+						name: { contains: query?.q },
+						categoryId: query?.categoryId,
+					},
+					take: limit,
+					skip: (page - 1) * limit,
+				}),
+				this.prismaService.product.count({
+					where: {
+						name: { contains: query?.q },
+						categoryId: query?.categoryId,
+					},
+				}),
+			]);
+
+			return new PaginatedDto<ProductDto>(products, page, limit, count);
 		} catch (e) {
 			throw new BadRequestException('Cannot get products');
 		}
