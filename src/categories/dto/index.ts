@@ -1,7 +1,7 @@
+import { CategoryType } from 'src/products/types';
 import { ApiProperty } from '@nestjs/swagger';
-import { Category } from '@prisma/client';
 
-export class CategoryDto implements Category {
+export class CategoryDto {
 	@ApiProperty()
 	id: number;
 
@@ -10,6 +10,9 @@ export class CategoryDto implements Category {
 
 	@ApiProperty()
 	imgUrl: string;
+
+	@ApiProperty()
+	categoryType: CategoryType;
 
 	@ApiProperty()
 	description: string;

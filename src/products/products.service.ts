@@ -48,6 +48,7 @@ export class ProductsService {
 								},
 							},
 						},
+						category: true,
 					},
 					where: {
 						name: { contains: query?.q },
@@ -84,6 +85,7 @@ export class ProductsService {
 						},
 					},
 				},
+				category: true,
 			},
 			where: { id },
 		});
@@ -116,6 +118,7 @@ export class ProductsService {
 							},
 						},
 					},
+					category: true,
 				},
 			});
 			return product;
@@ -162,6 +165,7 @@ export class ProductsService {
 							},
 						},
 					},
+					category: true,
 				},
 			});
 			return updatedProduct;
@@ -187,6 +191,7 @@ export class ProductsService {
 							},
 						},
 					},
+					category: true,
 				},
 			});
 		} catch (e) {

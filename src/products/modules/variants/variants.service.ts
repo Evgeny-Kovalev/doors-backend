@@ -4,9 +4,9 @@ import {
 	InternalServerErrorException,
 } from '@nestjs/common';
 import { VariantCreateDto, VariantDto, VariantUpdateDto } from './variant.dto';
-import { Product } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AttributesService } from 'src/products/modules/attributes/attributes.service';
+import { ProductDto } from 'src/products/dto/product.dto';
 
 @Injectable()
 export class VariantsService {
@@ -15,9 +15,9 @@ export class VariantsService {
 		private readonly attributesService: AttributesService,
 	) {}
 
-	async getAll(product: Product): Promise<VariantDto[]> {
+	async getAll(product: ProductDto): Promise<VariantDto[]> {
 		const variants: VariantDto[] = await this.prismaService.productVariant.findMany({
-			where: { product },
+			where: { productId: product.id },
 			include: { attributes: { include: { key: true, value: true } } },
 		});
 		return variants;
@@ -32,7 +32,7 @@ export class VariantsService {
 		return variant;
 	}
 
-	async createOne(product: Product, dto: VariantCreateDto): Promise<VariantDto> {
+	async createOne(product: ProductDto, dto: VariantCreateDto): Promise<VariantDto> {
 		const { imgUrl, attributeIds, productId, price, discountPrice } = dto;
 		try {
 			const createdVariant: VariantDto =

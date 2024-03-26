@@ -1,3 +1,4 @@
+import { CategoryDto } from './../../categories/dto/index';
 import { ApiProperty } from '@nestjs/swagger';
 import { VariantDto } from '../modules/variants/variant.dto';
 import { IsInt, IsOptional, IsString } from 'class-validator';
@@ -20,8 +21,8 @@ export class ProductDto {
 	@ApiProperty()
 	isVisible: boolean;
 
-	@ApiProperty()
-	categoryId: number;
+	@ApiProperty({ type: CategoryDto })
+	category: CategoryDto;
 
 	@ApiProperty({ type: [VariantDto] })
 	variants: VariantDto[];

@@ -23,9 +23,16 @@ model Category {
   parentCategoryId Int?
   subCategories    Category[] @relation("ParentSubCategories")
 
+  categoryType CategoryType @default(interiorDoors)
+
   isVisible Boolean @default(true)
 
   products Product[]
+}
+
+enum CategoryType {
+  interiorDoors
+  exteriorDoors
 }
 
 model Product {

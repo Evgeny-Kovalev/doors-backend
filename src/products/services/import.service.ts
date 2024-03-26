@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as csv from 'fast-csv';
 import { VariantCreateDto } from '../modules/variants/variant.dto';
-import { Product, Attribute } from '@prisma/client';
 import { ImportTemplate, ProductVariantFromFile } from '../types';
 import { FilesService } from 'src/files/files.service';
 import { FileTypes } from 'src/files/types';
 import { createReadStream } from 'fs';
 import { AttributesService } from 'src/products/modules/attributes/attributes.service';
+import { ProductDto } from '../dto/product.dto';
 
 @Injectable()
 export class ImportService {
@@ -33,7 +33,7 @@ export class ImportService {
 	}
 
 	async getVariantDtosFromFile(
-		product: Product,
+		product: ProductDto,
 		variantsRows: ProductVariantFromFile[],
 		template: ImportTemplate,
 	): Promise<VariantCreateDto[]> {
