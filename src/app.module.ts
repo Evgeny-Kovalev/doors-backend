@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { envSchema } from './env/env';
 import { EnvModule } from './env/env.module';
 import { EnvService } from './env/env.service';
+import { CollectionsModule } from './collections/collections.module';
 
 @Module({
 	imports: [
@@ -33,6 +34,7 @@ import { EnvService } from './env/env.service';
 		FilesModule,
 		PrismaModule,
 		AuthModule,
+		CollectionsModule,
 	],
 	providers: [],
 })

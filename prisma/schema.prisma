@@ -27,7 +27,8 @@ model Category {
 
   isVisible Boolean @default(true)
 
-  products Product[]
+  products    Product[]
+  collections Collection[]
 
   productOneCategory Product[] @relation(name: "mainCategoryToProduct")
 }
@@ -51,6 +52,8 @@ model Product {
 
   variants ProductVariant[]
   params   Attribute[]
+
+  collections Collection[]
 }
 
 model ProductVariant {
@@ -101,4 +104,12 @@ model User {
   email        String  @unique
   password     String
   refreshToken String?
+}
+
+model Collection {
+  id    Int    @id @default(autoincrement())
+  title String
+
+  products   Product[]
+  categories Category[]
 }
