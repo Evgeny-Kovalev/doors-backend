@@ -1,18 +1,18 @@
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CategoryCreateDto, CategoryUpdateDto } from './dto';
+import { CategoryCreateDto, CategoryDto, CategoryUpdateDto } from './dto';
 import { Category } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
 	constructor(private readonly prismaService: PrismaService) {}
 
-	async getAll(): Promise<Category[]> {
+	async getAll(): Promise<CategoryDto[]> {
 		const categories: Category[] = await this.prismaService.category.findMany();
 		return categories;
 	}
 
-	async getById(id: number): Promise<Category> {
+	async getById(id: number): Promise<CategoryDto> {
 		const category = await this.prismaService.category.findFirst({ where: { id } });
 		if (!category) throw new BadRequestException('Category with this id not found');
 		return category;
@@ -21,7 +21,7 @@ export class CategoriesService {
 	async createOne(dto: CategoryCreateDto) {
 		const { name, description, imgUrl, isVisible, parentId } = dto;
 		try {
-			const createdCategory = this.prismaService.category.create({
+			const createdCategory = await this.prismaService.category.create({
 				data: {
 					name,
 					description,

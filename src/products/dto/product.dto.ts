@@ -1,8 +1,8 @@
 import { CategoryDto } from './../../categories/dto/index';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { VariantDto } from '../modules/variants/variant.dto';
-import { IsInt, IsOptional, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { AttributeDto } from '../modules/attributes/dto/attribute.dto';
 
 export class ProductDto {
@@ -22,7 +22,10 @@ export class ProductDto {
 	isVisible: boolean;
 
 	@ApiProperty({ type: CategoryDto })
-	category: CategoryDto;
+	mainCategory: CategoryDto;
+
+	@ApiProperty({ type: [CategoryDto] })
+	categories: CategoryDto[];
 
 	@ApiProperty({ type: [VariantDto] })
 	variants: VariantDto[];
@@ -45,7 +48,12 @@ export class ProductCreateDto {
 	isVisible?: boolean = true;
 
 	@ApiProperty()
-	categoryId: number;
+	mainCategoryId: number;
+
+	@ApiProperty({ type: [Number] })
+	@IsArray()
+	@IsNumber({}, { each: true })
+	categoryIds: number[];
 
 	@ApiProperty({ type: [Number], example: [1, 3] })
 	paramIds: number[];
@@ -65,30 +73,37 @@ export class ProductUpdateDto {
 	isVisible?: boolean;
 
 	@ApiProperty()
-	categoryId?: number;
+	mainCategoryId?: number;
+
+	@ApiPropertyOptional({ type: [Number] })
+	@IsArray()
+	@IsNumber({}, { each: true })
+	@IsOptional()
+	categoryIds?: number[];
 
 	@ApiProperty({ type: [Number], example: [1, 3] })
 	paramIds?: number[];
 }
 
 export class ProductQueryDto {
-	@ApiProperty({ required: false })
-	@Type(() => Number)
-	@IsInt()
-	@IsOptional()
-	categoryId?: number;
+	@ApiPropertyOptional({ type: [Number] })
+	@Transform(({ value }) => value.toString().split(',').map(Number))
+	categoryIds?: number[];
 
-	@ApiProperty({ example: 'Product name 1', required: false })
+	@ApiPropertyOptional({ required: false })
 	@IsString()
 	@IsOptional()
 	q?: string;
 }
 
 export class ProductImportDto {
-	@ApiProperty({ example: 3 })
-	@Type(() => Number)
-	@IsInt()
-	categoryId: number;
+	@ApiProperty({ type: [Number] })
+	@IsArray()
+	@IsNumber({}, { each: true })
+	categoryIds: number[];
+
+	@ApiProperty()
+	mainCategoryId: number;
 
 	@ApiProperty({ example: 'test.csv', required: true })
 	@IsString()

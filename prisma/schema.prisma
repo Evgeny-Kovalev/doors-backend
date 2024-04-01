@@ -28,6 +28,8 @@ model Category {
   isVisible Boolean @default(true)
 
   products Product[]
+
+  productOneCategory Product[] @relation(name: "mainCategoryToProduct")
 }
 
 enum CategoryType {
@@ -42,8 +44,10 @@ model Product {
   description String
   isVisible   Boolean @default(true)
 
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId Int
+  mainCategory Category @relation(fields: [categoryId], references: [id], name: "mainCategoryToProduct")
+  categoryId   Int
+
+  categories Category[]
 
   variants ProductVariant[]
   params   Attribute[]
