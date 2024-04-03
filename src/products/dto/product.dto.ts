@@ -4,6 +4,7 @@ import { VariantDto } from '../modules/variants/variant.dto';
 import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { AttributeDto } from '../modules/attributes/dto/attribute.dto';
+import { ImportTemplate } from '../types';
 
 export class ProductDto {
 	@ApiProperty()
@@ -108,4 +109,7 @@ export class ProductImportDto {
 	@ApiProperty({ example: 'test.csv', required: true })
 	@IsString()
 	fileName: string;
+
+	@ApiProperty()
+	template: ImportTemplate;
 }

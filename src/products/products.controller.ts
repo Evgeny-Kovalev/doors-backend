@@ -92,23 +92,8 @@ export class ProductsController {
 	@ApiCreatedResponse({ type: [ProductDto] })
 	@Post('/import')
 	async importProduct(@Body() dto: ProductImportDto) {
-		// !FIX
-
-		const MOCK_TEMPLATE: ImportTemplate = {
-			info: {
-				nameKey: 'name',
-				imgPathKey: 'imagePath',
-				priceKey: 'price',
-				discountPriceKey: 'discountPrice',
-			},
-			paramsKeysInDoc: ['covering', 'material', 'doorThickness', 'height', 'width'],
-			attributesKeysInDoc: ['color', 'glassVariant'],
-		};
-
-		const createdProducts: ProductDto[] = await this.productsService.importFromFile(
-			dto,
-			MOCK_TEMPLATE,
-		);
+		const createdProducts: ProductDto[] =
+			await this.productsService.importFromFile(dto);
 		return createdProducts;
 	}
 }

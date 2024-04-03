@@ -212,10 +212,7 @@ export class ProductsService {
 		}
 	}
 
-	async importFromFile(
-		dto: ProductImportDto,
-		template: ImportTemplate,
-	): Promise<ProductDto[]> {
+	async importFromFile(dto: ProductImportDto): Promise<ProductDto[]> {
 		const filePath = this.filesService.getPathToFile(dto.fileName, FileTypes.DOC);
 		const groupByKey = 'name';
 
@@ -251,7 +248,7 @@ export class ProductsService {
 			const productDto = await this.getProductDtoFromFile(
 				productVariants,
 				categories,
-				template,
+				dto.template,
 				mainCategory,
 			);
 
@@ -260,7 +257,7 @@ export class ProductsService {
 			const productVariantsDtos = await this.importService.getVariantDtosFromFile(
 				newProduct,
 				productVariants,
-				template,
+				dto.template,
 			);
 
 			await Promise.all(
