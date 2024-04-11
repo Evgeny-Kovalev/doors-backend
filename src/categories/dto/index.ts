@@ -24,6 +24,11 @@ export class CategoryDto {
 	parentCategoryId: number | null;
 }
 
+export class CategoryWithSubCategories extends CategoryDto {
+	@ApiProperty({ type: [CategoryDto] })
+	children: CategoryWithSubCategories[];
+}
+
 export class CategoryCreateDto {
 	@ApiProperty({ example: 'test category name' })
 	name: string;

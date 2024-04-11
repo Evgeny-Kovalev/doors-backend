@@ -16,7 +16,12 @@ import {
 	Delete,
 	ParseIntPipe,
 } from '@nestjs/common';
-import { CategoryCreateDto, CategoryDto, CategoryUpdateDto } from './dto';
+import {
+	CategoryCreateDto,
+	CategoryDto,
+	CategoryUpdateDto,
+	CategoryWithSubCategories,
+} from './dto';
 
 @ApiTags('Categories')
 @Controller({
@@ -29,25 +34,46 @@ export class CategoriesController {
 	@Public()
 	@ApiOkResponse({ type: [CategoryDto] })
 	@Get('/')
-	async getAllCategories() {
-		const categories = await this.categoriesService.getAll();
-		return categories;
+	async getAllCategories(): Promise<CategoryWithSubCategories[]> {
+		const allCategories = await this.categoriesService.getAll();
+
+		const categoryWithSubCategories =
+			this.categoriesService.formatAllCategories(allCategories);
+
+		return categoryWithSubCategories;
 	}
 
 	@Public()
 	@ApiOkResponse({ type: CategoryDto })
 	@Get(':id')
-	async getCategory(@Param('id', ParseIntPipe) id: number) {
+	async getCategory(
+		@Param('id', ParseIntPipe) id: number,
+	): Promise<CategoryWithSubCategories> {
 		const category = await this.categoriesService.getById(id);
-		return category;
+		const allCategories = await this.categoriesService.getAll();
+
+		const categoryWithSubCategories = this.categoriesService.formatOneCategory(
+			category,
+			allCategories,
+		);
+
+		return categoryWithSubCategories;
 	}
 
 	@ApiBearerAuth()
 	@ApiCreatedResponse({ type: CategoryDto })
 	@Post('/')
-	async createCategory(@Body() dto: CategoryCreateDto) {
+	async createCategory(
+		@Body() dto: CategoryCreateDto,
+	): Promise<CategoryWithSubCategories> {
 		const createdCategory = await this.categoriesService.createOne(dto);
-		return createdCategory;
+		const allCategories = await this.categoriesService.getAll();
+
+		const categoryWithSubCategories = this.categoriesService.formatOneCategory(
+			createdCategory,
+			allCategories,
+		);
+		return categoryWithSubCategories;
 	}
 
 	@ApiBearerAuth()
@@ -61,7 +87,14 @@ export class CategoriesController {
 			categoryId,
 			categoryUpdateDto,
 		);
-		return updatedCategory;
+		const allCategories = await this.categoriesService.getAll();
+
+		const categoryWithSubCategories = this.categoriesService.formatOneCategory(
+			updatedCategory,
+			allCategories,
+		);
+
+		return categoryWithSubCategories;
 	}
 
 	@ApiBearerAuth()

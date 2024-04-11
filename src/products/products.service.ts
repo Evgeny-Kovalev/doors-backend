@@ -9,7 +9,6 @@ import {
 	ProductImportDto,
 	ProductDto,
 } from './dto/product.dto';
-import { Category } from '@prisma/client';
 import { FileTypes } from 'src/files/types';
 import { ImportService } from './services/import.service';
 import { groupBy } from 'src/utils';
@@ -35,10 +34,17 @@ export class ProductsService {
 		{ limit, page }: PaginationParamsDto,
 	): Promise<PaginatedDto<ProductDto>> {
 		try {
+			const categories = query.categoryId
+				? await this.categoriesService.getNestedCategoriesList(
+						await this.categoriesService.getById(query.categoryId),
+						await this.categoriesService.getAll(),
+					)
+				: undefined;
+
 			const [products, count] = await this.prismaService.$transaction([
 				this.prismaService.product.findMany({
 					include: {
-						mainCategory: true,
+						category: true,
 						params: { include: { key: true, value: true } },
 						variants: {
 							include: {
@@ -50,13 +56,14 @@ export class ProductsService {
 								},
 							},
 						},
-						categories: true,
 					},
 					where: {
 						name: { contains: query?.q },
-						categories: query.categoryIds && {
-							some: { id: { in: [...query.categoryIds] } },
-						},
+						categoryId: categories
+							? {
+									in: categories.map((c) => c.id),
+								}
+							: undefined,
 					},
 					take: limit,
 					skip: (page - 1) * limit,
@@ -64,9 +71,11 @@ export class ProductsService {
 				this.prismaService.product.count({
 					where: {
 						name: { contains: query?.q },
-						categories: query.categoryIds && {
-							some: { id: { in: [...query.categoryIds] } },
-						},
+						categoryId: categories
+							? {
+									in: categories.map((c) => c.id),
+								}
+							: undefined,
 					},
 				}),
 			]);
@@ -77,10 +86,10 @@ export class ProductsService {
 		}
 	}
 
-	async getById(id: number): Promise<ProductDto> {
-		const product: ProductDto | null = await this.prismaService.product.findFirst({
+	async getById(id: number) {
+		const product = await this.prismaService.product.findFirst({
 			include: {
-				mainCategory: true,
+				category: true,
 				params: { include: { key: true, value: true } },
 				variants: {
 					include: {
@@ -92,30 +101,27 @@ export class ProductsService {
 						},
 					},
 				},
-				categories: true,
 			},
 			where: { id },
 		});
-
 		if (!product) throw new BadRequestException('Product with this id not found');
 		return product;
 	}
 
 	async createOne(dto: ProductCreateDto): Promise<ProductDto> {
 		try {
-			const { name, categoryIds, description, imgUrl, isVisible, paramIds } = dto;
+			const { name, categoryId, description, imgUrl, isVisible, paramIds } = dto;
 			const product: ProductDto = await this.prismaService.product.create({
 				data: {
 					name,
 					description,
 					imgUrl,
 					isVisible,
-					mainCategory: { connect: { id: dto.mainCategoryId } },
-					categories: { connect: categoryIds.map((id) => ({ id })) },
+					category: { connect: { id: categoryId } },
 					params: { connect: paramIds.map((id) => ({ id })) },
 				},
 				include: {
-					mainCategory: true,
+					category: true,
 					params: { include: { key: true, value: true } },
 					variants: {
 						include: {
@@ -127,7 +133,6 @@ export class ProductsService {
 							},
 						},
 					},
-					categories: true,
 				},
 			});
 			return product;
@@ -139,7 +144,7 @@ export class ProductsService {
 	async update(productId: number, dto: ProductUpdateDto): Promise<ProductDto> {
 		try {
 			const product = await this.getById(productId);
-			const { name, categoryIds, description, imgUrl, isVisible, paramIds } = dto;
+			const { name, categoryId, description, imgUrl, isVisible, paramIds } = dto;
 
 			const newParams = paramIds
 				? (await this.attributesService.getManyByIds(paramIds)).map(({ id }) => ({
@@ -159,13 +164,11 @@ export class ProductsService {
 					description,
 					imgUrl,
 					isVisible,
-					categories: categoryIds
-						? { connect: categoryIds.map((id) => ({ id })) }
-						: undefined,
+					category: categoryId ? { connect: { id: categoryId } } : undefined,
 					params: newParams ? { set: newParams } : undefined,
 				},
 				include: {
-					mainCategory: true,
+					category: true,
 					params: { include: { key: true, value: true } },
 					variants: {
 						include: {
@@ -177,7 +180,6 @@ export class ProductsService {
 							},
 						},
 					},
-					categories: true,
 				},
 			});
 			return updatedProduct;
@@ -192,7 +194,7 @@ export class ProductsService {
 			return await this.prismaService.product.delete({
 				where: { id },
 				include: {
-					mainCategory: true,
+					category: true,
 					params: { include: { key: true, value: true } },
 					variants: {
 						include: {
@@ -204,7 +206,6 @@ export class ProductsService {
 							},
 						},
 					},
-					categories: true,
 				},
 			});
 		} catch (e) {
@@ -214,12 +215,9 @@ export class ProductsService {
 
 	async importFromFile(dto: ProductImportDto): Promise<ProductDto[]> {
 		const filePath = this.filesService.getPathToFile(dto.fileName, FileTypes.DOC);
-		const groupByKey = 'name';
+		const GROUP_BY_KEY = 'name';
 
-		const categories = await Promise.all(
-			dto.categoryIds.map((id) => this.categoriesService.getById(id)),
-		);
-		const mainCategory = await this.categoriesService.getById(dto.mainCategoryId);
+		const category = await this.categoriesService.getById(dto.categoryId);
 
 		let productsFromFile: ProductVariantFromFile[] = [];
 
@@ -232,13 +230,16 @@ export class ProductsService {
 		if (!productsFromFile.length)
 			throw new BadRequestException('Invalid or empty file');
 
-		const groupedProducts = groupBy<ProductVariantFromFile>(productsFromFile, (i) => {
-			if (!i[groupByKey])
-				throw new BadRequestException(
-					`The file does not have the attribute '${groupByKey}' for grouping products`,
-				);
-			return i[groupByKey];
-		});
+		const groupedProducts = groupBy<ProductVariantFromFile>(
+			productsFromFile,
+			(variant) => {
+				if (!variant[GROUP_BY_KEY])
+					throw new BadRequestException(
+						`The file does not have the attribute '${GROUP_BY_KEY}' for grouping products`,
+					);
+				return variant[GROUP_BY_KEY];
+			},
+		);
 
 		const allProducts = Object.values(groupedProducts);
 
@@ -247,9 +248,8 @@ export class ProductsService {
 		for (const productVariants of allProducts) {
 			const productDto = await this.getProductDtoFromFile(
 				productVariants,
-				categories,
+				category,
 				dto.template,
-				mainCategory,
 			);
 
 			const newProduct = await this.createOne({ ...productDto });
@@ -275,9 +275,8 @@ export class ProductsService {
 
 	async getProductDtoFromFile(
 		productVariantsFromFile: ProductVariantFromFile[],
-		categories: Category[],
+		category: CategoryDto,
 		template: ImportTemplate,
-		mainCategory: CategoryDto,
 	): Promise<ProductCreateDto> {
 		// keys in doc
 		const { imgPathKey, nameKey } = template.info;
@@ -302,10 +301,9 @@ export class ProductsService {
 		const productDto: ProductCreateDto = {
 			// TODO: desc
 			description: 'test desc',
-			mainCategoryId: mainCategory.id,
+			categoryId: category.id,
 			imgUrl: imgUrl,
 			name: mainVariant[nameKey],
-			categoryIds: categories.map((cat) => cat.id),
 			paramIds: params.map((param) => param.id),
 		};
 		return productDto;

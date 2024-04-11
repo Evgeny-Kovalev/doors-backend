@@ -14,7 +14,7 @@ export class CollectionsService {
 					categories: true,
 					products: {
 						include: {
-							mainCategory: true,
+							category: true,
 							params: { include: { key: true, value: true } },
 							variants: {
 								include: {
@@ -26,7 +26,6 @@ export class CollectionsService {
 									},
 								},
 							},
-							categories: true,
 						},
 					},
 				},
@@ -48,7 +47,7 @@ export class CollectionsService {
 					categories: true,
 					products: {
 						include: {
-							mainCategory: true,
+							category: true,
 							params: { include: { key: true, value: true } },
 							variants: {
 								include: {
@@ -60,7 +59,6 @@ export class CollectionsService {
 									},
 								},
 							},
-							categories: true,
 						},
 					},
 				},
