@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import slugify from 'slugify';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -7,12 +8,14 @@ async function main() {
 			{
 				id: 1,
 				name: 'Двери межкомнатные',
+				slug: slugify('Двери межкомнатные', { lower: true }),
 				imgUrl: 'http://localhost:4000/images/category.png',
 				description: 'test',
 				categoryType: 'interiorDoors',
 			},
 			{
 				id: 2,
+				slug: slugify('Двери входные', { lower: true }),
 				name: 'Двери входные',
 				imgUrl: 'http://localhost:4000/images/category.png',
 				description: 'test',

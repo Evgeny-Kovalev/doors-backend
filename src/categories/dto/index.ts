@@ -6,6 +6,9 @@ export class CategoryDto {
 	id: number;
 
 	@ApiProperty()
+	slug: string;
+
+	@ApiProperty()
 	name: string;
 
 	@ApiProperty()
@@ -49,6 +52,9 @@ export class CategoryCreateDto {
 export class CategoryUpdateDto {
 	@ApiProperty({ example: 'New Product name' })
 	name?: string;
+
+	@ApiProperty({ example: 'slug' })
+	slug?: string;
 
 	@ApiProperty({ example: 'New Product image path' })
 	imgUrl?: string;

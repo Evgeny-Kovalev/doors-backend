@@ -50,9 +50,9 @@ export class ProductsController {
 
 	@Public()
 	@ApiOkResponse({ type: ProductDto })
-	@Get(':id')
-	async getProduct(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {
-		const product = await this.productsService.getById(id);
+	@Get(':slug')
+	async getProduct(@Param('slug') slug: string): Promise<ProductDto> {
+		const product = await this.productsService.getBySlug(slug);
 		return product;
 	}
 

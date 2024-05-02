@@ -8,6 +8,7 @@ import {
 	CategoryWithSubCategories,
 } from './dto';
 import { Category } from '@prisma/client';
+import slugify from 'slugify';
 
 @Injectable()
 export class CategoriesService {
@@ -24,11 +25,18 @@ export class CategoriesService {
 		return category;
 	}
 
+	async getBySlug(slug: string): Promise<CategoryDto> {
+		const category = await this.prismaService.category.findFirst({ where: { slug } });
+		if (!category) throw new BadRequestException('Category with this slug not found');
+		return category;
+	}
+
 	async createOne(dto: CategoryCreateDto): Promise<CategoryDto> {
 		const { name, description, imgUrl, isVisible, parentId } = dto;
 		try {
 			const createdCategory = await this.prismaService.category.create({
 				data: {
+					slug: slugify(name, { lower: true }),
 					name,
 					description,
 					imgUrl,
@@ -49,6 +57,7 @@ export class CategoriesService {
 		try {
 			const updatedCategory = await this.prismaService.category.update({
 				data: {
+					slug: name && slugify(name, { lower: true }),
 					name,
 					description,
 					imgUrl,

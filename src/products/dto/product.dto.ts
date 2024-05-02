@@ -11,6 +11,9 @@ export class ProductDto {
 	id: number;
 
 	@ApiProperty()
+	slug: string;
+
+	@ApiProperty()
 	name: string;
 
 	@ApiProperty()
@@ -53,6 +56,9 @@ export class ProductCreateDto {
 }
 
 export class ProductUpdateDto {
+	@ApiProperty({ example: 'New Product slug' })
+	slug?: string;
+
 	@ApiProperty({ example: 'New Product name' })
 	name?: string;
 

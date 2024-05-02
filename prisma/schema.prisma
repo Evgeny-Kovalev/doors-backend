@@ -15,6 +15,7 @@ datasource db {
 
 model Category {
   id          Int    @id @default(autoincrement())
+  slug        String @unique
   name        String
   imgUrl      String
   description String
@@ -38,6 +39,7 @@ enum CategoryType {
 
 model Product {
   id          Int     @id @default(autoincrement())
+  slug        String  @unique
   name        String
   imgUrl      String
   description String

@@ -45,11 +45,9 @@ export class CategoriesController {
 
 	@Public()
 	@ApiOkResponse({ type: CategoryDto })
-	@Get(':id')
-	async getCategory(
-		@Param('id', ParseIntPipe) id: number,
-	): Promise<CategoryWithSubCategories> {
-		const category = await this.categoriesService.getById(id);
+	@Get(':slug')
+	async getCategory(@Param('slug') slug: string): Promise<CategoryWithSubCategories> {
+		const category = await this.categoriesService.getBySlug(slug);
 		const allCategories = await this.categoriesService.getAll();
 
 		const categoryWithSubCategories = this.categoriesService.formatOneCategory(

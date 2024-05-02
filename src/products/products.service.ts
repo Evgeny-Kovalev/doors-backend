@@ -17,6 +17,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CategoriesService } from 'src/categories/categories.service';
 import { PaginatedDto, PaginationParamsDto } from 'src/shared/pagination/dto';
 import { CategoryDto } from 'src/categories/dto';
+import slugify from 'slugify';
 
 @Injectable()
 export class ProductsService {
@@ -108,11 +109,34 @@ export class ProductsService {
 		return product;
 	}
 
+	async getBySlug(slug: string) {
+		const product = await this.prismaService.product.findFirst({
+			include: {
+				category: true,
+				params: { include: { key: true, value: true } },
+				variants: {
+					include: {
+						attributes: {
+							include: {
+								key: true,
+								value: true,
+							},
+						},
+					},
+				},
+			},
+			where: { slug },
+		});
+		if (!product) throw new BadRequestException('Product with this slug not found');
+		return product;
+	}
+
 	async createOne(dto: ProductCreateDto): Promise<ProductDto> {
 		try {
 			const { name, categoryId, description, imgUrl, isVisible, paramIds } = dto;
 			const product: ProductDto = await this.prismaService.product.create({
 				data: {
+					slug: slugify(name, { lower: true }),
 					name,
 					description,
 					imgUrl,
@@ -160,6 +184,7 @@ export class ProductsService {
 			const updatedProduct: ProductDto = await this.prismaService.product.update({
 				where: { id: product.id },
 				data: {
+					slug: name && slugify(name, { lower: true }),
 					name,
 					description,
 					imgUrl,
