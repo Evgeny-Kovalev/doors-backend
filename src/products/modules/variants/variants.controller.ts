@@ -8,6 +8,7 @@ import {
 	Patch,
 	Post,
 	Query,
+	UseGuards,
 } from '@nestjs/common';
 import { VariantsService } from './variants.service';
 import {
@@ -25,6 +26,9 @@ import {
 	VariantUpdateDto,
 } from './variant.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { Role } from '@prisma/client';
+import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @ApiTags('Product variants')
 @Controller({
@@ -56,6 +60,8 @@ export class VariantsController {
 
 	@ApiBearerAuth()
 	@ApiCreatedResponse({ type: VariantDto })
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
 	@Post('/')
 	@ApiBody({ type: VariantCreateDto })
 	async createOne(@Body() dto: VariantCreateDto): Promise<VariantDto> {
@@ -66,6 +72,8 @@ export class VariantsController {
 
 	@ApiBearerAuth()
 	@ApiOkResponse({ type: VariantDto })
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
 	@Patch(':id')
 	async update(
 		@Param('id', ParseIntPipe) variantId: number,
@@ -79,6 +87,8 @@ export class VariantsController {
 	}
 
 	@ApiBearerAuth()
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
 	@Delete(':id')
 	async deleteOne(@Param('id', ParseIntPipe) id: number): Promise<VariantDto> {
 		return await this.variantsService.deleteById(id);

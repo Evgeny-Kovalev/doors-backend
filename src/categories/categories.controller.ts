@@ -15,6 +15,7 @@ import {
 	Patch,
 	Delete,
 	ParseIntPipe,
+	UseGuards,
 } from '@nestjs/common';
 import {
 	CategoryCreateDto,
@@ -22,6 +23,9 @@ import {
 	CategoryUpdateDto,
 	CategoryWithSubCategories,
 } from './dto';
+import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
+import { Role } from '@prisma/client';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @ApiTags('Categories')
 @Controller({
@@ -60,6 +64,8 @@ export class CategoriesController {
 
 	@ApiBearerAuth()
 	@ApiCreatedResponse({ type: CategoryDto })
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
 	@Post('/')
 	async createCategory(
 		@Body() dto: CategoryCreateDto,
@@ -76,6 +82,8 @@ export class CategoriesController {
 
 	@ApiBearerAuth()
 	@ApiOkResponse({ type: CategoryDto })
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
 	@Patch(':id')
 	async update(
 		@Param('id', ParseIntPipe) categoryId: number,
@@ -96,6 +104,8 @@ export class CategoriesController {
 	}
 
 	@ApiBearerAuth()
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
 	@Delete(':id')
 	delete(@Param('id', ParseIntPipe) id: number) {
 		return this.categoriesService.delete(id);
