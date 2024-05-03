@@ -5,6 +5,7 @@ import { UsersService } from 'src/users/users.service';
 import { JwtPayload, Tokens } from './types';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +26,7 @@ export class AuthService {
 			password: hash,
 		});
 
-		const tokens = await this.generateTokens(user.id, user.email);
+		const tokens = await this.generateTokens(user, user.email);
 		await this.updateRefreshToken(user.id, tokens.refreshToken);
 
 		return tokens;
@@ -38,7 +39,7 @@ export class AuthService {
 		const passwordMatches = await argon.verify(user.password, dto.password);
 		if (!passwordMatches) throw new ForbiddenException('Password is incorrect');
 
-		const tokens = await this.generateTokens(user.id, user.email);
+		const tokens = await this.generateTokens(user, user.email);
 		await this.updateRefreshToken(user.id, tokens.refreshToken);
 
 		return tokens;
@@ -56,7 +57,7 @@ export class AuthService {
 		const refreshTokenMatches = await argon.verify(user.refreshToken, refreshToken);
 		if (!refreshTokenMatches) throw new ForbiddenException('Access Denied');
 
-		const tokens = await this.generateTokens(user.id, user.email);
+		const tokens = await this.generateTokens(user, user.email);
 		await this.updateRefreshToken(user.id, tokens.refreshToken);
 
 		return tokens;
@@ -67,10 +68,11 @@ export class AuthService {
 		await this.usersService.updateOne({ id: userId, refreshToken: hashedRefreshToken });
 	}
 
-	private async generateTokens(userId: number, email: string): Promise<Tokens> {
+	private async generateTokens(user: User, email: string): Promise<Tokens> {
 		const jwtPayload: JwtPayload = {
-			sub: userId,
+			sub: user.id,
 			email,
+			roles: user.roles,
 		};
 
 		const [accessToken, refreshToken] = await Promise.all([
