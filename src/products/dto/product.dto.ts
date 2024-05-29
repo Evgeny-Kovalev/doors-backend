@@ -80,11 +80,11 @@ export class ProductUpdateDto {
 
 export class ProductQueryDto {
 	@ApiPropertyOptional()
-	@IsNumber()
-	@Type(() => Number)
-	categoryId?: number;
+	@IsString()
+	@IsOptional()
+	categorySlug?: string;
 
-	@ApiPropertyOptional({ required: false })
+	@ApiPropertyOptional()
 	@IsString()
 	@IsOptional()
 	q?: string;

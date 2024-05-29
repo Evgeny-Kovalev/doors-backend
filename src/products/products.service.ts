@@ -35,9 +35,9 @@ export class ProductsService {
 		{ limit, page }: PaginationParamsDto,
 	): Promise<PaginatedDto<ProductDto>> {
 		try {
-			const categories = query.categoryId
+			const categories = query.categorySlug
 				? await this.categoriesService.getNestedCategoriesList(
-						await this.categoriesService.getById(query.categoryId),
+						await this.categoriesService.getBySlug(query.categorySlug),
 						await this.categoriesService.getAll(),
 					)
 				: undefined;
