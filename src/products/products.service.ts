@@ -59,7 +59,7 @@ export class ProductsService {
 						},
 					},
 					where: {
-						name: { contains: query?.q },
+						name: { contains: query?.q, mode: 'insensitive' },
 						categoryId: categories
 							? {
 									in: categories.map((c) => c.id),
@@ -71,7 +71,7 @@ export class ProductsService {
 				}),
 				this.prismaService.product.count({
 					where: {
-						name: { contains: query?.q },
+						name: { contains: query?.q, mode: 'insensitive' },
 						categoryId: categories
 							? {
 									in: categories.map((c) => c.id),
