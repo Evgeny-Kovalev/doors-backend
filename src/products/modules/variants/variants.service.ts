@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	Logger,
 } from '@nestjs/common';
 import { VariantCreateDto, VariantDto, VariantUpdateDto } from './variant.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -14,6 +15,8 @@ export class VariantsService {
 		private readonly prismaService: PrismaService,
 		private readonly attributesService: AttributesService,
 	) {}
+
+	private readonly logger = new Logger(VariantsService.name);
 
 	async getAll(product: ProductDto): Promise<VariantDto[]> {
 		const variants: VariantDto[] = await this.prismaService.productVariant.findMany({
@@ -48,6 +51,7 @@ export class VariantsService {
 				});
 			return createdVariant;
 		} catch (e) {
+			this.logger.error(e);
 			throw new InternalServerErrorException('Cannot create the variant');
 		}
 	}
@@ -80,6 +84,7 @@ export class VariantsService {
 			});
 			return updatedVariant;
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Cannnot update the product variant');
 		}
 	}
@@ -92,6 +97,7 @@ export class VariantsService {
 				include: { attributes: { include: { key: true, value: true } } },
 			});
 		} catch (e) {
+			this.logger.error(e);
 			throw new InternalServerErrorException('Cannot delete the product variant');
 		}
 	}

@@ -9,6 +9,7 @@ import {
 	Query,
 	ParseIntPipe,
 	UseGuards,
+	Logger,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 
@@ -40,6 +41,8 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 })
 export class ProductsController {
 	constructor(private readonly productsService: ProductsService) {}
+
+	private readonly logger = new Logger(ProductsController.name);
 
 	@Public()
 	@ApiPaginatedResponse(ProductDto)
@@ -100,8 +103,13 @@ export class ProductsController {
 	@UseGuards(RolesGuard)
 	@Post('/import')
 	async importProduct(@Body() dto: ProductImportDto) {
+		this.logger.log('Product import start');
+
 		const createdProducts: ProductDto[] =
 			await this.productsService.importFromFile(dto);
+
+		this.logger.log('Product import end');
+
 		return createdProducts;
 	}
 }

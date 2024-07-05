@@ -1,6 +1,6 @@
 import { Queue } from './../utils/Queue';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
 	CategoryCreateDto,
 	CategoryDto,
@@ -13,6 +13,8 @@ import slugify from 'slugify';
 @Injectable()
 export class CategoriesService {
 	constructor(private readonly prismaService: PrismaService) {}
+
+	private readonly logger = new Logger(CategoriesService.name);
 
 	async getAll(): Promise<CategoryDto[]> {
 		const categories: Category[] = await this.prismaService.category.findMany();
@@ -46,6 +48,7 @@ export class CategoriesService {
 			});
 			return createdCategory;
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Cannot create the category');
 		}
 	}
@@ -68,6 +71,7 @@ export class CategoriesService {
 			});
 			return updatedCategory;
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Cannot update the category');
 		}
 	}
@@ -77,6 +81,7 @@ export class CategoriesService {
 		try {
 			return await this.prismaService.category.delete({ where: { id: categoryId } });
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Cannot delete category');
 		}
 	}

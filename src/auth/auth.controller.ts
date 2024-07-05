@@ -4,6 +4,7 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
+	Logger,
 	Post,
 	UseGuards,
 } from '@nestjs/common';
@@ -24,10 +25,13 @@ import { RtGuard } from './guards/rt.guard';
 export class AuthController {
 	constructor(private authService: AuthService) {}
 
+	private readonly logger = new Logger(AuthController.name);
+
 	@Public()
 	@Post('signup')
 	@HttpCode(HttpStatus.CREATED)
 	signup(@Body() dto: AuthDto): Promise<Tokens> {
+		this.logger.log('User signup');
 		return this.authService.signUp(dto);
 	}
 
@@ -35,6 +39,7 @@ export class AuthController {
 	@Post('signin')
 	@HttpCode(HttpStatus.OK)
 	signin(@Body() dto: AuthDto): Promise<Tokens> {
+		this.logger.log('User signin');
 		return this.authService.signIn(dto);
 	}
 
@@ -53,6 +58,7 @@ export class AuthController {
 		@GetCurrentUserId() userId: number,
 		@GetCurrentUser('refreshToken') refreshToken: string,
 	): Promise<Tokens> {
+		this.logger.log('User refreshTokens');
 		return this.authService.refreshTokens(userId, refreshToken);
 	}
 }

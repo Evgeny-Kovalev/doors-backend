@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	Logger,
 } from '@nestjs/common';
 import { Attribute, AttributeValue } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -11,6 +12,8 @@ import { AttributeCreateDto, AttributeDto } from './dto/attribute.dto';
 @Injectable()
 export class AttributesService {
 	constructor(private readonly prismaServise: PrismaService) {}
+
+	private readonly logger = new Logger(AttributesService.name);
 
 	async getOneById(id: number): Promise<Attribute | null> {
 		return await this.prismaServise.attribute.findFirst({ where: { id } });
@@ -38,34 +41,39 @@ export class AttributesService {
 	}
 
 	async getOrCreateOne(dto: AttributeCreateDto): Promise<AttributeDto> {
-		const key = dto.key.value;
-		const value = dto.value.value;
+		try {
+			const key = dto.key.value;
+			const value = dto.value.value;
 
-		const isAttributeExist = await this.isExist(key);
+			const isAttributeExist = await this.isExist(key);
 
-		if (isAttributeExist) {
-			const attributeValues = await this.getValuesByKey(key);
+			if (isAttributeExist) {
+				const attributeValues = await this.getValuesByKey(key);
 
-			if (attributeValues.find((attr) => attr.value === value)) {
-				// attribute with the same value already exists, just push
-				const existedAttribute = await this.getOne(key, value);
-				if (!existedAttribute) throw new InternalServerErrorException();
-				return existedAttribute;
+				if (attributeValues.find((attr) => attr.value === value)) {
+					// attribute with the same value already exists, just push
+					const existedAttribute = await this.getOne(key, value);
+					if (!existedAttribute) throw new InternalServerErrorException();
+					return existedAttribute;
+				} else {
+					// add value to existing attribute
+					const newAttribute = await this.createOne({
+						key: { ...dto.key },
+						value: { ...dto.value },
+					});
+					return newAttribute;
+				}
 			} else {
-				// add value to existing attribute
+				// create new attribute
 				const newAttribute = await this.createOne({
 					key: { ...dto.key },
 					value: { ...dto.value },
 				});
 				return newAttribute;
 			}
-		} else {
-			// create new attribute
-			const newAttribute = await this.createOne({
-				key: { ...dto.key },
-				value: { ...dto.value },
-			});
-			return newAttribute;
+		} catch (e) {
+			this.logger.error(e);
+			throw new BadRequestException('Cannot get/create the attribute');
 		}
 	}
 
@@ -113,34 +121,39 @@ export class AttributesService {
 	}
 
 	async createOne(dto: AttributeCreateDto): Promise<AttributeDto> {
-		const newAttribute: AttributeDto = await this.prismaServise.attribute.create({
-			data: {
-				key: {
-					connectOrCreate: {
-						where: {
-							value: dto.key.value,
+		try {
+			const newAttribute: AttributeDto = await this.prismaServise.attribute.create({
+				data: {
+					key: {
+						connectOrCreate: {
+							where: {
+								value: dto.key.value,
+							},
+							create: {
+								value: dto.key.value,
+								label: dto.key.label,
+								imgUrl: dto.key.imgUrl,
+							},
 						},
-						create: {
-							value: dto.key.value,
-							label: dto.key.label,
-							imgUrl: dto.key.imgUrl,
+					},
+					value: {
+						connectOrCreate: {
+							where: {
+								value: dto.value.value,
+							},
+							create: {
+								value: dto.value.value,
+							},
 						},
 					},
 				},
-				value: {
-					connectOrCreate: {
-						where: {
-							value: dto.value.value,
-						},
-						create: {
-							value: dto.value.value,
-						},
-					},
-				},
-			},
-			include: { key: true, value: true },
-		});
-		return newAttribute;
+				include: { key: true, value: true },
+			});
+			return newAttribute;
+		} catch (e) {
+			this.logger.error(e);
+			throw new BadRequestException('Cannot create the attribute');
+		}
 	}
 
 	async isExist(key: string): Promise<boolean> {

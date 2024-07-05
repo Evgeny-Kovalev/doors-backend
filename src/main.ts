@@ -5,9 +5,17 @@ import { EnvService } from './env/env.service';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
 import { ExceptionsLoggerFilter } from './exceptionsLogger.filter';
 import { ValidationPipe } from '@nestjs/common';
+import { WinstonModule } from 'nest-winston';
+import { winstonLogger } from './logger/winston.logger';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule, { cors: true });
+	const app = await NestFactory.create(AppModule, {
+		cors: true,
+		logger: WinstonModule.createLogger({
+			instance: winstonLogger,
+		}),
+		bufferLogs: true,
+	});
 
 	app.useGlobalPipes(new ValidationPipe({ transform: true }));
 	app.useGlobalFilters(new ExceptionsLoggerFilter());

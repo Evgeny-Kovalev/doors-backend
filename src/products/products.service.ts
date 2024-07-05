@@ -1,7 +1,7 @@
 import { AttributesService } from './modules/attributes/attributes.service';
 import { VariantsService } from './modules/variants/variants.service';
 import { FilesService } from 'src/files/files.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
 	ProductCreateDto,
 	ProductUpdateDto,
@@ -30,6 +30,8 @@ export class ProductsService {
 		private readonly attributesService: AttributesService,
 	) {}
 
+	private readonly logger = new Logger(ProductsService.name);
+
 	async getAll(
 		query: ProductQueryDto,
 		{ limit, page }: PaginationParamsDto,
@@ -41,7 +43,6 @@ export class ProductsService {
 						await this.categoriesService.getAll(),
 					)
 				: undefined;
-
 			const [products, count] = await this.prismaService.$transaction([
 				this.prismaService.product.findMany({
 					include: {
@@ -83,6 +84,7 @@ export class ProductsService {
 
 			return new PaginatedDto<ProductDto>(products, page, limit, count);
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Cannot get products');
 		}
 	}
@@ -161,6 +163,7 @@ export class ProductsService {
 			});
 			return product;
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Cannot create product');
 		}
 	}
@@ -209,6 +212,7 @@ export class ProductsService {
 			});
 			return updatedProduct;
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Cannot update product');
 		}
 	}
@@ -234,6 +238,7 @@ export class ProductsService {
 				},
 			});
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('Product deletion error');
 		}
 	}
