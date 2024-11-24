@@ -16,6 +16,7 @@ import { CollectionsModule } from './collections/collections.module';
 	imports: [
 		ConfigModule.forRoot({
 			validate: (env) => envSchema.parse(env),
+			envFilePath: ['.env.dev', '.env.test', '.env.production', '.env'],
 			isGlobal: true,
 		}),
 		ServeStaticModule.forRootAsync({
