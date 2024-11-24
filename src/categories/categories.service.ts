@@ -35,6 +35,9 @@ export class CategoriesService {
 
 	async createOne(dto: CategoryCreateDto): Promise<CategoryDto> {
 		const { name, description, imgUrl, isVisible, parentId } = dto;
+
+		const parentCategory = parentId ? await this.getById(parentId) : undefined;
+
 		try {
 			const createdCategory = await this.prismaService.category.create({
 				data: {
@@ -43,7 +46,7 @@ export class CategoriesService {
 					description,
 					imgUrl,
 					isVisible,
-					parentCategoryId: parentId,
+					parentCategoryId: parentCategory?.id ?? undefined,
 				},
 			});
 			return createdCategory;
