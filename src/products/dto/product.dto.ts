@@ -1,10 +1,10 @@
 import { CategoryDto } from './../../categories/dto/index';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { VariantDto } from '../modules/variants/variant.dto';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { AttributeDto } from '../modules/attributes/dto/attribute.dto';
 import { ImportTemplate } from '../types';
-import { Type } from 'class-transformer';
+import { PriceType } from '@prisma/client';
 
 export class ProductDto {
 	@ApiProperty()
@@ -24,6 +24,9 @@ export class ProductDto {
 
 	@ApiProperty()
 	isVisible: boolean;
+
+	@ApiProperty({ example: PriceType.full, enum: PriceType })
+	priceType: PriceType;
 
 	@ApiProperty({ type: CategoryDto })
 	category: CategoryDto;
@@ -48,6 +51,9 @@ export class ProductCreateDto {
 	@ApiProperty({ example: false })
 	isVisible?: boolean = true;
 
+	@ApiProperty({ example: PriceType.full, enum: PriceType })
+	priceType?: PriceType;
+
 	@ApiProperty()
 	categoryId: number;
 
@@ -70,6 +76,9 @@ export class ProductUpdateDto {
 
 	@ApiProperty({ example: false })
 	isVisible?: boolean;
+
+	@ApiProperty({ example: PriceType.doorLeafOnly, enum: PriceType })
+	priceType?: PriceType;
 
 	@ApiProperty()
 	categoryId?: number;

@@ -37,13 +37,19 @@ enum CategoryType {
   exteriorDoors
 }
 
+enum PriceType {
+  full
+  doorLeafOnly
+}
+
 model Product {
-  id          Int     @id @default(autoincrement())
-  slug        String  @unique
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
   name        String
   imgUrl      String
   description String
-  isVisible   Boolean @default(true)
+  isVisible   Boolean   @default(true)
+  priceType   PriceType @default(full)
 
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId Int
