@@ -135,8 +135,15 @@ export class ProductsService {
 
 	async createOne(dto: ProductCreateDto): Promise<ProductDto> {
 		try {
-			const { name, categoryId, description, imgUrl, isVisible, paramIds, priceType } =
-				dto;
+			const {
+				name,
+				categoryId,
+				description,
+				imgUrl,
+				isVisible,
+				paramIds,
+				productType,
+			} = dto;
 			const product: ProductDto = await this.prismaService.product.create({
 				data: {
 					slug: slugify(name, { lower: true }),
@@ -144,7 +151,7 @@ export class ProductsService {
 					description,
 					imgUrl,
 					isVisible,
-					priceType,
+					productType,
 					category: { connect: { id: categoryId } },
 					params: { connect: paramIds.map((id) => ({ id })) },
 				},
@@ -173,8 +180,15 @@ export class ProductsService {
 	async update(productId: number, dto: ProductUpdateDto): Promise<ProductDto> {
 		try {
 			const product = await this.getById(productId);
-			const { name, categoryId, description, imgUrl, isVisible, paramIds, priceType } =
-				dto;
+			const {
+				name,
+				categoryId,
+				description,
+				imgUrl,
+				isVisible,
+				paramIds,
+				productType,
+			} = dto;
 
 			const newParams = paramIds
 				? (await this.attributesService.getManyByIds(paramIds)).map(({ id }) => ({
@@ -195,7 +209,7 @@ export class ProductsService {
 					description,
 					imgUrl,
 					isVisible,
-					priceType,
+					productType,
 					category: categoryId ? { connect: { id: categoryId } } : undefined,
 					params: newParams ? { set: newParams } : undefined,
 				},

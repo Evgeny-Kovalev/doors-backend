@@ -4,7 +4,7 @@ import { VariantDto } from '../modules/variants/variant.dto';
 import { IsOptional, IsString } from 'class-validator';
 import { AttributeDto } from '../modules/attributes/dto/attribute.dto';
 import { ImportTemplate } from '../types';
-import { PriceType } from '@prisma/client';
+import { ProductType } from '@prisma/client';
 
 export class ProductDto {
 	@ApiProperty()
@@ -25,8 +25,8 @@ export class ProductDto {
 	@ApiProperty()
 	isVisible: boolean;
 
-	@ApiProperty({ example: PriceType.full, enum: PriceType })
-	priceType: PriceType;
+	@ApiProperty({ example: ProductType.full, enum: ProductType })
+	productType: ProductType;
 
 	@ApiProperty({ type: CategoryDto })
 	category: CategoryDto;
@@ -51,8 +51,8 @@ export class ProductCreateDto {
 	@ApiProperty({ example: false })
 	isVisible?: boolean = true;
 
-	@ApiProperty({ example: PriceType.full, enum: PriceType })
-	priceType?: PriceType;
+	@ApiProperty({ example: ProductType.full, enum: ProductType })
+	productType?: ProductType;
 
 	@ApiProperty()
 	categoryId: number;
@@ -77,8 +77,8 @@ export class ProductUpdateDto {
 	@ApiProperty({ example: false })
 	isVisible?: boolean;
 
-	@ApiProperty({ example: PriceType.doorLeafOnly, enum: PriceType })
-	priceType?: PriceType;
+	@ApiProperty({ example: ProductType.doorOnlySample, enum: ProductType })
+	productType?: ProductType;
 
 	@ApiProperty()
 	categoryId?: number;
