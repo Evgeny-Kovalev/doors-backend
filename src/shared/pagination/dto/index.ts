@@ -1,24 +1,30 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, Min, IsInt, Max } from 'class-validator';
+import { IsOptional, Min, IsInt, Max, IsNumber, IsBoolean } from 'class-validator';
 
 export class PaginationMetaDto {
 	@ApiProperty()
+	@IsNumber()
 	readonly page: number;
 
 	@ApiProperty()
+	@IsNumber()
 	readonly limit: number;
 
 	@ApiProperty()
+	@IsNumber()
 	readonly itemCount: number;
 
 	@ApiProperty()
+	@IsNumber()
 	readonly pageCount: number;
 
 	@ApiProperty()
+	@IsBoolean()
 	readonly hasPreviousPage: boolean;
 
 	@ApiProperty()
+	@IsBoolean()
 	readonly hasNextPage: boolean;
 
 	constructor(page: number, limit: number, itemCount: number) {

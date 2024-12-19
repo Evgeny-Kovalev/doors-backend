@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UserDto {
 	@ApiProperty()
@@ -8,20 +8,24 @@ export class UserDto {
 
 	@ApiProperty()
 	@IsString()
+	@IsNotEmpty()
 	email: string;
 }
 
 export class UserCreateDto {
 	@ApiProperty()
 	@IsString()
+	@IsNotEmpty()
 	email: string;
 
 	@ApiProperty()
 	@IsString()
+	@IsNotEmpty()
 	password: string;
 
-	@ApiProperty()
+	@ApiPropertyOptional()
 	@IsString()
+	@IsNotEmpty()
 	@IsOptional()
 	refreshToken?: string | null;
 }
@@ -31,13 +35,15 @@ export class UserUpdateDto {
 	@IsNumber()
 	id: number;
 
-	@ApiProperty()
+	@ApiPropertyOptional()
 	@IsOptional()
 	@IsString()
+	@IsNotEmpty()
 	password?: string;
 
-	@ApiProperty()
+	@ApiPropertyOptional()
 	@IsString()
+	@IsNotEmpty()
 	@IsOptional()
 	refreshToken?: string | null;
 }
