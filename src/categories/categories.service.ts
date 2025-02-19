@@ -34,9 +34,12 @@ export class CategoriesService {
 	}
 
 	async createOne(dto: CategoryCreateDto): Promise<CategoryDto> {
-		const { name, description, imgUrl, isVisible, parentId } = dto;
+		const { name, description, imgUrl, isVisible, parentCategoryId, categoryType } =
+			dto;
 
-		const parentCategory = parentId ? await this.getById(parentId) : undefined;
+		const parentId = parentCategoryId
+			? (await this.getById(parentCategoryId)).id
+			: null;
 
 		try {
 			const createdCategory = await this.prismaService.category.create({
@@ -46,7 +49,8 @@ export class CategoriesService {
 					description,
 					imgUrl,
 					isVisible,
-					parentCategoryId: parentCategory?.id ?? undefined,
+					parentCategoryId,
+					categoryType,
 				},
 			});
 			return createdCategory;
@@ -58,17 +62,17 @@ export class CategoriesService {
 
 	async update(categoryId: number, dto: CategoryUpdateDto): Promise<CategoryDto> {
 		await this.getById(categoryId);
-		const { name, description, imgUrl, isVisible, parentId } = dto;
+		const { name, description, imgUrl, isVisible, parentCategoryId, slug } = dto;
 
 		try {
 			const updatedCategory = await this.prismaService.category.update({
 				data: {
-					slug: name && slugify(name, { lower: true }),
+					slug: slug || (name && slugify(name, { lower: true })),
 					name,
 					description,
 					imgUrl,
 					isVisible,
-					parentCategoryId: parentId,
+					parentCategoryId,
 				},
 				where: { id: categoryId },
 			});

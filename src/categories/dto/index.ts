@@ -1,117 +1,40 @@
-import { CategoryType } from 'src/products/types';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsBoolean,
-	IsEnum,
-	IsNotEmpty,
-	IsNumber,
-	IsOptional,
-	IsString,
-} from 'class-validator';
-import { arrayOfAll } from '../../utils';
+import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
+import { CategoryType as CategoryType2 } from '@prisma/client';
 
-export class CategoryDto {
-	@ApiProperty()
-	@IsNumber()
-	id: number;
+const CategorySchema = z.object({
+	id: z.number(),
+	slug: z.string(),
+	name: z.string(),
+	imgUrl: z.string(),
+	categoryType: z
+		.enum([CategoryType2.exteriorDoors, CategoryType2.interiorDoors])
+		.default('interiorDoors'),
+	description: z.string(),
+	isVisible: z.boolean().default(true),
+	parentCategoryId: z.number().nullable().default(null),
+});
 
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	slug: string;
+export class CategoryDto extends createZodDto(CategorySchema) {}
 
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	name: string;
+const CategoryWithSubCategoriesSchema = CategorySchema.extend({
+	children: z.lazy(() => CategoryWithSubCategoriesSchema.array()),
+});
 
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	imgUrl: string;
+export class CategoryWithSubCategories extends createZodDto(
+	CategoryWithSubCategoriesSchema,
+) {}
 
-	@ApiProperty()
-	@IsEnum(arrayOfAll<CategoryType>()(['exteriorDoors', 'interiorDoors']))
-	categoryType: CategoryType;
+const CategoryCreateSchema = CategorySchema.omit({ id: true, slug: true }).partial({
+	categoryType: true,
+	isVisible: true,
+	parentCategoryId: true,
+});
 
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	description: string;
+type CategoryCreateType = z.infer<typeof CategoryCreateSchema>;
+export class CategoryCreateDto extends createZodDto(CategoryCreateSchema) {}
 
-	@ApiProperty()
-	@IsBoolean()
-	isVisible: boolean;
+const CategoryUpdateSchema = CategorySchema.omit({ id: true }).partial();
 
-	@ApiProperty({ nullable: true })
-	@IsNumber()
-	@IsOptional()
-	parentCategoryId: number | null;
-}
-
-export class CategoryWithSubCategories extends CategoryDto {
-	@ApiProperty({ type: [CategoryDto] })
-	children: CategoryWithSubCategories[];
-}
-
-export class CategoryCreateDto {
-	@ApiProperty({ example: 'test category name' })
-	@IsString()
-	@IsNotEmpty()
-	name: string;
-
-	@ApiProperty({ example: 'test image path' })
-	@IsString()
-	@IsNotEmpty()
-	imgUrl: string;
-
-	@ApiProperty({ example: 'test product desc' })
-	@IsString()
-	@IsNotEmpty()
-	description: string;
-
-	@ApiPropertyOptional({ example: false })
-	@IsBoolean()
-	@IsOptional()
-	isVisible?: boolean;
-
-	@ApiProperty({ nullable: true, example: 2 })
-	@IsNumber()
-	@IsOptional()
-	parentId: number | null;
-}
-
-export class CategoryUpdateDto {
-	@ApiPropertyOptional({ example: 'New Product name' })
-	@IsString()
-	@IsOptional()
-	name?: string;
-
-	@ApiPropertyOptional({ example: 'slug' })
-	@IsString()
-	@IsNotEmpty()
-	@IsOptional()
-	slug?: string;
-
-	@ApiPropertyOptional({ example: 'New Product image path' })
-	@IsString()
-	@IsNotEmpty()
-	@IsOptional()
-	imgUrl?: string;
-
-	@ApiPropertyOptional({ example: 'New Product desc' })
-	@IsString()
-	@IsNotEmpty()
-	@IsOptional()
-	description?: string;
-
-	@ApiPropertyOptional({ example: false })
-	@IsBoolean()
-	@IsOptional()
-	isVisible?: boolean;
-
-	@ApiPropertyOptional({ nullable: true, example: null })
-	@IsNumber()
-	@IsOptional()
-	parentId?: number | null;
-}
+type CategoryUpdateType = z.infer<typeof CategoryUpdateSchema>;
+export class CategoryUpdateDto extends createZodDto(CategoryUpdateSchema) {}
