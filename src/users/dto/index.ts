@@ -1,49 +1,21 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
 
-export class UserDto {
-	@ApiProperty()
-	@IsNumber()
-	id: number;
+export const UserSchema = z.object({
+	id: z.number(),
+	email: z.string().email(),
+	refreshToken: z.string().nullable().default(null).optional(),
+});
 
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	email: string;
-}
+const UserCreateSchema = UserSchema.omit({ id: true }).extend({
+	password: z.string(),
+});
 
-export class UserCreateDto {
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	email: string;
+const UserUpdateSchema = UserCreateSchema.partial();
 
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	password: string;
+export type UserCreateDtoType = z.infer<typeof UserCreateSchema>;
+export type UserUpdateDtoType = z.infer<typeof UserUpdateSchema>;
 
-	@ApiPropertyOptional()
-	@IsString()
-	@IsNotEmpty()
-	@IsOptional()
-	refreshToken?: string | null;
-}
-
-export class UserUpdateDto {
-	@ApiProperty()
-	@IsNumber()
-	id: number;
-
-	@ApiPropertyOptional()
-	@IsOptional()
-	@IsString()
-	@IsNotEmpty()
-	password?: string;
-
-	@ApiPropertyOptional()
-	@IsString()
-	@IsNotEmpty()
-	@IsOptional()
-	refreshToken?: string | null;
-}
+export class UserDto extends createZodDto(UserSchema) {}
+export class UserCreateDto extends createZodDto(UserCreateSchema) {}
+export class UserUpdateDto extends createZodDto(UserUpdateSchema) {}
