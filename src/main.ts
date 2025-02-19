@@ -4,9 +4,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EnvService } from './env/env.service';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
 import { ExceptionsLoggerFilter } from './exceptionsLogger.filter';
-import { ValidationPipe } from '@nestjs/common';
 import { WinstonModule } from 'nest-winston';
 import { winstonLogger } from './logger/winston.logger';
+import { patchNestJsSwagger, ZodValidationPipe } from 'nestjs-zod';
+
+patchNestJsSwagger();
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -17,7 +19,7 @@ async function bootstrap() {
 		bufferLogs: true,
 	});
 
-	app.useGlobalPipes(new ValidationPipe({ transform: true }));
+	app.useGlobalPipes(new ZodValidationPipe());
 	app.useGlobalFilters(new ExceptionsLoggerFilter());
 
 	app.setGlobalPrefix('api');
