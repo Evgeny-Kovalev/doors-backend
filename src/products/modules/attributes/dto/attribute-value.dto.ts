@@ -1,20 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+	AttributeValueCreateSchema,
+	AttributeValueSchema,
+} from '../../../../../contracts';
+import { createZodDto } from 'nestjs-zod';
 
-export class AttributeValueDto {
-	@ApiProperty()
-	@IsNumber()
-	id: number;
-
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	value: string;
-}
-
-export class AttributeValueCreateDto {
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	value: string;
-}
+export class AttributeValueDto extends createZodDto(AttributeValueSchema) {}
+export class AttributeValueCreateDto extends createZodDto(AttributeValueCreateSchema) {}

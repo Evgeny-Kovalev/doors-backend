@@ -17,15 +17,16 @@ import {
 	ParseIntPipe,
 	UseGuards,
 } from '@nestjs/common';
-import {
-	CategoryCreateDto,
-	CategoryDto,
-	CategoryUpdateDto,
-	CategoryWithSubCategories,
-} from './dto';
+
 import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
 import { Role } from '@prisma/client';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import {
+	CategoryDto,
+	CategoryWithSubCategories,
+	CategoryCreateDto,
+	CategoryUpdateDto,
+} from './dto';
 
 @ApiTags('Categories')
 @Controller({

@@ -49,7 +49,7 @@ export class CategoriesService {
 					description,
 					imgUrl,
 					isVisible,
-					parentCategoryId,
+					parentCategoryId: parentId,
 					categoryType,
 				},
 			});

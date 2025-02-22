@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import * as csv from 'fast-csv';
-import { VariantCreateDto } from '../modules/variants/variant.dto';
-import { ImportTemplate, ProductVariantFromFile } from '../types';
+import { ImportTemplate, ProductDto } from '../dto/product.dto';
+import { ProductVariantFromFile } from '../types';
 import { FilesService } from 'src/files/files.service';
 import { FileTypes } from 'src/files/types';
 import { createReadStream } from 'fs';
 import { AttributesService } from 'src/products/modules/attributes/attributes.service';
-import { ProductDto } from '../dto/product.dto';
+import { VariantCreateDto } from '../modules/variants/variant.dto';
 
 @Injectable()
 export class ImportService {

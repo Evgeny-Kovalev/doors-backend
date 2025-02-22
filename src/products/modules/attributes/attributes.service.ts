@@ -7,7 +7,7 @@ import {
 import { Attribute, AttributeValue } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProductVariantFromFile } from 'src/products/types';
-import { AttributeCreateDto, AttributeDto } from './dto/attribute.dto';
+import { AttributeCreateDto, AttributeDto } from './dto';
 
 @Injectable()
 export class AttributesService {

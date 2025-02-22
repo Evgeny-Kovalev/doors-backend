@@ -46,7 +46,10 @@ export class AuthService {
 	}
 
 	async logout(userId: number): Promise<boolean> {
-		await this.usersService.updateOne({ id: userId, refreshToken: null });
+		const user = await this.usersService.findById(userId);
+		if (!user) throw new ForbiddenException('User does not exist');
+
+		await this.usersService.updateOne(userId, { refreshToken: null });
 		return true;
 	}
 
@@ -65,7 +68,7 @@ export class AuthService {
 
 	private async updateRefreshToken(userId: number, refreshToken: string): Promise<void> {
 		const hashedRefreshToken = await argon.hash(refreshToken);
-		await this.usersService.updateOne({ id: userId, refreshToken: hashedRefreshToken });
+		await this.usersService.updateOne(userId, { refreshToken: hashedRefreshToken });
 	}
 
 	private async generateTokens(user: User, email: string): Promise<Tokens> {

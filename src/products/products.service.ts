@@ -2,22 +2,23 @@ import { AttributesService } from './modules/attributes/attributes.service';
 import { VariantsService } from './modules/variants/variants.service';
 import { FilesService } from 'src/files/files.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import {
-	ProductCreateDto,
-	ProductUpdateDto,
-	ProductQueryDto,
-	ProductImportDto,
-	ProductDto,
-} from './dto/product.dto';
 import { FileTypes } from 'src/files/types';
 import { ImportService } from './services/import.service';
 import { groupBy } from 'src/utils';
-import { ImportTemplate, ProductVariantFromFile } from './types';
+import { ProductVariantFromFile } from './types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CategoriesService } from 'src/categories/categories.service';
 import { PaginatedDto, PaginationParamsDto } from 'src/shared/pagination/dto';
-import { CategoryDto } from 'src/categories/dto';
+import {
+	ImportTemplate,
+	ProductCreateDto,
+	ProductDto,
+	ProductImportDto,
+	ProductQueryDto,
+	ProductUpdateDto,
+} from './dto/product.dto';
 import slugify from 'slugify';
+import { CategoryDto } from '../categories/dto';
 
 @Injectable()
 export class ProductsService {

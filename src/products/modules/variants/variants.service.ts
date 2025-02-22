@@ -4,10 +4,10 @@ import {
 	InternalServerErrorException,
 	Logger,
 } from '@nestjs/common';
-import { VariantCreateDto, VariantDto, VariantUpdateDto } from './variant.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AttributesService } from 'src/products/modules/attributes/attributes.service';
-import { ProductDto } from 'src/products/dto/product.dto';
+import { ProductDto } from '../../dto/product.dto';
+import { VariantDto, VariantCreateDto, VariantUpdateDto } from './variant.dto';
 
 @Injectable()
 export class VariantsService {

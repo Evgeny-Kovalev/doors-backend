@@ -14,13 +14,6 @@ import {
 import { ProductsService } from './products.service';
 
 import {
-	ProductCreateDto,
-	ProductDto,
-	ProductImportDto,
-	ProductQueryDto,
-	ProductUpdateDto,
-} from './dto/product.dto';
-import {
 	ApiBearerAuth,
 	ApiCreatedResponse,
 	ApiOkResponse,
@@ -33,6 +26,13 @@ import { ApiPaginatedResponse } from 'src/shared/pagination/decorators';
 import { Role } from '@prisma/client';
 import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import {
+	ProductDto,
+	ProductQueryDto,
+	ProductCreateDto,
+	ProductUpdateDto,
+	ProductImportDto,
+} from './dto/product.dto';
 
 @ApiTags('Products')
 @Controller({
