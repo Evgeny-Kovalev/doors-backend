@@ -21,7 +21,13 @@
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.ts",
-		"seed": "ts-node prisma/seed.ts"
+		"prisma:seed:dev": "dotenv -e .env.dev -- npx prisma db seed",
+		"prisma:studio:dev": "dotenv -e .env.dev -- npx prisma studio",
+		"prisma:generate:dev": "dotenv -e .env.dev -- npx prisma generate",
+		"prisma:migrate:dev": "dotenv -e .env.dev -- npx prisma migrate dev",
+		"prisma:studio:prod": "dotenv -e .env.production -- npx prisma studio",
+		"prisma:generate:prod": "dotenv -e .env.production -- npx prisma generate",
+		"prisma:migrate:prod": "dotenv -e .env.production -- npx prisma migrate dev"
 	},
 	"dependencies": {
 		"@nestjs/axios": "^3.0.2",
