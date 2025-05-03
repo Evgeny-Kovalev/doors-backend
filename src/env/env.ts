@@ -17,6 +17,9 @@ export const envSchema = z.object({
 	TOKEN_EXPIRES_IN: z.string(),
 	AT_SECRET: z.string(),
 	RT_SECRET: z.string(),
+
+	TELEGRAM_BOT_TOKEN: z.string(),
+	TELEGRAM_CHAT_IDS: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;

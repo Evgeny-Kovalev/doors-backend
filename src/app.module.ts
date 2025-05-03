@@ -11,6 +11,7 @@ import { envSchema } from './env/env';
 import { EnvModule } from './env/env.module';
 import { EnvService } from './env/env.service';
 import { CollectionsModule } from './collections/collections.module';
+import { TgBotModule } from './tg-bot/tg-bot.module';
 
 @Module({
 	imports: [
@@ -36,6 +37,7 @@ import { CollectionsModule } from './collections/collections.module';
 		PrismaModule,
 		AuthModule,
 		CollectionsModule,
+		TgBotModule,
 	],
 	providers: [],
 })
