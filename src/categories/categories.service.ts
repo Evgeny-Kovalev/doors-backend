@@ -1,7 +1,11 @@
-import { Queue } from './../utils/Queue';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CategoryCreateDto, CategoryDto, CategoryUpdateDto } from './dto';
+import {
+	CategoryCreateDto,
+	CategoryDto,
+	CategoryQueryDto,
+	CategoryUpdateDto,
+} from './dto';
 import { Category } from '@prisma/client';
 import slugify from 'slugify';
 
@@ -11,8 +15,14 @@ export class CategoriesService {
 
 	private readonly logger = new Logger(CategoriesService.name);
 
-	async getAll(): Promise<CategoryDto[]> {
-		const categories: Category[] = await this.prismaService.category.findMany();
+	async getAll(dto: CategoryQueryDto): Promise<CategoryDto[]> {
+		const categories: Category[] = await this.prismaService.category.findMany({
+			where: {
+				parentCategory: {
+					slug: dto.parentCategorySlug,
+				},
+			},
+		});
 		return categories;
 	}
 
@@ -88,71 +98,45 @@ export class CategoriesService {
 		}
 	}
 
-	// formatAllCategories(allCategories: CategoryDto[]): CategoryWithSubCategories[] {
-	// 	const rootCategories = allCategories.filter((cat) => cat.parentCategoryId === null);
-	// 	if (rootCategories.length === 0) return [];
+	async getCategoryHierarchy(category: CategoryDto): Promise<CategoryDto[]> {
+		const categories = await this.prismaService.$queryRaw<Category[]>`
+			WITH RECURSIVE cat_path AS (
+				SELECT id, slug, name, "imgUrl", description, "isVisible", "parentCategoryId", "categoryType", 0 AS depth
+				FROM "Category"
+				WHERE id = ${category.id}
+				UNION ALL
+				SELECT c.id, c.slug, c.name, c."imgUrl", c.description, c."isVisible", c."parentCategoryId", c."categoryType", cp.depth + 1
+				FROM "Category" c
+				JOIN cat_path cp ON c.id = cp."parentCategoryId"
+			)
+			SELECT id, slug, name, "imgUrl", description, "isVisible", "parentCategoryId", "categoryType"
+			FROM cat_path
+			ORDER BY depth DESC;
+		`;
 
-	// 	const res: CategoryWithSubCategories[] = [];
+		return categories;
+	}
 
-	// 	for (const rootCat of rootCategories) {
-	// 		const categoryWithSub = this.formatOneCategory(rootCat, allCategories);
-	// 		res.push(categoryWithSub);
-	// 	}
-	// 	return res;
-	// }
+	async getChildren(category: CategoryDto): Promise<CategoryDto[]> {
+		const categories = await this.prismaService.category.findMany({
+			where: { parentCategoryId: category.id },
+		});
+		return categories;
+	}
 
-	// formatOneCategory(
-	// 	category: CategoryDto,
-	// 	allCategories: CategoryDto[],
-	// ): CategoryWithSubCategories {
-	// 	return {
-	// 		...category,
-	// 		children: this.getAllChildren(allCategories, category),
-	// 	};
-	// }
-
-	// private getAllChildren(
-	// 	allCategories: CategoryDto[],
-	// 	category: CategoryDto,
-	// ): CategoryWithSubCategories[] {
-	// 	const children = allCategories.filter(
-	// 		(cat) => cat.parentCategoryId === category.id,
-	// 	);
-	// 	if (children.length === 0) return [];
-
-	// 	const childrenWithSubCategories: CategoryWithSubCategories[] = [];
-
-	// 	children.forEach((item) => {
-	// 		const children = this.getAllChildren(allCategories, item);
-	// 		childrenWithSubCategories.push({
-	// 			...item,
-	// 			children,
-	// 		});
-	// 	});
-
-	// 	return childrenWithSubCategories;
-	// }
-
-	// async getNestedCategoriesList(
-	// 	category: CategoryDto,
-	// 	allCategories: CategoryDto[],
-	// ): Promise<CategoryDto[]> {
-	// 	const getChildren = (category: CategoryDto): CategoryDto[] =>
-	// 		allCategories.filter((cat) => cat.parentCategoryId === category.id);
-
-	// 	const nestedCategories: CategoryDto[] = [];
-
-	// 	const queue = new Queue<CategoryDto>();
-
-	// 	const children = getChildren(category);
-	// 	children.forEach((cat) => queue.enqueue(cat));
-
-	// 	while (!queue.isEmpty) {
-	// 		const cat = queue.dequeue();
-	// 		nestedCategories.push(cat);
-	// 		const children = getChildren(cat);
-	// 		children.forEach((cat) => queue.enqueue(cat));
-	// 	}
-	// 	return [category, ...nestedCategories];
-	// }
+	async getDescendantCategoryIdsBySlug(slug: string): Promise<number[]> {
+		const rows = await this.prismaService.$queryRaw<{ id: number }[]>`
+			WITH RECURSIVE subs AS (
+				SELECT id, "parentCategoryId"
+				FROM "Category"
+				WHERE slug = ${slug}
+				UNION ALL
+				SELECT c.id, c."parentCategoryId"
+				FROM "Category" c
+				JOIN subs s ON c."parentCategoryId" = s.id
+			)
+			SELECT id FROM subs;
+		`;
+		return rows.map((r) => r.id);
+	}
 }

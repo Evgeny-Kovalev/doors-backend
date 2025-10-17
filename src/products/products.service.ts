@@ -19,6 +19,7 @@ import {
 } from './dto/product.dto';
 import slugify from 'slugify';
 import { CategoryDto } from '../categories/dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
@@ -38,6 +39,17 @@ export class ProductsService {
 		{ limit, page }: PaginationQueryDto,
 	): Promise<PaginatedDto<ProductDto>> {
 		try {
+			const productFilter: Prisma.ProductWhereInput = {
+				name: { contains: query?.q, mode: 'insensitive' },
+			};
+			if (query?.categorySlug) {
+				const ids = await this.categoriesService.getDescendantCategoryIdsBySlug(
+					query.categorySlug,
+				);
+				if (ids.length === 1) productFilter.categoryId = { equals: ids[0] };
+				else if (ids.length > 1) productFilter.categoryId = { in: ids };
+			}
+
 			const [products, count] = await this.prismaService.$transaction([
 				this.prismaService.product.findMany({
 					include: {
@@ -46,26 +58,17 @@ export class ProductsService {
 						variants: {
 							include: {
 								attributes: {
-									include: {
-										key: true,
-										value: true,
-									},
+									include: { key: true, value: true },
 								},
 							},
 						},
 					},
-					where: {
-						name: { contains: query?.q, mode: 'insensitive' },
-						category: { slug: query?.categorySlug },
-					},
+					where: productFilter,
 					take: limit,
 					skip: (page - 1) * limit,
 				}),
 				this.prismaService.product.count({
-					where: {
-						name: { contains: query.q, mode: 'insensitive' },
-						category: { slug: query?.categorySlug },
-					},
+					where: productFilter,
 				}),
 			]);
 

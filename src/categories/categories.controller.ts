@@ -16,6 +16,7 @@ import {
 	Delete,
 	ParseIntPipe,
 	UseGuards,
+	Query,
 } from '@nestjs/common';
 
 import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
@@ -23,9 +24,9 @@ import { Role } from '@prisma/client';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import {
 	CategoryDto,
-	// CategoryWithSubCategories,
 	CategoryCreateDto,
 	CategoryUpdateDto,
+	CategoryQueryDto,
 } from './dto';
 
 @ApiTags('Categories')
@@ -39,15 +40,9 @@ export class CategoriesController {
 	@Public()
 	@ApiOkResponse({ type: [CategoryDto] })
 	@Get('/')
-	async getAllCategories(): Promise<CategoryDto[]> {
-		const allCategories = await this.categoriesService.getAll();
-
+	async getAllCategories(@Query() query: CategoryQueryDto): Promise<CategoryDto[]> {
+		const allCategories = await this.categoriesService.getAll(query);
 		return allCategories;
-
-		// const categoryWithSubCategories =
-		// 	this.categoriesService.formatAllCategories(allCategories);
-
-		// return categoryWithSubCategories;
 	}
 
 	@Public()
@@ -55,15 +50,16 @@ export class CategoriesController {
 	@Get(':slug')
 	async getCategory(@Param('slug') slug: string): Promise<CategoryDto> {
 		const category = await this.categoriesService.getBySlug(slug);
-		// const allCategories = await this.categoriesService.getAll();
-
 		return category;
-		// const categoryWithSubCategories = this.categoriesService.formatOneCategory(
-		// 	category,
-		// 	allCategories,
-		// );
+	}
 
-		// return categoryWithSubCategories;
+	@Public()
+	@ApiOkResponse({ type: [CategoryDto] })
+	@Get(':slug/hierarchy')
+	async getCategoryHierarchy(@Param('slug') slug: string): Promise<CategoryDto[]> {
+		const category = await this.categoriesService.getBySlug(slug);
+		const categories = await this.categoriesService.getCategoryHierarchy(category);
+		return categories;
 	}
 
 	@ApiBearerAuth()
