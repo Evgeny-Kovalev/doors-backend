@@ -1,6 +1,5 @@
 import { ProductType as ProductTypePrisma } from '@prisma/client';
 import { z } from 'zod';
-import { createZodDto } from 'nestjs-zod';
 import { AttributeSchema } from './attributes';
 import { CategorySchema } from './categories';
 import { VariantSchema } from './product-variants';
@@ -12,7 +11,7 @@ export const ProductBaseSchema = z.object({
 	imgUrl: z.string(),
 	description: z.string(),
 	isVisible: z.boolean().default(true),
-	productType: z.nativeEnum(ProductTypePrisma).default('full'),
+	productType: z.enum(ProductTypePrisma).default('full'),
 });
 
 export type ProductType = z.infer<typeof ProductSchema>;
@@ -21,6 +20,13 @@ export const ProductSchema = ProductBaseSchema.extend({
 	category: CategorySchema,
 	variants: z.array(VariantSchema),
 	params: z.array(AttributeSchema),
+}).meta({
+	title: 'Product',
+});
+
+export const ProductQuerySchema = z.object({
+	categorySlug: z.string().optional(),
+	q: z.string().optional(),
 });
 
 export const ProductCreateSchema = ProductBaseSchema.omit({
@@ -34,6 +40,9 @@ export const ProductCreateSchema = ProductBaseSchema.omit({
 	.extend({
 		categoryId: z.number(),
 		paramIds: z.array(z.number()),
+	})
+	.meta({
+		title: 'Product Create',
 	});
 
 export type ProductCreateType = z.infer<typeof ProductCreateSchema>;
@@ -43,6 +52,9 @@ export const ProductUpdateSchema = ProductBaseSchema.omit({ id: true })
 		categoryId: z.number(),
 		paramIds: z.array(z.number()),
 	})
-	.partial();
+	.partial()
+	.meta({
+		title: 'Product Update',
+	});
 
 export type ProductUpdateType = z.infer<typeof ProductUpdateSchema>;

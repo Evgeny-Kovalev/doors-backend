@@ -1,14 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { TgBotCallbackSchema, TgBotCallbackResponseSchema } from '../../../contracts';
+import { createZodDto } from 'nestjs-zod';
 
-export class TgBotCallbackDto {
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	phone: string;
-
-	@ApiProperty()
-	@IsString()
-	@IsNotEmpty()
-	name: string;
-}
+export class TgBotCallbackDto extends createZodDto(TgBotCallbackSchema) {}
+export class TgBotCallbackResponseDto extends createZodDto(TgBotCallbackResponseSchema) {}

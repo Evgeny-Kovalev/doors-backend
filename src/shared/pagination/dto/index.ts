@@ -1,30 +1,12 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsOptional, Min, IsInt, Max, IsNumber, IsBoolean } from 'class-validator';
+import { createZodDto } from 'nestjs-zod';
+import { PaginationQuerySchema } from '../../../../contracts';
 
 export class PaginationMetaDto {
-	@ApiProperty()
-	@IsNumber()
 	readonly page: number;
-
-	@ApiProperty()
-	@IsNumber()
 	readonly limit: number;
-
-	@ApiProperty()
-	@IsNumber()
 	readonly itemCount: number;
-
-	@ApiProperty()
-	@IsNumber()
 	readonly pageCount: number;
-
-	@ApiProperty()
-	@IsBoolean()
 	readonly hasPreviousPage: boolean;
-
-	@ApiProperty()
-	@IsBoolean()
 	readonly hasNextPage: boolean;
 
 	constructor(page: number, limit: number, itemCount: number) {
@@ -48,26 +30,4 @@ export class PaginatedDto<T> {
 	}
 }
 
-export class PaginationParamsDto {
-	@ApiPropertyOptional({
-		minimum: 1,
-		default: 1,
-	})
-	@Type(() => Number)
-	@IsInt()
-	@Min(1)
-	@IsOptional()
-	readonly page: number = 1;
-
-	@ApiPropertyOptional({
-		minimum: 1,
-		maximum: 60,
-		default: 20,
-	})
-	@Type(() => Number)
-	@IsInt()
-	@Min(1)
-	@Max(60)
-	@IsOptional()
-	readonly limit: number = 20;
-}
+export class PaginationQueryDto extends createZodDto(PaginationQuerySchema) {}

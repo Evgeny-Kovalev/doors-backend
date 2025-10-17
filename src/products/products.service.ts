@@ -8,7 +8,7 @@ import { groupBy } from 'src/utils';
 import { ProductVariantFromFile } from './types';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CategoriesService } from 'src/categories/categories.service';
-import { PaginatedDto, PaginationParamsDto } from 'src/shared/pagination/dto';
+import { PaginatedDto, PaginationQueryDto } from 'src/shared/pagination/dto';
 import {
 	ImportTemplate,
 	ProductCreateDto,
@@ -35,15 +35,9 @@ export class ProductsService {
 
 	async getAll(
 		query: ProductQueryDto,
-		{ limit, page }: PaginationParamsDto,
+		{ limit, page }: PaginationQueryDto,
 	): Promise<PaginatedDto<ProductDto>> {
 		try {
-			const categories = query.categorySlug
-				? await this.categoriesService.getNestedCategoriesList(
-						await this.categoriesService.getBySlug(query.categorySlug),
-						await this.categoriesService.getAll(),
-					)
-				: undefined;
 			const [products, count] = await this.prismaService.$transaction([
 				this.prismaService.product.findMany({
 					include: {
@@ -62,23 +56,15 @@ export class ProductsService {
 					},
 					where: {
 						name: { contains: query?.q, mode: 'insensitive' },
-						categoryId: categories
-							? {
-									in: categories.map((c) => c.id),
-								}
-							: undefined,
+						category: { slug: query?.categorySlug },
 					},
 					take: limit,
 					skip: (page - 1) * limit,
 				}),
 				this.prismaService.product.count({
 					where: {
-						name: { contains: query?.q, mode: 'insensitive' },
-						categoryId: categories
-							? {
-									in: categories.map((c) => c.id),
-								}
-							: undefined,
+						name: { contains: query.q, mode: 'insensitive' },
+						category: { slug: query?.categorySlug },
 					},
 				}),
 			]);

@@ -12,6 +12,9 @@ import { EnvModule } from './env/env.module';
 import { EnvService } from './env/env.service';
 import { CollectionsModule } from './collections/collections.module';
 import { TgBotModule } from './tg-bot/tg-bot.module';
+import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { ZodValidationPipe, ZodSerializerInterceptor } from 'nestjs-zod';
+import { HttpExceptionFilter } from './http-exception.filter';
 
 @Module({
 	imports: [
@@ -39,6 +42,19 @@ import { TgBotModule } from './tg-bot/tg-bot.module';
 		CollectionsModule,
 		TgBotModule,
 	],
-	providers: [],
+	providers: [
+		{
+			provide: APP_PIPE,
+			useClass: ZodValidationPipe,
+		},
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: ZodSerializerInterceptor,
+		},
+		{
+			provide: APP_FILTER,
+			useClass: HttpExceptionFilter,
+		},
+	],
 })
 export class AppModule {}

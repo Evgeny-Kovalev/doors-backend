@@ -6,3 +6,5 @@ export * from './users';
 export * from './collections';
 export * from './attributes';
 export * from './product-import';
+export * from './pagination';
+export * from './tg-bot';

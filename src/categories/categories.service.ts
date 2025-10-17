@@ -1,12 +1,7 @@
 import { Queue } from './../utils/Queue';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import {
-	CategoryCreateDto,
-	CategoryDto,
-	CategoryUpdateDto,
-	CategoryWithSubCategories,
-} from './dto';
+import { CategoryCreateDto, CategoryDto, CategoryUpdateDto } from './dto';
 import { Category } from '@prisma/client';
 import slugify from 'slugify';
 
@@ -93,71 +88,71 @@ export class CategoriesService {
 		}
 	}
 
-	formatAllCategories(allCategories: CategoryDto[]): CategoryWithSubCategories[] {
-		const rootCategories = allCategories.filter((cat) => cat.parentCategoryId === null);
-		if (rootCategories.length === 0) return [];
+	// formatAllCategories(allCategories: CategoryDto[]): CategoryWithSubCategories[] {
+	// 	const rootCategories = allCategories.filter((cat) => cat.parentCategoryId === null);
+	// 	if (rootCategories.length === 0) return [];
 
-		const res: CategoryWithSubCategories[] = [];
+	// 	const res: CategoryWithSubCategories[] = [];
 
-		for (const rootCat of rootCategories) {
-			const categoryWithSub = this.formatOneCategory(rootCat, allCategories);
-			res.push(categoryWithSub);
-		}
-		return res;
-	}
+	// 	for (const rootCat of rootCategories) {
+	// 		const categoryWithSub = this.formatOneCategory(rootCat, allCategories);
+	// 		res.push(categoryWithSub);
+	// 	}
+	// 	return res;
+	// }
 
-	formatOneCategory(
-		category: CategoryDto,
-		allCategories: CategoryDto[],
-	): CategoryWithSubCategories {
-		return {
-			...category,
-			children: this.getAllChildren(allCategories, category),
-		};
-	}
+	// formatOneCategory(
+	// 	category: CategoryDto,
+	// 	allCategories: CategoryDto[],
+	// ): CategoryWithSubCategories {
+	// 	return {
+	// 		...category,
+	// 		children: this.getAllChildren(allCategories, category),
+	// 	};
+	// }
 
-	private getAllChildren(
-		allCategories: CategoryDto[],
-		category: CategoryDto,
-	): CategoryWithSubCategories[] {
-		const children = allCategories.filter(
-			(cat) => cat.parentCategoryId === category.id,
-		);
-		if (children.length === 0) return [];
+	// private getAllChildren(
+	// 	allCategories: CategoryDto[],
+	// 	category: CategoryDto,
+	// ): CategoryWithSubCategories[] {
+	// 	const children = allCategories.filter(
+	// 		(cat) => cat.parentCategoryId === category.id,
+	// 	);
+	// 	if (children.length === 0) return [];
 
-		const childrenWithSubCategories: CategoryWithSubCategories[] = [];
+	// 	const childrenWithSubCategories: CategoryWithSubCategories[] = [];
 
-		children.forEach((item) => {
-			const children = this.getAllChildren(allCategories, item);
-			childrenWithSubCategories.push({
-				...item,
-				children,
-			});
-		});
+	// 	children.forEach((item) => {
+	// 		const children = this.getAllChildren(allCategories, item);
+	// 		childrenWithSubCategories.push({
+	// 			...item,
+	// 			children,
+	// 		});
+	// 	});
 
-		return childrenWithSubCategories;
-	}
+	// 	return childrenWithSubCategories;
+	// }
 
-	async getNestedCategoriesList(
-		category: CategoryDto,
-		allCategories: CategoryDto[],
-	): Promise<CategoryDto[]> {
-		const getChildren = (category: CategoryDto): CategoryDto[] =>
-			allCategories.filter((cat) => cat.parentCategoryId === category.id);
+	// async getNestedCategoriesList(
+	// 	category: CategoryDto,
+	// 	allCategories: CategoryDto[],
+	// ): Promise<CategoryDto[]> {
+	// 	const getChildren = (category: CategoryDto): CategoryDto[] =>
+	// 		allCategories.filter((cat) => cat.parentCategoryId === category.id);
 
-		const nestedCategories: CategoryDto[] = [];
+	// 	const nestedCategories: CategoryDto[] = [];
 
-		const queue = new Queue<CategoryDto>();
+	// 	const queue = new Queue<CategoryDto>();
 
-		const children = getChildren(category);
-		children.forEach((cat) => queue.enqueue(cat));
+	// 	const children = getChildren(category);
+	// 	children.forEach((cat) => queue.enqueue(cat));
 
-		while (!queue.isEmpty) {
-			const cat = queue.dequeue();
-			nestedCategories.push(cat);
-			const children = getChildren(cat);
-			children.forEach((cat) => queue.enqueue(cat));
-		}
-		return [category, ...nestedCategories];
-	}
+	// 	while (!queue.isEmpty) {
+	// 		const cat = queue.dequeue();
+	// 		nestedCategories.push(cat);
+	// 		const children = getChildren(cat);
+	// 		children.forEach((cat) => queue.enqueue(cat));
+	// 	}
+	// 	return [category, ...nestedCategories];
+	// }
 }

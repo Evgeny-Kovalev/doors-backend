@@ -15,12 +15,23 @@ export const CategorySchema = z.object({
 });
 export type CategoryType = z.infer<typeof CategorySchema>;
 
-export const CategoryWithSubCategoriesSchema = CategorySchema.extend({
-	children: z.lazy(() => CategoryWithSubCategoriesSchema.array()),
-});
-export type CategoryWithSubCategoriesType = z.infer<
-	typeof CategoryWithSubCategoriesSchema
->;
+// export type CategoryWithSubCategoriesType = z.infer<typeof CategorySchema> & {
+// 	children: CategoryWithSubCategoriesType[];
+// };
+
+// //this type needs only for schema typing
+// export type CategoryWithSubCategoriesInput = z.input<typeof CategorySchema> & {
+// 	children: CategoryWithSubCategoriesInput[];
+// };
+
+// export const CategoryWithSubCategoriesSchema: z.ZodType<
+// 	CategoryWithSubCategoriesType,
+// 	CategoryWithSubCategoriesInput
+// > = z.lazy(() =>
+// 	CategorySchema.extend({
+// 		children: z.array(CategoryWithSubCategoriesSchema),
+// 	}),
+// );
 
 export const CategoryCreateSchema = CategorySchema.omit({ id: true, slug: true }).partial(
 	{

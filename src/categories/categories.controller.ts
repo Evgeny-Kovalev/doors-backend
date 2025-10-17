@@ -23,7 +23,7 @@ import { Role } from '@prisma/client';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import {
 	CategoryDto,
-	CategoryWithSubCategories,
+	// CategoryWithSubCategories,
 	CategoryCreateDto,
 	CategoryUpdateDto,
 } from './dto';
@@ -39,28 +39,31 @@ export class CategoriesController {
 	@Public()
 	@ApiOkResponse({ type: [CategoryDto] })
 	@Get('/')
-	async getAllCategories(): Promise<CategoryWithSubCategories[]> {
+	async getAllCategories(): Promise<CategoryDto[]> {
 		const allCategories = await this.categoriesService.getAll();
 
-		const categoryWithSubCategories =
-			this.categoriesService.formatAllCategories(allCategories);
+		return allCategories;
 
-		return categoryWithSubCategories;
+		// const categoryWithSubCategories =
+		// 	this.categoriesService.formatAllCategories(allCategories);
+
+		// return categoryWithSubCategories;
 	}
 
 	@Public()
 	@ApiOkResponse({ type: CategoryDto })
 	@Get(':slug')
-	async getCategory(@Param('slug') slug: string): Promise<CategoryWithSubCategories> {
+	async getCategory(@Param('slug') slug: string): Promise<CategoryDto> {
 		const category = await this.categoriesService.getBySlug(slug);
-		const allCategories = await this.categoriesService.getAll();
+		// const allCategories = await this.categoriesService.getAll();
 
-		const categoryWithSubCategories = this.categoriesService.formatOneCategory(
-			category,
-			allCategories,
-		);
+		return category;
+		// const categoryWithSubCategories = this.categoriesService.formatOneCategory(
+		// 	category,
+		// 	allCategories,
+		// );
 
-		return categoryWithSubCategories;
+		// return categoryWithSubCategories;
 	}
 
 	@ApiBearerAuth()
@@ -68,17 +71,9 @@ export class CategoriesController {
 	@HasRoles(Role.ADMIN)
 	@UseGuards(RolesGuard)
 	@Post('/')
-	async createCategory(
-		@Body() dto: CategoryCreateDto,
-	): Promise<CategoryWithSubCategories> {
+	async createCategory(@Body() dto: CategoryCreateDto): Promise<CategoryDto> {
 		const createdCategory = await this.categoriesService.createOne(dto);
-		const allCategories = await this.categoriesService.getAll();
-
-		const categoryWithSubCategories = this.categoriesService.formatOneCategory(
-			createdCategory,
-			allCategories,
-		);
-		return categoryWithSubCategories;
+		return createdCategory;
 	}
 
 	@ApiBearerAuth()
@@ -89,19 +84,8 @@ export class CategoriesController {
 	async update(
 		@Param('id', ParseIntPipe) categoryId: number,
 		@Body() categoryUpdateDto: CategoryUpdateDto,
-	) {
-		const updatedCategory = await this.categoriesService.update(
-			categoryId,
-			categoryUpdateDto,
-		);
-		const allCategories = await this.categoriesService.getAll();
-
-		const categoryWithSubCategories = this.categoriesService.formatOneCategory(
-			updatedCategory,
-			allCategories,
-		);
-
-		return categoryWithSubCategories;
+	): Promise<CategoryDto> {
+		return await this.categoriesService.update(categoryId, categoryUpdateDto);
 	}
 
 	@ApiBearerAuth()

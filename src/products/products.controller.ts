@@ -12,7 +12,6 @@ import {
 	Logger,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-
 import {
 	ApiBearerAuth,
 	ApiCreatedResponse,
@@ -20,9 +19,7 @@ import {
 	ApiTags,
 } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { PaginatedDto } from './../shared/pagination/dto/index';
-import { PaginationParamsDto } from 'src/shared/pagination/dto';
-import { ApiPaginatedResponse } from 'src/shared/pagination/decorators';
+import { PaginationQueryDto } from 'src/shared/pagination/dto';
 import { Role } from '@prisma/client';
 import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -32,6 +29,7 @@ import {
 	ProductCreateDto,
 	ProductUpdateDto,
 	ProductImportDto,
+	PaginatedProductDto,
 } from './dto/product.dto';
 
 @ApiTags('Products')
@@ -45,14 +43,18 @@ export class ProductsController {
 	private readonly logger = new Logger(ProductsController.name);
 
 	@Public()
-	@ApiPaginatedResponse(ProductDto)
 	@Get('/')
+	@ApiOkResponse({ type: PaginatedProductDto })
 	async getAllProducts(
-		@Query() q: ProductQueryDto,
-		@Query() dto: PaginationParamsDto,
-	): Promise<PaginatedDto<ProductDto>> {
-		const products = await this.productsService.getAll(q, dto);
-		return products;
+		@Query() query: ProductQueryDto,
+		@Query() paginationDto: PaginationQueryDto,
+	): Promise<PaginatedProductDto> {
+		const { page, limit } = paginationDto;
+
+		return await this.productsService.getAll(query, {
+			page,
+			limit,
+		});
 	}
 
 	@Public()

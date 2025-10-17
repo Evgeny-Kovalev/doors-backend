@@ -3,12 +3,9 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EnvService } from './env/env.service';
 import { VersioningType } from '@nestjs/common/enums/version-type.enum';
-import { ExceptionsLoggerFilter } from './exceptionsLogger.filter';
 import { WinstonModule } from 'nest-winston';
 import { winstonLogger } from './logger/winston.logger';
-import { patchNestJsSwagger, ZodValidationPipe } from 'nestjs-zod';
-
-patchNestJsSwagger();
+import { cleanupOpenApiDoc } from 'nestjs-zod';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -18,9 +15,6 @@ async function bootstrap() {
 		}),
 		bufferLogs: true,
 	});
-
-	app.useGlobalPipes(new ZodValidationPipe());
-	app.useGlobalFilters(new ExceptionsLoggerFilter());
 
 	app.setGlobalPrefix('api');
 	app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
@@ -35,7 +29,7 @@ async function bootstrap() {
 		.build();
 	const document = SwaggerModule.createDocument(app, config);
 
-	SwaggerModule.setup(`api/:version/docs`, app, document);
+	SwaggerModule.setup(`api/:version/docs`, app, cleanupOpenApiDoc(document));
 
 	await app.listen(port);
 }
