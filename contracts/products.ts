@@ -29,6 +29,11 @@ export const ProductQuerySchema = z.object({
 	q: z.string().optional(),
 });
 
+export const RandomProductsQuerySchema = z.object({
+	categorySlug: z.string(),
+	limit: z.coerce.number().optional().default(6),
+});
+
 export const ProductCreateSchema = ProductBaseSchema.omit({
 	id: true,
 	slug: true,

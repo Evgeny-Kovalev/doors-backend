@@ -26,11 +26,13 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import {
 	ProductDto,
 	ProductQueryDto,
+	RandomProductsQueryDto,
 	ProductCreateDto,
 	ProductUpdateDto,
 	ProductImportDto,
 	PaginatedProductDto,
 } from './dto/product.dto';
+import { CategoriesService } from 'src/categories/categories.service';
 
 @ApiTags('Products')
 @Controller({
@@ -38,7 +40,10 @@ import {
 	version: '1',
 })
 export class ProductsController {
-	constructor(private readonly productsService: ProductsService) {}
+	constructor(
+		private readonly productsService: ProductsService,
+		private readonly categoriesService: CategoriesService,
+	) {}
 
 	private readonly logger = new Logger(ProductsController.name);
 
@@ -55,6 +60,17 @@ export class ProductsController {
 			page,
 			limit,
 		});
+	}
+
+	@Public()
+	@ApiOkResponse({ type: [ProductDto] })
+	@Get('/random')
+	async getRandomProducts(
+		@Query() query: RandomProductsQueryDto,
+	): Promise<ProductDto[]> {
+		const category = await this.categoriesService.getBySlug(query.categorySlug);
+		const res = await this.productsService.getRandom({ category, limit: query.limit });
+		return res;
 	}
 
 	@Public()

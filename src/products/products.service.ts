@@ -79,6 +79,42 @@ export class ProductsService {
 		}
 	}
 
+	async getRandom({
+		category,
+		limit,
+	}: {
+		category: CategoryDto;
+		limit: number;
+	}): Promise<ProductDto[]> {
+		try {
+			const rows = await this.prismaService.$queryRaw<{ id: number }[]>`
+					SELECT id FROM "Product"
+					WHERE "categoryId" = ${category.id}
+					ORDER BY RANDOM()
+					LIMIT ${limit}
+				`;
+
+			if (!rows.length) return [];
+
+			const products = await this.prismaService.product.findMany({
+				where: { id: { in: rows.map((r) => r.id) } },
+				include: {
+					category: true,
+					params: { include: { key: true, value: true } },
+					variants: {
+						include: {
+							attributes: { include: { key: true, value: true } },
+						},
+					},
+				},
+			});
+			return products;
+		} catch (e) {
+			this.logger.error(e);
+			throw new BadRequestException('Cannot get random products');
+		}
+	}
+
 	async getById(id: number) {
 		const product = await this.prismaService.product.findFirst({
 			include: {
