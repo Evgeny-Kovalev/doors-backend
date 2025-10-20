@@ -1,43 +1,17 @@
-import { createLogger, format, transports } from 'winston';
-import { utilities } from 'nest-winston';
+import { createLogger, format } from 'winston';
+import * as Sentry from '@sentry/node';
+import Transport = require('winston-transport');
 
-const options = {
-	file: {
-		filename: 'error.log',
-		level: 'error',
-	},
-	console: {
-		level: 'info',
-	},
-};
+const SentryWinstonTransport = Sentry.createSentryWinstonTransport(Transport);
 
-const devLogger = {
-	format: format.combine(
-		format.timestamp({ format: 'DD-MM-YYYY, HH:mm:ss' }),
-		format.ms(),
-		utilities.format.nestLike('Nest', {
-			colors: true,
-			prettyPrint: true,
-			processId: true,
-		}),
-	),
-	transports: [new transports.Console(options.console)],
-};
-
-const prodLogger = {
+const logger = {
 	format: format.combine(
 		format.timestamp(),
 		format.errors({ stack: true }),
 		format.json(),
 	),
-	transports: [
-		new transports.File(options.file),
-		new transports.File({
-			filename: 'combine.log',
-		}),
-	],
+
+	transports: [new SentryWinstonTransport()],
 };
 
-const instanceLogger = process.env.NODE_ENV === 'production' ? prodLogger : devLogger;
-
-export const winstonLogger = createLogger(instanceLogger);
+export const winstonLogger = createLogger(logger);

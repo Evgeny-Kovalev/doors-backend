@@ -1,3 +1,5 @@
+import './instrument';
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -6,13 +8,11 @@ import { VersioningType } from '@nestjs/common/enums/version-type.enum';
 import { WinstonModule } from 'nest-winston';
 import { winstonLogger } from './logger/winston.logger';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
 		cors: true,
-		logger: WinstonModule.createLogger({
-			instance: winstonLogger,
-		}),
 		bufferLogs: true,
 	});
 
@@ -21,7 +21,15 @@ async function bootstrap() {
 
 	const envService = app.get(EnvService);
 	const port = envService.get('PORT');
+	const isProd = envService.get('NODE_ENV') === 'production';
 
+	app.useLogger(
+		isProd
+			? WinstonModule.createLogger({
+					instance: winstonLogger,
+				})
+			: new Logger(bootstrap.name),
+	);
 	const config = new DocumentBuilder()
 		.setTitle('Shop backend')
 		.setVersion('1.0')

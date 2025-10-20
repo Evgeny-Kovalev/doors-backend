@@ -15,12 +15,17 @@ import { TgBotModule } from './tg-bot/tg-bot.module';
 import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ZodValidationPipe, ZodSerializerInterceptor } from 'nestjs-zod';
 import { HttpExceptionFilter } from './http-exception.filter';
+import { SentryModule } from '@sentry/nestjs/setup';
 
 @Module({
 	imports: [
+		SentryModule.forRoot(),
 		ConfigModule.forRoot({
 			validate: (env) => envSchema.parse(env),
-			envFilePath: ['.env.dev', '.env.test', '.env.production', '.env'],
+			envFilePath: [
+				process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : undefined,
+				'.env',
+			].filter(Boolean) as string[],
 			isGlobal: true,
 		}),
 		ServeStaticModule.forRootAsync({

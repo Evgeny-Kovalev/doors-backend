@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
 export const envSchema = z.object({
+	NODE_ENV: z.enum(['development', 'production', 'test']),
 	PORT: z.coerce.number().optional().default(4000),
 
-	DATABASE_URL: z.string().url(),
+	DATABASE_URL: z.url(),
 
-	APP_URL: z.string().url(),
+	APP_URL: z.url(),
 
 	STATIC_DOCS_PATH: z.string(),
 	STATIC_IMAGES_PATH: z.string(),
@@ -20,6 +21,8 @@ export const envSchema = z.object({
 
 	TELEGRAM_BOT_TOKEN: z.string(),
 	TELEGRAM_CHAT_IDS: z.string(),
+
+	SENTRY_DSN: process.env.NODE_ENV === 'production' ? z.url() : z.url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
