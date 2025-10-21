@@ -33,7 +33,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 			inject: [EnvService],
 			useFactory: (envService: EnvService) => [
 				{
-					rootPath: join(__dirname, '..', 'files', 'images'),
+					rootPath: join(__dirname, '..', '..', 'files', 'images'),
 					serveRoot: envService.get('STATIC_IMAGES_PATH_API'),
 					exclude: ['/api*'],
 				},
