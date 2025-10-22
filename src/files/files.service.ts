@@ -3,143 +3,184 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	Logger,
 } from '@nestjs/common';
-import { createWriteStream, existsSync, unlink } from 'fs';
-import { join } from 'path';
-import { FileTypeInfoMap, FileTypes } from './types';
+import {
+	S3Client,
+	PutObjectCommand,
+	DeleteObjectCommand,
+	HeadObjectCommand,
+} from '@aws-sdk/client-s3';
 import { HttpService } from '@nestjs/axios';
-import { join as joinPath } from 'node:path/posix';
+import { firstValueFrom } from 'rxjs';
+
+const S3_PREFIX_BY_MIME: Record<string, string> = {
+	'image/*': 'doors',
+	'text/csv': 'docs',
+	'application/csv': 'docs',
+};
 
 @Injectable()
 export class FilesService {
 	constructor(
-		private readonly httpService: HttpService,
 		private readonly envService: EnvService,
+		private readonly httpService: HttpService,
 	) {}
 
-	private getFilesMap() {
-		const FILES_MAP: FileTypeInfoMap = {
-			DOC: { path: this.envService.get('STATIC_DOCS_PATH') },
-			IMG: { path: this.envService.get('STATIC_IMAGES_PATH') },
-		};
-		return FILES_MAP;
-	}
+	private s3Client: S3Client | null = null;
+	private readonly logger = new Logger(FilesService.name);
 
-	async deleteFileByPath(path: string) {
-		if (!existsSync(path)) {
-			throw new BadRequestException('There is no file with this name');
-		}
-		await unlink(path, (err) => {
-			if (err) throw new InternalServerErrorException(err);
+	private getS3Client(): S3Client {
+		if (this.s3Client) return this.s3Client;
+
+		const region = this.envService.get('S3_REGION');
+		const endpoint = this.envService.get('S3_ENDPOINT');
+
+		this.s3Client = new S3Client({
+			region,
+			credentials: {
+				accessKeyId: this.envService.get('S3_ACCESS_KEY_ID'),
+				secretAccessKey: this.envService.get('S3_SECRET_ACCESS_KEY'),
+			},
+			endpoint: endpoint || undefined,
 		});
 
-		//TODO
-		return { message: 'File has been successfully deleted' };
+		return this.s3Client;
 	}
 
-	async deleteFileByName(imageName: string, fileType: FileTypes) {
-		const imagePath = this.getPathToFile(imageName, fileType);
-		return await this.deleteFileByPath(imagePath);
+	private getS3PublicUrl(
+		key: string,
+		{ returnOriginalS3Url = false }: { returnOriginalS3Url?: boolean } = {},
+	): string {
+		if (returnOriginalS3Url) {
+			return `${this.envService.get('S3_ENDPOINT')}/${this.envService.get('S3_BUCKET')}/${key}`;
+		}
+		const appUrl = new URL(this.envService.get('APP_URL'));
+		appUrl.pathname = `/${encodeURIComponent(key)}`;
+
+		return appUrl.toString();
 	}
 
-	getPathToFile(name: string, fileType: FileTypes) {
-		const folderPath = this.getDestinationPathByFileType(fileType);
-		const filePath = join(process.cwd(), folderPath, name);
+	async uploadFileToS3(
+		file: Express.Multer.File,
+		{ returnOriginalS3Url = false }: { returnOriginalS3Url?: boolean } = {},
+	): Promise<{ url: string; key: string }> {
+		if (!file?.buffer) throw new BadRequestException('No file buffer');
 
-		if (!existsSync(filePath))
-			throw new BadRequestException('There is no file with this name');
+		const prefix = this.getPrefixForMime(file.mimetype);
+		const key = prefix ? `${prefix}/${file.originalname}` : file.originalname;
 
-		return filePath;
-	}
-
-	getDestinationPathByFileType(type: FileTypes): string {
-		const path = this.getFilesMap()[type].path;
-		if (!path)
-			throw new InternalServerErrorException(
-				`Cannot get destiantion paht to file typeof ${type}`,
+		try {
+			await this.getS3Client().send(
+				new PutObjectCommand({
+					Bucket: this.envService.get('S3_BUCKET'),
+					Key: key,
+					Body: file.buffer,
+					ContentType: file.mimetype,
+				}),
 			);
-		return path;
-	}
-
-	isFileExist(name: string, fileType: FileTypes) {
-		const folderPath = this.getDestinationPathByFileType(fileType);
-		const filePath = join(process.cwd(), folderPath, name);
-		return existsSync(filePath);
-	}
-
-	async loadFile({
-		url,
-		fileName,
-		outputDir,
-	}: {
-		url: string;
-		fileName: string;
-		outputDir: string;
-	}) {
-		const writer = createWriteStream(join(outputDir, fileName));
-
-		const response = await this.httpService.axiosRef({
-			url: url,
-			method: 'GET',
-			responseType: 'stream',
-		});
-
-		response.data.pipe(writer);
-
-		return new Promise<void>((resolve, reject) => {
-			writer.on('finish', () => resolve());
-			writer.on('error', reject);
-		});
-	}
-
-	async loadFileByFileType({
-		url,
-		fileName,
-		type,
-	}: {
-		url: string;
-		fileName: string;
-		type: FileTypes;
-	}) {
-		await this.loadFile({
-			url,
-			fileName,
-			outputDir: this.getDestinationPathByFileType(type),
-		});
-		return this.getPathToFile(fileName, type);
-	}
-
-	async getOrLoadFile({ url, fileType }: { url: string; fileType: FileTypes }) {
-		const fileName = url.substring(url.lastIndexOf('/') + 1);
-
-		const isImgExist = this.isFileExist(fileName, fileType);
-
-		if (isImgExist) {
-			return this.getPathToFile(fileName, fileType);
-		} else {
-			const loadedImgPath = await this.loadFileByFileType({
-				url,
-				fileName,
-				type: FileTypes.IMG,
-			});
-			return loadedImgPath;
+			return { url: this.getS3PublicUrl(key, { returnOriginalS3Url }), key };
+		} catch (error) {
+			this.logger.error(error);
+			throw new InternalServerErrorException('Failed to upload file');
 		}
 	}
 
-	convertImagePathToUrl(path: string) {
-		const fileName = path.substring(path.lastIndexOf('/') + 1);
-		if (
-			!this.envService.get('APP_URL') ||
-			!this.envService.get('STATIC_IMAGES_PATH_API')
-		)
-			throw new InternalServerErrorException();
+	async deleteFile(key: string) {
+		try {
+			await this.getS3Client().send(
+				new DeleteObjectCommand({
+					Bucket: this.envService.get('S3_BUCKET'),
+					Key: key,
+				}),
+			);
+			return { message: 'File has been successfully deleted' };
+		} catch (error) {
+			this.logger.error(error);
+			throw new InternalServerErrorException('Failed to delete file');
+		}
+	}
 
-		const fullUrl = new URL(this.envService.get('APP_URL'));
-		fullUrl.pathname = joinPath(
-			this.envService.get('STATIC_IMAGES_PATH_API'),
-			fileName,
-		);
+	async getOrDownloadFile({ url }: { url: string }): Promise<string> {
+		let fileName = '';
 
-		return fullUrl.toString();
+		try {
+			const parsed = new URL(url);
+			const last = parsed.pathname.split('/').pop();
+			fileName = last ? decodeURIComponent(last) : '';
+		} catch (_) {
+			const last = url.split('?')[0].split('#')[0].split('/').pop();
+			fileName = last ? decodeURIComponent(last) : '';
+		}
+		if (!fileName) throw new BadRequestException('Invalid file url');
+
+		const guessedMime = this.guessMimeFromFilename(fileName);
+		const prefix = this.getPrefixForMime(guessedMime);
+		const s3Key = prefix ? `${prefix}/${fileName}` : fileName;
+
+		try {
+			await this.getS3Client().send(
+				new HeadObjectCommand({
+					Bucket: this.envService.get('S3_BUCKET'),
+					Key: s3Key,
+				}),
+			);
+			return this.getS3PublicUrl(s3Key);
+		} catch (error) {
+			const httpStatus = error?.$metadata?.httpStatusCode;
+			const isNotFound = httpStatus === 404 || error?.name === 'NotFound';
+			if (!isNotFound)
+				this.logger.warn(`HEAD failed for ${s3Key}: ${error?.message ?? error}`);
+		}
+
+		try {
+			const response = await this.httpService.get<ArrayBuffer>(url, {
+				responseType: 'arraybuffer',
+				validateStatus: () => true,
+			});
+			const { data, status, headers } = await firstValueFrom(response);
+
+			if (status >= 400) throw new Error(`Failed to download: ${status}`);
+
+			const contentType =
+				headers['content-type'] || guessedMime || 'application/octet-stream';
+			await this.getS3Client().send(
+				new PutObjectCommand({
+					Bucket: this.envService.get('S3_BUCKET'),
+					Key: s3Key,
+					Body: Buffer.from(data),
+					ContentType: contentType,
+				}),
+			);
+			this.logger.log(`File ${s3Key} downloaded and uploaded successfully`);
+			return this.getS3PublicUrl(s3Key);
+		} catch (error) {
+			this.logger.error(error);
+			throw new InternalServerErrorException('Failed to fetch and upload file');
+		}
+	}
+
+	private getPrefixForMime(mimetype?: string): string {
+		if (!mimetype) return '';
+		for (const [pattern, prefix] of Object.entries(S3_PREFIX_BY_MIME)) {
+			if (pattern.endsWith('/*')) {
+				const base = pattern.slice(0, -2);
+				if (mimetype.startsWith(base + '/')) return prefix;
+			} else if (mimetype === pattern) {
+				return prefix;
+			}
+		}
+		return '';
+	}
+
+	private guessMimeFromFilename(fileName: string): string | undefined {
+		const lower = fileName.toLowerCase();
+		if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+		if (lower.endsWith('.png')) return 'image/png';
+		if (lower.endsWith('.webp')) return 'image/webp';
+		if (lower.endsWith('.gif')) return 'image/gif';
+		if (lower.endsWith('.svg')) return 'image/svg+xml';
+		if (lower.endsWith('.csv')) return 'text/csv';
+		return undefined;
 	}
 }

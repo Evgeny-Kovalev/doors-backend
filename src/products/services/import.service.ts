@@ -3,10 +3,9 @@ import * as csv from 'fast-csv';
 import { ImportTemplate, ProductDto } from '../dto/product.dto';
 import { ProductVariantFromFile } from '../types';
 import { FilesService } from 'src/files/files.service';
-import { FileTypes } from 'src/files/types';
-import { createReadStream } from 'fs';
 import { AttributesService } from 'src/products/modules/attributes/attributes.service';
 import { VariantCreateDto } from '../modules/variants/variant.dto';
+import { Readable } from 'stream';
 
 @Injectable()
 export class ImportService {
@@ -15,20 +14,23 @@ export class ImportService {
 		private readonly filesService: FilesService,
 	) {}
 
-	async parseCsvFile<T>(path: string): Promise<T[]> {
-		return new Promise((res, rej) => {
+	async parseCsvFile<T>(file: Express.Multer.File): Promise<T[]> {
+		const source = Readable.from(file.buffer);
+
+		return new Promise((resolve, reject) => {
 			const results: T[] = [];
-			createReadStream(path)
-				.pipe(csv.parse({ headers: true }))
-				.on('error', (error) => {
-					rej(error);
+			source
+				.pipe(
+					csv.parse({
+						headers: true,
+						ignoreEmpty: true,
+					}),
+				)
+				.on('error', (error) => reject(error))
+				.on('data', (row) => {
+					results.push(row);
 				})
-				.on('data', (item) => {
-					results.push(item);
-				})
-				.on('end', () => {
-					res(results);
-				});
+				.on('end', () => resolve(results));
 		});
 	}
 
@@ -50,12 +52,7 @@ export class ImportService {
 			);
 
 			const url = variant[imgPathKey];
-			const imgPath = await this.filesService.getOrLoadFile({
-				url,
-				fileType: FileTypes.IMG,
-			});
-
-			const imgUrl = this.filesService.convertImagePathToUrl(imgPath);
+			const imgUrl = await this.filesService.getOrDownloadFile({ url });
 
 			const variantResult: VariantCreateDto = {
 				imgUrl,

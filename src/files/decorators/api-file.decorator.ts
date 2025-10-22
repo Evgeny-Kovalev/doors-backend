@@ -1,9 +1,9 @@
-import { applyDecorators, UseInterceptors } from '@nestjs/common';
+import { applyDecorators, UseInterceptors, Type } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
-import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { fileMimetypeFilter } from '../file-mimetype-filter';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 
 function ApiFile(
 	fieldName: string = 'file',
@@ -31,19 +31,60 @@ function ApiFile(
 export function ApiImageFile(fileName: string = 'image', required: boolean = true) {
 	return ApiFile(fileName, required, {
 		fileFilter: fileMimetypeFilter('image'),
-		storage: diskStorage({
-			destination: './files/images',
-			filename: (req, file, cb) => cb(null, file.originalname),
-		}),
+		storage: memoryStorage(),
 	});
 }
 
 export function ApiCsvFile(fileName: string = 'document', required: boolean = true) {
 	return ApiFile(fileName, required, {
-		fileFilter: fileMimetypeFilter('text/csv'),
-		storage: diskStorage({
-			destination: './files/docs',
-			filename: (req, file, cb) => cb(null, file.originalname),
-		}),
+		fileFilter: fileMimetypeFilter('text/csv', 'application/csv'),
+		storage: memoryStorage(),
 	});
+}
+
+export function ApiUploadFile(fileName: string = 'file', required: boolean = true) {
+	return ApiFile(fileName, required, {
+		fileFilter: fileMimetypeFilter('image', 'text/csv', 'application/csv'),
+		storage: memoryStorage(),
+	});
+}
+
+export function ApiFileWithBody<TModel extends Type<unknown>>({
+	bodyType,
+	fileName,
+	required,
+	mimetype,
+}: {
+	bodyType: TModel;
+	fileName: string;
+	required: boolean;
+	mimetype: string[];
+}) {
+	return applyDecorators(
+		ApiExtraModels(bodyType),
+		UseInterceptors(
+			FileInterceptor(fileName, {
+				fileFilter: fileMimetypeFilter(...mimetype),
+				storage: memoryStorage(),
+			}),
+		),
+		ApiConsumes('multipart/form-data'),
+		ApiBody({
+			schema: {
+				allOf: [
+					{ $ref: getSchemaPath(bodyType) },
+					{
+						type: 'object',
+						required: required ? [fileName] : [],
+						properties: {
+							[fileName]: {
+								type: 'string',
+								format: 'binary',
+							},
+						},
+					},
+				],
+			},
+		}),
+	);
 }

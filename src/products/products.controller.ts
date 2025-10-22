@@ -10,6 +10,7 @@ import {
 	ParseIntPipe,
 	UseGuards,
 	Logger,
+	UploadedFile,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import {
@@ -33,6 +34,7 @@ import {
 	PaginatedProductDto,
 } from './dto/product.dto';
 import { CategoriesService } from 'src/categories/categories.service';
+import { ApiFileWithBody } from '../files/decorators/api-file.decorator';
 
 @ApiTags('Products')
 @Controller({
@@ -119,12 +121,27 @@ export class ProductsController {
 	@ApiCreatedResponse({ type: [ProductDto] })
 	@HasRoles(Role.ADMIN)
 	@UseGuards(RolesGuard)
+	@ApiFileWithBody({
+		bodyType: ProductImportDto,
+		fileName: 'file',
+		required: true,
+		mimetype: ['text/csv', 'application/csv'],
+	})
 	@Post('/import')
-	async importProduct(@Body() dto: ProductImportDto) {
+	async importProduct(
+		@Body() dto: ProductImportDto,
+		@UploadedFile() file: Express.Multer.File,
+	) {
 		this.logger.log('Product import start');
 
-		const createdProducts: ProductDto[] =
-			await this.productsService.importFromFile(dto);
+		// const { url: fileUrl } = await this.filesService.uploadFileToS3(file, {
+		// 	returnOriginalS3Url: true,
+		// });
+
+		const createdProducts: ProductDto[] = await this.productsService.importFromFile(
+			dto,
+			{ file },
+		);
 
 		this.logger.log('Product import end');
 

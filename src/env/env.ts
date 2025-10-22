@@ -8,11 +8,6 @@ export const envSchema = z.object({
 
 	APP_URL: z.url(),
 
-	STATIC_DOCS_PATH: z.string(),
-	STATIC_IMAGES_PATH: z.string(),
-
-	STATIC_IMAGES_PATH_API: z.string(),
-
 	SECRET_JWT: z.string(),
 
 	TOKEN_EXPIRES_IN: z.string(),
@@ -23,6 +18,12 @@ export const envSchema = z.object({
 	TELEGRAM_CHAT_IDS: z.string(),
 
 	SENTRY_DSN: process.env.NODE_ENV === 'production' ? z.url() : z.url().optional(),
+
+	S3_BUCKET: z.string(),
+	S3_REGION: z.string(),
+	S3_ACCESS_KEY_ID: z.string(),
+	S3_SECRET_ACCESS_KEY: z.string(),
+	S3_ENDPOINT: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

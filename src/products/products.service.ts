@@ -2,7 +2,6 @@ import { AttributesService } from './modules/attributes/attributes.service';
 import { VariantsService } from './modules/variants/variants.service';
 import { FilesService } from 'src/files/files.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { FileTypes } from 'src/files/types';
 import { ImportService } from './services/import.service';
 import { groupBy } from 'src/utils';
 import { ProductVariantFromFile } from './types';
@@ -287,8 +286,10 @@ export class ProductsService {
 		}
 	}
 
-	async importFromFile(dto: ProductImportDto): Promise<ProductDto[]> {
-		const filePath = this.filesService.getPathToFile(dto.fileName, FileTypes.DOC);
+	async importFromFile(
+		dto: ProductImportDto,
+		{ file }: { file: Express.Multer.File },
+	): Promise<ProductDto[]> {
 		const GROUP_BY_KEY = 'name';
 
 		const category = await this.categoriesService.getById(dto.categoryId);
@@ -297,7 +298,7 @@ export class ProductsService {
 
 		try {
 			productsFromFile =
-				await this.importService.parseCsvFile<ProductVariantFromFile>(filePath);
+				await this.importService.parseCsvFile<ProductVariantFromFile>(file);
 		} catch (e) {
 			throw new BadRequestException('File parse error');
 		}
@@ -365,18 +366,13 @@ export class ProductsService {
 		);
 
 		const url = mainVariant[imgPathKey];
-		const imgPath = await this.filesService.getOrLoadFile({
-			url,
-			fileType: FileTypes.IMG,
-		});
-
-		const imgUrl = this.filesService.convertImagePathToUrl(imgPath);
+		const uploadedImageUrl = await this.filesService.getOrDownloadFile({ url });
 
 		const productDto: ProductCreateDto = {
 			// TODO: desc
 			description: 'test desc',
 			categoryId: category.id,
-			imgUrl: imgUrl,
+			imgUrl: uploadedImageUrl,
 			name: mainVariant[nameKey],
 			paramIds: params.map((param) => param.id),
 		};
