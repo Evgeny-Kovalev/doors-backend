@@ -1,7 +1,6 @@
 import {
 	Body,
 	Controller,
-	Get,
 	HttpCode,
 	HttpStatus,
 	Logger,
@@ -44,15 +43,16 @@ export class AuthController {
 	}
 
 	@ApiBearerAuth()
-	@Get('logout')
+	@Post('logout')
 	@HttpCode(HttpStatus.OK)
 	logout(@GetCurrentUserId() userId: number): Promise<boolean> {
 		return this.authService.logout(userId);
 	}
 
-	@ApiBearerAuth()
+	@ApiBearerAuth('refresh')
+	@Public()
 	@UseGuards(RtGuard)
-	@Get('refresh')
+	@Post('refresh')
 	@HttpCode(HttpStatus.OK)
 	refreshTokens(
 		@GetCurrentUserId() userId: number,

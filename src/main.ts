@@ -34,6 +34,15 @@ async function bootstrap() {
 		.setTitle('Shop backend')
 		.setVersion('1.0')
 		.addBearerAuth()
+		.addBearerAuth(
+			{
+				type: 'http',
+				scheme: 'bearer',
+				bearerFormat: 'JWT',
+				description: 'Provide refresh token as Bearer <token>',
+			},
+			'refresh',
+		)
 		.build();
 	const document = SwaggerModule.createDocument(app, config);
 
