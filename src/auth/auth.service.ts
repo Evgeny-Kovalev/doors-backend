@@ -34,10 +34,10 @@ export class AuthService {
 
 	async signIn(dto: AuthDto): Promise<Tokens> {
 		const user = await this.usersService.findOneByEmail(dto.email);
-		if (!user) throw new ForbiddenException('User does not exist');
+		if (!user) throw new ForbiddenException('Invalid credentials');
 
 		const passwordMatches = await argon.verify(user.password, dto.password);
-		if (!passwordMatches) throw new ForbiddenException('Password is incorrect');
+		if (!passwordMatches) throw new ForbiddenException('Invalid credentials');
 
 		const tokens = await this.generateTokens(user, user.email);
 		await this.updateRefreshToken(user.id, tokens.refreshToken);
