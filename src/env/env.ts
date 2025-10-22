@@ -4,6 +4,10 @@ export const envSchema = z.object({
 	NODE_ENV: z.enum(['development', 'production', 'test']),
 	PORT: z.coerce.number().optional().default(4000),
 
+	DB_USER: z.string(),
+	DB_PASSWORD: z.string(),
+	DB_NAME: z.string(),
+	DB_HOST: z.string(),
 	DATABASE_URL: z.url(),
 
 	APP_URL: z.url(),
