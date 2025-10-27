@@ -35,3 +35,7 @@ export const createPaginatedSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
 		.meta({
 			title: 'Paginated response',
 		});
+
+export type PaginatedResponse<T extends z.ZodTypeAny> = z.infer<
+	ReturnType<typeof createPaginatedSchema<T>>
+>;

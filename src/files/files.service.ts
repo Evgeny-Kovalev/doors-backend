@@ -55,10 +55,10 @@ export class FilesService {
 		if (returnOriginalS3Url) {
 			return `${this.envService.get('S3_ENDPOINT')}/${this.envService.get('S3_BUCKET')}/${key}`;
 		}
-		const appUrl = new URL(this.envService.get('APP_URL'));
-		appUrl.pathname = `/${encodeURIComponent(key)}`;
+		const appFilesUrl = new URL(this.envService.get('APP_FILES_URL'));
+		appFilesUrl.pathname = `/${encodeURIComponent(key)}`;
 
-		return appUrl.toString();
+		return appFilesUrl.toString();
 	}
 
 	async uploadFileToS3(
@@ -101,22 +101,32 @@ export class FilesService {
 		}
 	}
 
-	async getOrDownloadFile({ url }: { url: string }): Promise<string> {
-		let fileName = '';
+	async getOrDownloadFile({
+		url,
+		fileExtensionInS3,
+	}: {
+		url: string;
+		fileExtensionInS3?: '.webp';
+	}): Promise<string> {
+		let fileNameFull = '';
 
 		try {
 			const parsed = new URL(url);
 			const last = parsed.pathname.split('/').pop();
-			fileName = last ? decodeURIComponent(last) : '';
+			fileNameFull = last ? decodeURIComponent(last) : '';
 		} catch (_) {
 			const last = url.split('?')[0].split('#')[0].split('/').pop();
-			fileName = last ? decodeURIComponent(last) : '';
+			fileNameFull = last ? decodeURIComponent(last) : '';
 		}
-		if (!fileName) throw new BadRequestException('Invalid file url');
 
-		const guessedMime = this.guessMimeFromFilename(fileName);
+		if (!fileNameFull) throw new BadRequestException('Invalid file url');
+
+		const guessedMime = this.guessMimeFromFilename(fileNameFull);
 		const prefix = this.getPrefixForMime(guessedMime);
-		const s3Key = prefix ? `${prefix}/${fileName}` : fileName;
+		const fileName = fileNameFull.split('.')[0];
+		const s3Key = prefix
+			? `${prefix}/${fileName}${fileExtensionInS3}`
+			: `${fileName}${fileExtensionInS3}`;
 
 		try {
 			await this.getS3Client().send(
@@ -125,6 +135,7 @@ export class FilesService {
 					Key: s3Key,
 				}),
 			);
+			this.logger.log(`FILE with key "${s3Key}" EXISTS`);
 			return this.getS3PublicUrl(s3Key);
 		} catch (error) {
 			const httpStatus = error?.$metadata?.httpStatusCode;
@@ -133,6 +144,9 @@ export class FilesService {
 				this.logger.warn(`HEAD failed for ${s3Key}: ${error?.message ?? error}`);
 		}
 
+		this.logger.log(
+			`FILE with key "${s3Key}" DOES NOT EXIST. Trying to download file from URL: ${url}`,
+		);
 		try {
 			const response = await this.httpService.get<ArrayBuffer>(url, {
 				responseType: 'arraybuffer',
@@ -152,7 +166,7 @@ export class FilesService {
 					ContentType: contentType,
 				}),
 			);
-			this.logger.log(`File ${s3Key} downloaded and uploaded successfully`);
+			this.logger.log(`File ${s3Key} downloaded and uploaded to S3 successfully`);
 			return this.getS3PublicUrl(s3Key);
 		} catch (error) {
 			this.logger.error(error);

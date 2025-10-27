@@ -97,15 +97,12 @@ export class ProductsController {
 	@ApiOkResponse({ type: ProductDto })
 	@HasRoles(Role.ADMIN)
 	@UseGuards(RolesGuard)
-	@Patch(':id')
+	@Patch(':slug')
 	async update(
-		@Param('id', ParseIntPipe) productId: number,
+		@Param('slug') slug: string,
 		@Body() productUpdateDto: ProductUpdateDto,
 	): Promise<ProductDto> {
-		const updatedProduct = await this.productsService.update(
-			productId,
-			productUpdateDto,
-		);
+		const updatedProduct = await this.productsService.update(slug, productUpdateDto);
 		return updatedProduct;
 	}
 

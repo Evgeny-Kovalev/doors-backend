@@ -10,7 +10,7 @@ export const envSchema = z.object({
 	DB_HOST: z.string(),
 	DATABASE_URL: z.url(),
 
-	APP_URL: z.url(),
+	APP_FILES_URL: z.url(),
 
 	SECRET_JWT: z.string(),
 

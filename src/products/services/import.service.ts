@@ -52,7 +52,10 @@ export class ImportService {
 			);
 
 			const url = variant[imgPathKey];
-			const imgUrl = await this.filesService.getOrDownloadFile({ url });
+			const imgUrl = await this.filesService.getOrDownloadFile({
+				url,
+				fileExtensionInS3: '.webp',
+			});
 
 			const variantResult: VariantCreateDto = {
 				imgUrl,

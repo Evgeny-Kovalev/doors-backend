@@ -27,7 +27,7 @@
 		"prisma:migrate:dev": "dotenv -e .env.development -- npx prisma migrate dev",
 		"prisma:studio:prod": "dotenv -e .env.production -- npx prisma studio",
 		"prisma:generate:prod": "dotenv -e .env.production -- npx prisma generate",
-		"prisma:migrate:prod": "dotenv -e .env.production -- npx prisma migrate dev"
+		"prisma:migrate:prod": "dotenv -e .env.production -- npx prisma migrate deploy"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.914.0",

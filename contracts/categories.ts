@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { CategoryType as CategoryType2 } from '@prisma/client';
+
+export const CategoryType = {
+	interiorDoors: 'interiorDoors',
+	exteriorDoors: 'exteriorDoors',
+} as const;
 
 export const CategorySchema = z.object({
 	id: z.number(),
@@ -7,13 +11,13 @@ export const CategorySchema = z.object({
 	name: z.string(),
 	imgUrl: z.string(),
 	categoryType: z
-		.enum([CategoryType2.exteriorDoors, CategoryType2.interiorDoors])
+		.enum([CategoryType.exteriorDoors, CategoryType.interiorDoors])
 		.default('interiorDoors'),
 	description: z.string(),
 	isVisible: z.boolean().default(true),
 	parentCategoryId: z.number().nullable().default(null),
 });
-export type CategoryType = z.infer<typeof CategorySchema>;
+export type CategoryResponse = z.infer<typeof CategorySchema>;
 
 export const CategoryCreateSchema = CategorySchema.omit({ id: true, slug: true }).partial(
 	{

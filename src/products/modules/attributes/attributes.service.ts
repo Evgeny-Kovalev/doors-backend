@@ -11,30 +11,30 @@ import { AttributeCreateDto, AttributeDto } from './dto';
 
 @Injectable()
 export class AttributesService {
-	constructor(private readonly prismaServise: PrismaService) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
 	private readonly logger = new Logger(AttributesService.name);
 
 	async getOneById(id: number): Promise<Attribute | null> {
-		return await this.prismaServise.attribute.findFirst({ where: { id } });
+		return await this.prismaService.attribute.findFirst({ where: { id } });
 	}
 
 	async getOne(key: string, value: string): Promise<AttributeDto | null> {
-		return await this.prismaServise.attribute.findFirst({
+		return await this.prismaService.attribute.findFirst({
 			where: { key: { value: key }, value: { value } },
 			include: { key: true, value: true },
 		});
 	}
 
 	async getManyByKey(key: string): Promise<AttributeDto[]> {
-		return await this.prismaServise.attribute.findMany({
+		return await this.prismaService.attribute.findMany({
 			where: { key: { value: key } },
 			include: { key: true, value: true },
 		});
 	}
 
 	async getManyByIds(ids: number[]): Promise<AttributeDto[]> {
-		return await this.prismaServise.attribute.findMany({
+		return await this.prismaService.attribute.findMany({
 			where: { id: { in: ids } },
 			include: { key: true, value: true },
 		});
@@ -122,7 +122,7 @@ export class AttributesService {
 
 	async createOne(dto: AttributeCreateDto): Promise<AttributeDto> {
 		try {
-			const newAttribute: AttributeDto = await this.prismaServise.attribute.create({
+			const newAttribute: AttributeDto = await this.prismaService.attribute.create({
 				data: {
 					key: {
 						connectOrCreate: {
@@ -157,7 +157,7 @@ export class AttributesService {
 	}
 
 	async isExist(key: string): Promise<boolean> {
-		return !!(await this.prismaServise.attribute.findFirst({
+		return !!(await this.prismaService.attribute.findFirst({
 			where: { key: { value: key } },
 		}));
 	}

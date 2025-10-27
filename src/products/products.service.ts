@@ -40,6 +40,7 @@ export class ProductsService {
 		try {
 			const productFilter: Prisma.ProductWhereInput = {
 				name: { contains: query?.q, mode: 'insensitive' },
+				productType: query?.productTypes ? { in: query.productTypes } : undefined,
 			};
 			if (query?.categorySlug) {
 				const ids = await this.categoriesService.getDescendantCategoryIdsBySlug(
@@ -195,6 +196,7 @@ export class ProductsService {
 					},
 				},
 			});
+			this.logger.log(`Created product: ${product.name}`);
 			return product;
 		} catch (e) {
 			this.logger.error(e);
@@ -202,9 +204,9 @@ export class ProductsService {
 		}
 	}
 
-	async update(productId: number, dto: ProductUpdateDto): Promise<ProductDto> {
+	async update(slug: string, dto: ProductUpdateDto): Promise<ProductDto> {
 		try {
-			const product = await this.getById(productId);
+			const product = await this.getBySlug(slug);
 			const {
 				name,
 				categoryId,
@@ -229,7 +231,7 @@ export class ProductsService {
 			const updatedProduct: ProductDto = await this.prismaService.product.update({
 				where: { id: product.id },
 				data: {
-					slug: name && slugify(name, { lower: true }),
+					// slug: name && slugify(name, { lower: true }),
 					name,
 					description,
 					imgUrl,
@@ -318,6 +320,12 @@ export class ProductsService {
 
 		const allProducts = Object.values(groupedProducts);
 
+		this.logger.log(
+			'Grouped products names:',
+			allProducts.map((p) => p[0].name),
+		);
+		this.logger.log(`Grouped products length: ${allProducts.length}`);
+
 		const createdProducts: ProductDto[] = [];
 
 		for (const productVariants of allProducts) {
@@ -345,6 +353,8 @@ export class ProductsService {
 			const createdProduct: ProductDto = await this.getById(newProduct.id);
 			createdProducts.push(createdProduct);
 		}
+
+		this.logger.log(`Created products length: ${createdProducts.length}`);
 		return createdProducts;
 	}
 
@@ -366,7 +376,10 @@ export class ProductsService {
 		);
 
 		const url = mainVariant[imgPathKey];
-		const uploadedImageUrl = await this.filesService.getOrDownloadFile({ url });
+		const uploadedImageUrl = await this.filesService.getOrDownloadFile({
+			url,
+			fileExtensionInS3: '.webp',
+		});
 
 		const productDto: ProductCreateDto = {
 			// TODO: desc

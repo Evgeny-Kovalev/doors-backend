@@ -49,6 +49,7 @@ export class VariantsService {
 					},
 					include: { attributes: { include: { key: true, value: true } } },
 				});
+			this.logger.log(`Created variant id: ${createdVariant.id}`);
 			return createdVariant;
 		} catch (e) {
 			this.logger.error(e);
