@@ -52,8 +52,8 @@ model Product {
   isVisible   Boolean     @default(true)
   productType ProductType @default(full)
 
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId Int
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId Int?
 
   variants ProductVariant[]
   params   Attribute[]

@@ -20,7 +20,7 @@ export const ProductBaseSchema = z.object({
 });
 
 export const ProductSchema = ProductBaseSchema.extend({
-	category: CategorySchema,
+	category: CategorySchema.optional().nullable(),
 	variants: z.array(VariantSchema),
 	params: z.array(AttributeSchema),
 }).meta({
@@ -64,7 +64,7 @@ export const ProductCreateSchema = ProductBaseSchema.omit({
 		productType: true,
 	})
 	.extend({
-		categoryId: z.number(),
+		categoryId: z.number().optional().nullable(),
 		paramIds: z.array(z.number()),
 	})
 	.meta({

@@ -178,7 +178,7 @@ export class ProductsService {
 					imgUrl,
 					isVisible,
 					productType,
-					category: { connect: { id: categoryId } },
+					category: categoryId ? { connect: { id: categoryId } } : undefined,
 					params: { connect: paramIds.map((id) => ({ id })) },
 				},
 				include: {
