@@ -5,12 +5,13 @@ import {
 	Get,
 	Param,
 	ParseIntPipe,
+	Patch,
 	Post,
 	UseGuards,
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { CollectionCreateDto, CollectionDto } from './dto';
+import { CollectionCreateDto, CollectionDto, CollectionUpdateDto } from './dto';
 import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
 import { Role } from '@prisma/client';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
@@ -22,6 +23,13 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 })
 export class CollectionsController {
 	constructor(private readonly collectionsService: CollectionsService) {}
+
+	@Public()
+	@Get()
+	@ApiOkResponse({ type: [CollectionDto] })
+	async findAll(): Promise<CollectionDto[]> {
+		return this.collectionsService.findAll();
+	}
 
 	@Public()
 	@Get(':id')
@@ -36,5 +44,13 @@ export class CollectionsController {
 	@Post()
 	create(@Body() dto: CollectionCreateDto) {
 		return this.collectionsService.create(dto);
+	}
+
+	@ApiBearerAuth()
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
+	@Patch(':id')
+	update(@Param('id', ParseIntPipe) id: number, @Body() dto: CollectionUpdateDto) {
+		return this.collectionsService.update(id, dto);
 	}
 }

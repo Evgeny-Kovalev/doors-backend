@@ -8,8 +8,7 @@ export const CollectionSchema = z.object({
 	categories: z.array(CategorySchema),
 	products: z.array(ProductSchema),
 });
-
-export type CollectionCreateType = z.infer<typeof CollectionCreateSchema>;
+export type CollectionType = z.infer<typeof CollectionSchema>;
 
 export const CollectionCreateSchema = CollectionSchema.omit({
 	id: true,
@@ -18,5 +17,8 @@ export const CollectionCreateSchema = CollectionSchema.omit({
 	categoryIds: z.array(z.number()),
 	productIds: z.array(z.number()),
 });
+export type CollectionCreateType = z.infer<typeof CollectionCreateSchema>;
 
-export type CollectionType = z.infer<typeof CollectionSchema>;
+export const CollectionUpdateSchema = CollectionCreateSchema.partial();
+
+export type CollectionUpdateType = z.infer<typeof CollectionUpdateSchema>;

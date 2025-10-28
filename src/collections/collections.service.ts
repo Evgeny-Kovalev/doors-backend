@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CollectionCreateDto, CollectionDto } from './dto';
+import { CollectionCreateDto, CollectionDto, CollectionUpdateDto } from './dto';
 
 @Injectable()
 export class CollectionsService {
@@ -32,6 +32,72 @@ export class CollectionsService {
 			});
 		if (!collection) throw new BadRequestException('Collection with this id not found');
 		return collection;
+	}
+
+	async findAll(): Promise<CollectionDto[]> {
+		const collections: CollectionDto[] = await this.prismaService.collection.findMany({
+			include: {
+				categories: true,
+				products: {
+					include: {
+						category: true,
+						params: { include: { key: true, value: true } },
+						variants: {
+							include: {
+								attributes: {
+									include: {
+										key: true,
+										value: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		});
+		return collections;
+	}
+
+	async update(id: number, dto: CollectionUpdateDto): Promise<CollectionDto> {
+		const { title, categoryIds, productIds } = dto;
+		try {
+			const updatedCollection = await this.prismaService.collection.update({
+				where: { id },
+				data: {
+					title,
+					categories: categoryIds
+						? { set: categoryIds.map((id) => ({ id })) }
+						: undefined,
+					products: productIds
+						? { set: productIds.map((id) => ({ id })) }
+						: undefined,
+				},
+				include: {
+					categories: true,
+					products: {
+						include: {
+							category: true,
+							params: { include: { key: true, value: true } },
+							variants: {
+								include: {
+									attributes: {
+										include: {
+											key: true,
+											value: true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			});
+
+			return updatedCollection;
+		} catch (e) {
+			throw new BadRequestException('Cannot update the collection');
+		}
 	}
 
 	async create(dto: CollectionCreateDto) {
