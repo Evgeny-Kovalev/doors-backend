@@ -7,13 +7,26 @@ import {
 import { Attribute, AttributeValue } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProductVariantFromFile } from 'src/products/types';
-import { AttributeCreateDto, AttributeDto } from './dto';
+import {
+	AttributeCreateDto,
+	AttributeDto,
+	AttributeKeyDto,
+	AttributeKeyUpdateDto,
+	AttributeValueDto,
+	AttributeValueUpdateDto,
+} from './dto';
 
 @Injectable()
 export class AttributesService {
 	constructor(private readonly prismaService: PrismaService) {}
 
 	private readonly logger = new Logger(AttributesService.name);
+
+	async findAll(): Promise<AttributeDto[]> {
+		return await this.prismaService.attribute.findMany({
+			include: { key: true, value: true },
+		});
+	}
 
 	async getOneById(id: number): Promise<Attribute | null> {
 		return await this.prismaService.attribute.findFirst({ where: { id } });
@@ -98,10 +111,10 @@ export class AttributesService {
 				key: {
 					value: attrKey,
 					label: attrKey,
-					imgUrl: null,
 				},
 				value: {
 					value: valueInDoc,
+					imgUrl: null,
 				},
 			});
 			attributes.push(attribute);
@@ -132,7 +145,6 @@ export class AttributesService {
 							create: {
 								value: dto.key.value,
 								label: dto.key.label,
-								imgUrl: dto.key.imgUrl,
 							},
 						},
 					},
@@ -143,6 +155,7 @@ export class AttributesService {
 							},
 							create: {
 								value: dto.value.value,
+								imgUrl: dto.value.imgUrl,
 							},
 						},
 					},
@@ -162,7 +175,28 @@ export class AttributesService {
 		}));
 	}
 
-	async update() {}
+	async updateKey(id: number, dto: AttributeKeyUpdateDto): Promise<AttributeKeyDto> {
+		return await this.prismaService.attributeKey.update({
+			where: { id },
+			data: {
+				value: dto.value,
+				label: dto.label,
+			},
+		});
+	}
+
+	async updateValue(
+		id: number,
+		dto: AttributeValueUpdateDto,
+	): Promise<AttributeValueDto> {
+		return await this.prismaService.attributeValue.update({
+			where: { id },
+			data: {
+				value: dto.value,
+				imgUrl: dto.imgUrl,
+			},
+		});
+	}
 
 	async delete() {}
 }

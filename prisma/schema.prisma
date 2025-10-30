@@ -89,17 +89,17 @@ model Attribute {
 }
 
 model AttributeKey {
-  id     Int     @id @default(autoincrement())
-  value  String  @unique
-  label  String
-  imgUrl String?
+  id    Int    @id @default(autoincrement())
+  value String @unique
+  label String
 
   attribute Attribute[]
 }
 
 model AttributeValue {
-  id    Int    @id @default(autoincrement())
-  value String @unique
+  id     Int     @id @default(autoincrement())
+  value  String  @unique
+  imgUrl String?
 
   attribute Attribute[]
 }
