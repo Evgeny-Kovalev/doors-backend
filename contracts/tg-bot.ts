@@ -20,3 +20,19 @@ export const TgBotCallbackResponseSchema = z
 	});
 
 export type TgBotCallbackResponse = z.infer<typeof TgBotCallbackResponseSchema>;
+
+// FEEDBACK
+
+export const TgBotFeedbackSchema = TgBotCallbackSchema.extend({
+	text: z.string().min(5),
+}).meta({
+	title: 'Telegram Bot feedback request',
+});
+
+export type TgBotFeedback = z.infer<typeof TgBotFeedbackSchema>;
+
+export const TgBotFeedbackResponseSchema = TgBotCallbackResponseSchema.meta({
+	title: 'Telegram Bot feedback response',
+});
+
+export type TgBotFeedbackResponse = z.infer<typeof TgBotFeedbackResponseSchema>;
