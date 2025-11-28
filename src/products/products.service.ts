@@ -66,6 +66,7 @@ export class ProductsService {
 					where: productFilter,
 					take: limit,
 					skip: (page - 1) * limit,
+					orderBy: [{ category: { order: 'asc' } }, { name: 'asc' }],
 				}),
 				this.prismaService.product.count({
 					where: productFilter,

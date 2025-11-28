@@ -22,6 +22,9 @@ export class CategoriesService {
 					slug: dto.parentCategorySlug,
 				},
 			},
+			orderBy: {
+				order: 'asc',
+			},
 		});
 		return categories;
 	}
@@ -67,7 +70,7 @@ export class CategoriesService {
 
 	async update(categoryId: number, dto: CategoryUpdateDto): Promise<CategoryDto> {
 		await this.getById(categoryId);
-		const { name, description, imgUrl, isVisible, parentCategoryId, slug } = dto;
+		const { name, description, imgUrl, isVisible, parentCategoryId, slug, order } = dto;
 
 		try {
 			const updatedCategory = await this.prismaService.category.update({
@@ -78,6 +81,7 @@ export class CategoriesService {
 					imgUrl,
 					isVisible,
 					parentCategoryId,
+					order,
 				},
 				where: { id: categoryId },
 			});

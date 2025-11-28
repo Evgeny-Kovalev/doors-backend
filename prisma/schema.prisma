@@ -30,6 +30,8 @@ model Category {
 
   products    Product[]
   collections Collection[]
+
+  order Int?
 }
 
 enum CategoryType {

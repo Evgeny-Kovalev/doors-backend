@@ -16,6 +16,7 @@ export const CategorySchema = z.object({
 	description: z.string(),
 	isVisible: z.boolean().default(true),
 	parentCategoryId: z.number().nullable().default(null),
+	order: z.number().nullable().default(null),
 });
 export type CategoryResponse = z.infer<typeof CategorySchema>;
 
@@ -24,6 +25,7 @@ export const CategoryCreateSchema = CategorySchema.omit({ id: true, slug: true }
 		categoryType: true,
 		isVisible: true,
 		parentCategoryId: true,
+		order: true,
 	},
 );
 export type CategoryCreateType = z.infer<typeof CategoryCreateSchema>;
