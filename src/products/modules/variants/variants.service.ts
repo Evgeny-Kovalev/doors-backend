@@ -9,6 +9,11 @@ import { AttributesService } from 'src/products/modules/attributes/attributes.se
 import { ProductDto } from '../../dto/product.dto';
 import { VariantDto, VariantCreateDto, VariantUpdateDto } from './variant.dto';
 
+const DEFAULT_INCLUDE = {
+	attributes: { include: { key: true, value: true } },
+	tags: true,
+};
+
 @Injectable()
 export class VariantsService {
 	constructor(
@@ -21,7 +26,7 @@ export class VariantsService {
 	async getAll(product: ProductDto): Promise<VariantDto[]> {
 		const variants: VariantDto[] = await this.prismaService.productVariant.findMany({
 			where: { productId: product.id },
-			include: { attributes: { include: { key: true, value: true } } },
+			include: DEFAULT_INCLUDE,
 		});
 		return variants;
 	}
@@ -29,7 +34,7 @@ export class VariantsService {
 	async getById(id: number): Promise<VariantDto> {
 		const variant = await this.prismaService.productVariant.findFirst({
 			where: { id },
-			include: { attributes: { include: { key: true, value: true } } },
+			include: DEFAULT_INCLUDE,
 		});
 		if (!variant) throw new BadRequestException('Variant with this id not found');
 		return variant;
@@ -47,7 +52,7 @@ export class VariantsService {
 						attributes: { connect: attributeIds.map((id) => ({ id })) },
 						product: { connect: { id: productId } },
 					},
-					include: { attributes: { include: { key: true, value: true } } },
+					include: DEFAULT_INCLUDE,
 				});
 			this.logger.log(`Created variant id: ${createdVariant.id}`);
 			return createdVariant;
@@ -81,7 +86,7 @@ export class VariantsService {
 					discountPrice,
 					attributes: newAttributes ? { set: newAttributes } : undefined,
 				},
-				include: { attributes: { include: { key: true, value: true } } },
+				include: DEFAULT_INCLUDE,
 			});
 			return updatedVariant;
 		} catch (e) {
@@ -95,7 +100,7 @@ export class VariantsService {
 		try {
 			return this.prismaService.productVariant.delete({
 				where: { id },
-				include: { attributes: { include: { key: true, value: true } } },
+				include: DEFAULT_INCLUDE,
 			});
 		} catch (e) {
 			this.logger.error(e);

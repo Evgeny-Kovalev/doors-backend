@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { envSchema } from './env/env';
 import { CollectionsModule } from './collections/collections.module';
 import { TgBotModule } from './tg-bot/tg-bot.module';
+import { TagsModule } from './tags/tags.module';
 import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ZodValidationPipe, ZodSerializerInterceptor } from 'nestjs-zod';
 import { HttpExceptionFilter } from './http-exception.filter';
@@ -31,6 +32,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 		AuthModule,
 		CollectionsModule,
 		TgBotModule,
+		TagsModule,
 	],
 	providers: [
 		{

@@ -65,6 +65,7 @@ export class ImportService {
 				discountPrice: variant[discountPriceKey]
 					? parseInt(variant[discountPriceKey])
 					: undefined,
+				tags: [],
 			};
 			productVariantsDtos.push(variantResult);
 		}

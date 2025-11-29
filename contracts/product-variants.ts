@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { AttributeSchema } from './attributes';
+import { TagSchema } from './tags';
 
 export const VariantSchema = z.object({
 	id: z.number(),
@@ -8,6 +9,7 @@ export const VariantSchema = z.object({
 	price: z.number().nullable().default(null),
 	discountPrice: z.number().nullable().default(null),
 	attributes: z.array(AttributeSchema),
+	tags: z.array(TagSchema),
 });
 export type VariantType = z.infer<typeof VariantSchema>;
 

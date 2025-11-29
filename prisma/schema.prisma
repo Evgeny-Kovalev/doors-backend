@@ -73,6 +73,7 @@ model ProductVariant {
   productId Int
 
   attributes Attribute[]
+  tags       Tag[]
 }
 
 model Attribute {
@@ -125,4 +126,12 @@ model Collection {
 
   products   Product[]
   categories Category[]
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  key   String
+  label String
+
+  productVariant ProductVariant[]
 }

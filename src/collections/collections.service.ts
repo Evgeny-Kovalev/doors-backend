@@ -2,6 +2,27 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CollectionCreateDto, CollectionDto, CollectionUpdateDto } from './dto';
 
+const DEFAULT_INCLUDE = {
+	categories: true,
+	products: {
+		include: {
+			category: true,
+			params: { include: { key: true, value: true } },
+			variants: {
+				include: {
+					attributes: {
+						include: {
+							key: true,
+							value: true,
+						},
+					},
+					tags: true,
+				},
+			},
+		},
+	},
+};
+
 @Injectable()
 export class CollectionsService {
 	constructor(private readonly prismaService: PrismaService) {}
@@ -10,25 +31,7 @@ export class CollectionsService {
 		const collection: CollectionDto | null =
 			await this.prismaService.collection.findFirst({
 				where: { id },
-				include: {
-					categories: true,
-					products: {
-						include: {
-							category: true,
-							params: { include: { key: true, value: true } },
-							variants: {
-								include: {
-									attributes: {
-										include: {
-											key: true,
-											value: true,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				include: DEFAULT_INCLUDE,
 			});
 		if (!collection) throw new BadRequestException('Collection with this id not found');
 		return collection;
@@ -36,25 +39,7 @@ export class CollectionsService {
 
 	async findAll(): Promise<CollectionDto[]> {
 		const collections: CollectionDto[] = await this.prismaService.collection.findMany({
-			include: {
-				categories: true,
-				products: {
-					include: {
-						category: true,
-						params: { include: { key: true, value: true } },
-						variants: {
-							include: {
-								attributes: {
-									include: {
-										key: true,
-										value: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			include: DEFAULT_INCLUDE,
 		});
 		return collections;
 	}
@@ -73,25 +58,7 @@ export class CollectionsService {
 						? { set: productIds.map((id) => ({ id })) }
 						: undefined,
 				},
-				include: {
-					categories: true,
-					products: {
-						include: {
-							category: true,
-							params: { include: { key: true, value: true } },
-							variants: {
-								include: {
-									attributes: {
-										include: {
-											key: true,
-											value: true,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				include: DEFAULT_INCLUDE,
 			});
 
 			return updatedCollection;
@@ -109,25 +76,7 @@ export class CollectionsService {
 					categories: { connect: categoryIds.map((id) => ({ id })) },
 					products: { connect: productIds.map((id) => ({ id })) },
 				},
-				include: {
-					categories: true,
-					products: {
-						include: {
-							category: true,
-							params: { include: { key: true, value: true } },
-							variants: {
-								include: {
-									attributes: {
-										include: {
-											key: true,
-											value: true,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				include: DEFAULT_INCLUDE,
 			});
 			return createdCollection;
 		} catch (e) {

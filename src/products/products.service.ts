@@ -20,6 +20,22 @@ import slugify from 'slugify';
 import { CategoryDto } from '../categories/dto';
 import { Prisma } from '@prisma/client';
 
+const DEFAULT_INCLUDE = {
+	category: true,
+	params: { include: { key: true, value: true } },
+	variants: {
+		include: {
+			attributes: {
+				include: {
+					key: true,
+					value: true,
+				},
+			},
+			tags: true,
+		},
+	},
+};
+
 @Injectable()
 export class ProductsService {
 	constructor(
@@ -50,28 +66,19 @@ export class ProductsService {
 				else if (ids.length > 1) productFilter.categoryId = { in: ids };
 			}
 
-			const [products, count] = await this.prismaService.$transaction([
-				this.prismaService.product.findMany({
-					include: {
-						category: true,
-						params: { include: { key: true, value: true } },
-						variants: {
-							include: {
-								attributes: {
-									include: { key: true, value: true },
-								},
-							},
-						},
-					},
-					where: productFilter,
-					take: limit,
-					skip: (page - 1) * limit,
-					orderBy: [{ category: { order: 'asc' } }, { name: 'asc' }],
-				}),
-				this.prismaService.product.count({
-					where: productFilter,
-				}),
-			]);
+			const [products, count]: [ProductDto[], number] =
+				await this.prismaService.$transaction([
+					this.prismaService.product.findMany({
+						include: DEFAULT_INCLUDE,
+						where: productFilter,
+						take: limit,
+						skip: (page - 1) * limit,
+						orderBy: [{ category: { order: 'asc' } }, { name: 'asc' }],
+					}),
+					this.prismaService.product.count({
+						where: productFilter,
+					}),
+				]);
 
 			return new PaginatedDto<ProductDto>(products, page, limit, count);
 		} catch (e) {
@@ -99,15 +106,7 @@ export class ProductsService {
 
 			const products = await this.prismaService.product.findMany({
 				where: { id: { in: rows.map((r) => r.id) } },
-				include: {
-					category: true,
-					params: { include: { key: true, value: true } },
-					variants: {
-						include: {
-							attributes: { include: { key: true, value: true } },
-						},
-					},
-				},
+				include: DEFAULT_INCLUDE,
 			});
 			return products;
 		} catch (e) {
@@ -116,44 +115,18 @@ export class ProductsService {
 		}
 	}
 
-	async getById(id: number) {
+	async getById(id: number): Promise<ProductDto> {
 		const product = await this.prismaService.product.findFirst({
-			include: {
-				category: true,
-				params: { include: { key: true, value: true } },
-				variants: {
-					include: {
-						attributes: {
-							include: {
-								key: true,
-								value: true,
-							},
-						},
-					},
-				},
-			},
+			include: DEFAULT_INCLUDE,
 			where: { id },
 		});
 		if (!product) throw new BadRequestException('Product with this id not found');
 		return product;
 	}
 
-	async getBySlug(slug: string) {
+	async getBySlug(slug: string): Promise<ProductDto> {
 		const product = await this.prismaService.product.findFirst({
-			include: {
-				category: true,
-				params: { include: { key: true, value: true } },
-				variants: {
-					include: {
-						attributes: {
-							include: {
-								key: true,
-								value: true,
-							},
-						},
-					},
-				},
-			},
+			include: DEFAULT_INCLUDE,
 			where: { slug },
 		});
 		if (!product) throw new BadRequestException('Product with this slug not found');
@@ -182,20 +155,7 @@ export class ProductsService {
 					category: categoryId ? { connect: { id: categoryId } } : undefined,
 					params: { connect: paramIds.map((id) => ({ id })) },
 				},
-				include: {
-					category: true,
-					params: { include: { key: true, value: true } },
-					variants: {
-						include: {
-							attributes: {
-								include: {
-									key: true,
-									value: true,
-								},
-							},
-						},
-					},
-				},
+				include: DEFAULT_INCLUDE,
 			});
 			this.logger.log(`Created product: ${product.name}`);
 			return product;
@@ -241,20 +201,7 @@ export class ProductsService {
 					category: categoryId ? { connect: { id: categoryId } } : undefined,
 					params: newParams ? { set: newParams } : undefined,
 				},
-				include: {
-					category: true,
-					params: { include: { key: true, value: true } },
-					variants: {
-						include: {
-							attributes: {
-								include: {
-									key: true,
-									value: true,
-								},
-							},
-						},
-					},
-				},
+				include: DEFAULT_INCLUDE,
 			});
 			return updatedProduct;
 		} catch (e) {
@@ -268,20 +215,7 @@ export class ProductsService {
 			await this.getById(id);
 			return await this.prismaService.product.delete({
 				where: { id },
-				include: {
-					category: true,
-					params: { include: { key: true, value: true } },
-					variants: {
-						include: {
-							attributes: {
-								include: {
-									key: true,
-									value: true,
-								},
-							},
-						},
-					},
-				},
+				include: DEFAULT_INCLUDE,
 			});
 		} catch (e) {
 			this.logger.error(e);
