@@ -5,6 +5,7 @@ export const TagSchema = z.object({
 	key: z.string(),
 	label: z.string(),
 });
+export type TagResponse = z.infer<typeof TagSchema>;
 
 export const TagCreateSchema = TagSchema.omit({ id: true });
 export type TagCreateDtoType = z.infer<typeof TagCreateSchema>;

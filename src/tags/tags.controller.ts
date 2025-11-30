@@ -16,7 +16,7 @@ export class TagsController {
 	@Public()
 	@ApiOkResponse({ type: [TagsService] })
 	@Get('/')
-	async getAllCategories(): Promise<TagDto[]> {
+	async getAll(): Promise<TagDto[]> {
 		const tags = await this.tagsService.findAll();
 		return tags;
 	}

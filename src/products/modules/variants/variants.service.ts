@@ -64,7 +64,7 @@ export class VariantsService {
 
 	async update(variantId: number, dto: VariantUpdateDto): Promise<VariantDto> {
 		await this.getById(variantId);
-		const { imgUrl, attributeIds, price, discountPrice } = dto;
+		const { imgUrl, attributeIds, price, discountPrice, tags } = dto;
 
 		const newAttributes = attributeIds
 			? (await this.attributesService.getManyByIds(attributeIds)).map(({ id }) => ({
@@ -85,6 +85,7 @@ export class VariantsService {
 					price,
 					discountPrice,
 					attributes: newAttributes ? { set: newAttributes } : undefined,
+					tags: tags ? { set: tags } : undefined,
 				},
 				include: DEFAULT_INCLUDE,
 			});

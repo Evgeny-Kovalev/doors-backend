@@ -11,7 +11,7 @@ export const VariantSchema = z.object({
 	attributes: z.array(AttributeSchema),
 	tags: z.array(TagSchema),
 });
-export type VariantType = z.infer<typeof VariantSchema>;
+export type VariantResponse = z.infer<typeof VariantSchema>;
 
 export const VariantCreateSchema = VariantSchema.omit({
 	id: true,
@@ -30,6 +30,6 @@ export const VariantUpdateSchema = VariantSchema.omit({
 })
 	.partial()
 	.extend({
-		attributeIds: z.array(z.number()).min(1),
+		attributeIds: z.array(z.number()).min(1).optional(),
 	});
 export type VariantUpdateType = z.infer<typeof VariantUpdateSchema>;
