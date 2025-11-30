@@ -10,13 +10,11 @@ export const CategorySchema = z.object({
 	slug: z.string(),
 	name: z.string(),
 	imgUrl: z.string(),
-	categoryType: z
-		.enum([CategoryType.exteriorDoors, CategoryType.interiorDoors])
-		.default('interiorDoors'),
+	categoryType: z.enum([CategoryType.exteriorDoors, CategoryType.interiorDoors]),
 	description: z.string(),
-	isVisible: z.boolean().default(true),
-	parentCategoryId: z.number().nullable().default(null),
-	order: z.number().nullable().default(null),
+	isVisible: z.boolean(),
+	parentCategoryId: z.number().nullable(),
+	order: z.number().nullable(),
 });
 export type CategoryResponse = z.infer<typeof CategorySchema>;
 

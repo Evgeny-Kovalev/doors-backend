@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const UserSchema = z.object({
 	id: z.number(),
-	email: z.string().email(),
+	email: z.email(),
 	refreshToken: z.string().nullable().default(null).optional(),
 });
 

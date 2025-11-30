@@ -6,8 +6,8 @@ export const VariantSchema = z.object({
 	id: z.number(),
 	productId: z.number(),
 	imgUrl: z.string(),
-	price: z.number().nullable().default(null),
-	discountPrice: z.number().nullable().default(null),
+	price: z.number().nullable(),
+	discountPrice: z.number().nullable(),
 	attributes: z.array(AttributeSchema),
 	tags: z.array(TagSchema),
 });

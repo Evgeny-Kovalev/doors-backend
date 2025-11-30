@@ -15,8 +15,8 @@ export const ProductBaseSchema = z.object({
 	}),
 	imgUrl: z.string(),
 	description: z.string(),
-	isVisible: z.boolean().default(true),
-	productType: ProductTypeSchema.default('full'),
+	isVisible: z.boolean(),
+	productType: ProductTypeSchema,
 });
 
 export const ProductSchema = ProductBaseSchema.extend({
