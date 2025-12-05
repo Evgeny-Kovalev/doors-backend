@@ -14,12 +14,6 @@ import {
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
-const S3_PREFIX_BY_MIME: Record<string, string> = {
-	'image/*': 'doors',
-	'text/csv': 'docs',
-	'application/csv': 'docs',
-};
-
 @Injectable()
 export class FilesService {
 	constructor(
@@ -55,19 +49,19 @@ export class FilesService {
 		if (returnOriginalS3Url) {
 			return `${this.envService.get('S3_ENDPOINT')}/${this.envService.get('S3_BUCKET')}/${key}`;
 		}
-		const appFilesUrl = new URL(this.envService.get('APP_FILES_URL'));
-		appFilesUrl.pathname = `/${encodeURIComponent(key)}`;
-
-		return appFilesUrl.toString();
+		const appFilesUrl = this.envService.get('APP_FILES_URL');
+		return `${appFilesUrl}/${encodeURIComponent(key)}`;
 	}
 
 	async uploadFileToS3(
 		file: Express.Multer.File,
-		{ returnOriginalS3Url = false }: { returnOriginalS3Url?: boolean } = {},
+		{
+			returnOriginalS3Url = false,
+			prefix,
+		}: { returnOriginalS3Url?: boolean; prefix?: string } = {},
 	): Promise<{ url: string; key: string }> {
 		if (!file?.buffer) throw new BadRequestException('No file buffer');
 
-		const prefix = this.getPrefixForMime(file.mimetype);
 		const key = prefix ? `${prefix}/${file.originalname}` : file.originalname;
 
 		try {
@@ -104,9 +98,11 @@ export class FilesService {
 	async getOrDownloadFile({
 		url,
 		fileExtensionInS3,
+		prefix,
 	}: {
 		url: string;
 		fileExtensionInS3?: '.webp';
+		prefix: string;
 	}): Promise<string> {
 		let fileNameFull = '';
 
@@ -121,8 +117,6 @@ export class FilesService {
 
 		if (!fileNameFull) throw new BadRequestException('Invalid file url');
 
-		const guessedMime = this.guessMimeFromFilename(fileNameFull);
-		const prefix = this.getPrefixForMime(guessedMime);
 		const fileName = fileNameFull.split('.')[0];
 		const s3Key = prefix
 			? `${prefix}/${fileName}${fileExtensionInS3}`
@@ -156,8 +150,7 @@ export class FilesService {
 
 			if (status >= 400) throw new Error(`Failed to download: ${status}`);
 
-			const contentType =
-				headers['content-type'] || guessedMime || 'application/octet-stream';
+			const contentType = headers['content-type'] || 'application/octet-stream';
 			await this.getS3Client().send(
 				new PutObjectCommand({
 					Bucket: this.envService.get('S3_BUCKET'),
@@ -172,29 +165,5 @@ export class FilesService {
 			this.logger.error(error);
 			throw new InternalServerErrorException('Failed to fetch and upload file');
 		}
-	}
-
-	private getPrefixForMime(mimetype?: string): string {
-		if (!mimetype) return '';
-		for (const [pattern, prefix] of Object.entries(S3_PREFIX_BY_MIME)) {
-			if (pattern.endsWith('/*')) {
-				const base = pattern.slice(0, -2);
-				if (mimetype.startsWith(base + '/')) return prefix;
-			} else if (mimetype === pattern) {
-				return prefix;
-			}
-		}
-		return '';
-	}
-
-	private guessMimeFromFilename(fileName: string): string | undefined {
-		const lower = fileName.toLowerCase();
-		if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-		if (lower.endsWith('.png')) return 'image/png';
-		if (lower.endsWith('.webp')) return 'image/webp';
-		if (lower.endsWith('.gif')) return 'image/gif';
-		if (lower.endsWith('.svg')) return 'image/svg+xml';
-		if (lower.endsWith('.csv')) return 'text/csv';
-		return undefined;
 	}
 }

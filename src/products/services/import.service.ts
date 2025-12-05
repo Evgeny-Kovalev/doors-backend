@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as csv from 'fast-csv';
 import { ImportTemplate, ProductDto } from '../dto/product.dto';
+import { CategoryDto } from '../../categories/dto';
 import { ProductVariantFromFile } from '../types';
 import { FilesService } from 'src/files/files.service';
 import { AttributesService } from 'src/products/modules/attributes/attributes.service';
@@ -36,6 +37,7 @@ export class ImportService {
 
 	async getVariantDtosFromFile(
 		product: ProductDto,
+		category: CategoryDto,
 		variantsRows: ProductVariantFromFile[],
 		template: ImportTemplate,
 	): Promise<VariantCreateDto[]> {
@@ -55,6 +57,7 @@ export class ImportService {
 			const imgUrl = await this.filesService.getOrDownloadFile({
 				url,
 				fileExtensionInS3: '.webp',
+				prefix: `category/${category.slug}/doors`,
 			});
 
 			const variantResult: VariantCreateDto = {

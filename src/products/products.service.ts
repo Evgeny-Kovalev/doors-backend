@@ -274,6 +274,7 @@ export class ProductsService {
 
 			const productVariantsDtos = await this.importService.getVariantDtosFromFile(
 				newProduct,
+				category,
 				productVariants,
 				dto.template,
 			);
@@ -314,6 +315,7 @@ export class ProductsService {
 		const uploadedImageUrl = await this.filesService.getOrDownloadFile({
 			url,
 			fileExtensionInS3: '.webp',
+			prefix: `category/${category.slug}/doors`,
 		});
 
 		const productDto: ProductCreateDto = {
