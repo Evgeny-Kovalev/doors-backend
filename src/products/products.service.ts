@@ -54,10 +54,9 @@ export class ProductsService {
 		{ limit, page }: PaginationQueryDto,
 	): Promise<PaginatedDto<ProductDto>> {
 		try {
-			const productFilter: Prisma.ProductWhereInput = {
-				name: { contains: query?.q, mode: 'insensitive' },
-				productType: query?.productTypes ? { in: query.productTypes } : undefined,
-			};
+			const productFilter: Prisma.ProductWhereInput = {};
+			if (query?.q) productFilter.name = { contains: query.q, mode: 'insensitive' };
+			if (query?.productTypes) productFilter.productType = { in: query.productTypes };
 			if (query?.categorySlug) {
 				const ids = await this.categoriesService.getDescendantCategoryIdsBySlug(
 					query.categorySlug,
@@ -65,20 +64,64 @@ export class ProductsService {
 				if (ids.length === 1) productFilter.categoryId = { equals: ids[0] };
 				else if (ids.length > 1) productFilter.categoryId = { in: ids };
 			}
+			const paginationSkip = (page - 1) * limit;
+			const taggedFilter: Prisma.ProductWhereInput = {
+				AND: [productFilter, { variants: { some: { tags: { some: {} } } } }],
+			};
+			const untaggedFilter: Prisma.ProductWhereInput = {
+				AND: [productFilter, { variants: { none: { tags: { some: {} } } } }],
+			};
 
-			const [products, count]: [ProductDto[], number] =
-				await this.prismaService.$transaction([
-					this.prismaService.product.findMany({
-						include: DEFAULT_INCLUDE,
-						where: productFilter,
-						take: limit,
-						skip: (page - 1) * limit,
-						orderBy: [{ category: { order: 'asc' } }, { name: 'asc' }],
-					}),
-					this.prismaService.product.count({
-						where: productFilter,
-					}),
+			const { products, count } = await this.prismaService.$transaction(async (tx) => {
+				const [totalCount, taggedCount] = await Promise.all([
+					tx.product.count({ where: productFilter }),
+					tx.product.count({ where: taggedFilter }),
 				]);
+
+				const taggedTake =
+					paginationSkip >= taggedCount
+						? 0
+						: Math.min(limit, taggedCount - paginationSkip);
+				const taggedSkip = taggedTake ? paginationSkip : 0;
+				const untaggedSkip =
+					paginationSkip > taggedCount ? paginationSkip - taggedCount : 0;
+				const untaggedTake = limit - taggedTake;
+
+				const orderBy: Prisma.ProductOrderByWithRelationInput[] = [
+					{ category: { order: 'asc' } },
+					{ id: 'asc' },
+				];
+
+				const taggedProductsPromise = taggedTake
+					? tx.product.findMany({
+							include: DEFAULT_INCLUDE,
+							where: taggedFilter,
+							take: taggedTake,
+							skip: taggedSkip,
+							orderBy,
+						})
+					: Promise.resolve([]);
+
+				const untaggedProductsPromise = untaggedTake
+					? tx.product.findMany({
+							include: DEFAULT_INCLUDE,
+							where: untaggedFilter,
+							take: untaggedTake,
+							skip: untaggedSkip,
+							orderBy,
+						})
+					: Promise.resolve([]);
+
+				const [taggedProducts, untaggedProducts] = await Promise.all([
+					taggedProductsPromise,
+					untaggedProductsPromise,
+				]);
+
+				return {
+					products: [...taggedProducts, ...untaggedProducts],
+					count: totalCount,
+				};
+			});
 
 			return new PaginatedDto<ProductDto>(products, page, limit, count);
 		} catch (e) {
