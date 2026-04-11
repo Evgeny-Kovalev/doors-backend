@@ -73,8 +73,17 @@ export const ProductCreateSchema = ProductBaseSchema.omit({
 
 export type ProductCreateType = z.infer<typeof ProductCreateSchema>;
 
-export const ProductUpdateSchema = ProductCreateSchema.partial().meta({
-	title: 'Product Update',
-});
+export const ProductUpdateSchema = ProductCreateSchema.partial()
+	.meta({
+		title: 'Product Update',
+	})
+	.extend({
+		price: z.number().optional().nullable().meta({
+			title: 'Price for all variants',
+		}),
+		discountPrice: z.number().optional().nullable().meta({
+			title: 'Discount price for all variants',
+		}),
+	});
 
 export type ProductUpdateType = z.infer<typeof ProductUpdateSchema>;

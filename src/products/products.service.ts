@@ -219,6 +219,8 @@ export class ProductsService {
 				isVisible,
 				paramIds,
 				productType,
+				price,
+				discountPrice,
 			} = dto;
 
 			const newParams = paramIds
@@ -243,6 +245,20 @@ export class ProductsService {
 					productType,
 					category: categoryId ? { connect: { id: categoryId } } : undefined,
 					params: newParams ? { set: newParams } : undefined,
+					variants:
+						price || price === null || discountPrice || discountPrice === null
+							? {
+									updateMany: {
+										data: {
+											price,
+											discountPrice,
+										},
+										where: {
+											productId: product.id,
+										},
+									},
+								}
+							: undefined,
 				},
 				include: DEFAULT_INCLUDE,
 			});
