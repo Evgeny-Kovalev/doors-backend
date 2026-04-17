@@ -21,7 +21,7 @@ export const envSchema = z.object({
 	TELEGRAM_BOT_TOKEN: z.string(),
 	TELEGRAM_CHAT_IDS: z.string(),
 
-	SENTRY_DSN: process.env.NODE_ENV === 'production' ? z.url() : z.url().optional(),
+	SENTRY_DSN: process.env.NODE_ENV === 'production' ? z.url() : z.string().optional(),
 
 	S3_BUCKET: z.string(),
 	S3_REGION: z.string(),
