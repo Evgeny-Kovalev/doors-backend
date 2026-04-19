@@ -135,3 +135,19 @@ model Tag {
 
   productVariant ProductVariant[]
 }
+
+enum NewsType {
+  NEWS
+  PROMOTION
+}
+
+model News {
+  id            Int      @id @default(autoincrement())
+  slug          String   @unique
+  title         String
+  description   String
+  coverImageUrl String
+  publishedAt   DateTime
+  type          NewsType
+  markdownUrl   String
+}

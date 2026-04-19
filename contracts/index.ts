@@ -9,3 +9,4 @@ export * from './product-import';
 export * from './pagination';
 export * from './tg-bot';
 export * from './tags';
+export * from './news';
