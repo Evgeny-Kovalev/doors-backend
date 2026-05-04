@@ -64,10 +64,11 @@ model Product {
 }
 
 model ProductVariant {
-  id            Int    @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   imgUrl        String
   price         Int?
   discountPrice Int?
+  sourceId      String? @unique
 
   product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId Int

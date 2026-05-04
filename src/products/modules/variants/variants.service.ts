@@ -41,11 +41,21 @@ export class VariantsService {
 	}
 
 	async createOne(product: ProductDto, dto: VariantCreateDto): Promise<VariantDto> {
-		const { imgUrl, attributeIds, productId, price, discountPrice } = dto;
+		const { sourceId, imgUrl, attributeIds, productId, price, discountPrice } = dto;
 		try {
 			const createdVariant: VariantDto =
-				await this.prismaService.productVariant.create({
-					data: {
+				await this.prismaService.productVariant.upsert({
+					where: { sourceId: sourceId || undefined },
+					create: {
+						sourceId,
+						imgUrl,
+						price,
+						discountPrice,
+						attributes: { connect: attributeIds.map((id) => ({ id })) },
+						product: { connect: { id: productId } },
+					},
+					update: {
+						sourceId,
 						imgUrl,
 						price,
 						discountPrice,

@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const ImportTemplateSchema = z
 	.object({
 		info: z.object({
+			sourceIdKey: z.string(),
 			nameKey: z.string(),
 			imgPathKey: z.string(),
 			priceKey: z.string(),

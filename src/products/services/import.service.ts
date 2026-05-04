@@ -25,6 +25,7 @@ export class ImportService {
 					csv.parse({
 						headers: true,
 						ignoreEmpty: true,
+						delimiter: ';',
 					}),
 				)
 				.on('error', (error) => reject(error))
@@ -44,16 +45,16 @@ export class ImportService {
 		const productVariantsDtos: VariantCreateDto[] = [];
 
 		//TODO: check keys existing
-		const { imgPathKey, priceKey, discountPriceKey } = template.info;
+		const { imgPathKey, priceKey, discountPriceKey, sourceIdKey } = template.info;
 
-		for (const variant of variantsRows) {
+		for (const variantRow of variantsRows) {
 			const attributesToAdd = await this.attributesService.getOrCreateMany(
 				template.attributesKeysInDoc,
-				variant,
+				variantRow,
 				variantsRows,
 			);
 
-			const url = variant[imgPathKey];
+			const url = variantRow[imgPathKey];
 			const imgUrl = await this.filesService.getOrDownloadFile({
 				url,
 				fileExtensionInS3: '.webp',
@@ -62,11 +63,12 @@ export class ImportService {
 
 			const variantResult: VariantCreateDto = {
 				imgUrl,
+				sourceId: variantRow[sourceIdKey],
 				attributeIds: attributesToAdd.map((a) => a.id),
-				price: variant[priceKey] ? parseInt(variant[priceKey]) : undefined,
+				price: variantRow[priceKey] ? parseInt(variantRow[priceKey]) : undefined,
 				productId: product.id,
-				discountPrice: variant[discountPriceKey]
-					? parseInt(variant[discountPriceKey])
+				discountPrice: variantRow[discountPriceKey]
+					? parseInt(variantRow[discountPriceKey])
 					: undefined,
 				tags: [],
 			};

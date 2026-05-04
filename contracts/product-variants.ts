@@ -4,6 +4,7 @@ import { TagSchema } from './tags';
 
 export const VariantSchema = z.object({
 	id: z.number(),
+	sourceId: z.string().nullable(),
 	productId: z.number(),
 	imgUrl: z.string(),
 	price: z.number().nullable(),

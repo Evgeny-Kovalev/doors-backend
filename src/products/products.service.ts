@@ -187,17 +187,23 @@ export class ProductsService {
 				paramIds,
 				productType,
 			} = dto;
-			const product: ProductDto = await this.prismaService.product.create({
-				data: {
-					slug: slugify(name, { lower: true }),
-					name,
-					description,
-					imgUrl,
-					isVisible,
-					productType,
-					category: categoryId ? { connect: { id: categoryId } } : undefined,
-					params: { connect: paramIds.map((id) => ({ id })) },
-				},
+
+			const slug = slugify(name, { lower: true });
+			const upsertProductData = {
+				slug: slugify(name, { lower: true }),
+				name,
+				description,
+				imgUrl,
+				isVisible,
+				productType,
+				category: categoryId ? { connect: { id: categoryId } } : undefined,
+				params: { connect: paramIds.map((id) => ({ id })) },
+			};
+
+			const product: ProductDto = await this.prismaService.product.upsert({
+				where: { slug },
+				create: upsertProductData,
+				update: upsertProductData,
 				include: DEFAULT_INCLUDE,
 			});
 			this.logger.log(`Created product: ${product.name}`);
@@ -296,6 +302,7 @@ export class ProductsService {
 			productsFromFile =
 				await this.importService.parseCsvFile<ProductVariantFromFile>(file);
 		} catch (e) {
+			this.logger.error(e);
 			throw new BadRequestException('File parse error');
 		}
 		if (!productsFromFile.length)
