@@ -19,6 +19,8 @@ import {
 import slugify from 'slugify';
 import { CategoryDto } from '../categories/dto';
 import { Prisma } from '@prisma/client';
+import { ExportProductsQueryDto } from './dto/product.dto';
+import * as csv from 'fast-csv';
 
 const DEFAULT_INCLUDE = {
 	category: true,
@@ -329,7 +331,7 @@ export class ProductsService {
 
 		const createdProducts: ProductDto[] = [];
 
-		for (const productVariants of allProducts) {
+		for (const [index, productVariants] of allProducts.entries()) {
 			const productDto = await this.getProductDtoFromFile(
 				productVariants,
 				category,
@@ -345,12 +347,11 @@ export class ProductsService {
 				dto.template,
 			);
 
-			await Promise.all(
-				productVariantsDtos.map(
-					async (variantDto) =>
-						await this.variantsService.createOne(newProduct, variantDto),
-				),
-			);
+			for (const variantDto of productVariantsDtos) {
+				await this.variantsService.createOne(newProduct, variantDto);
+			}
+
+			this.logger.log(`${index + 1} / ${allProducts.length} products created.`);
 
 			const createdProduct: ProductDto = await this.getById(newProduct.id);
 			createdProducts.push(createdProduct);
@@ -393,5 +394,88 @@ export class ProductsService {
 			paramIds: params.map((param) => param.id),
 		};
 		return productDto;
+	}
+
+	async exportProductsToCSV(dto: ExportProductsQueryDto): Promise<string> {
+		const categoryIds = await this.categoriesService.getDescendantCategoryIdsBySlug(
+			dto.categorySlug,
+		);
+
+		const products = await this.prismaService.product.findMany({
+			where: {
+				categoryId:
+					categoryIds.length === 1
+						? { equals: categoryIds[0] }
+						: { in: categoryIds },
+			},
+			include: {
+				params: { include: { key: true, value: true } },
+				variants: {
+					include: {
+						attributes: { include: { key: true, value: true } },
+					},
+				},
+			},
+			orderBy: [{ id: 'asc' }],
+		});
+
+		type ExportRow = Record<string, string | number>;
+		const baseColumns = ['id', 'sourceId', 'slug', 'name', 'imgUrl', 'price'];
+		const paramColumns = new Set<string>();
+		const attributeColumns = new Set<string>();
+
+		for (const product of products) {
+			for (const param of product.params) {
+				paramColumns.add(`${param.key.value}`);
+			}
+			for (const variant of product.variants) {
+				for (const attribute of variant.attributes) {
+					attributeColumns.add(`${attribute.key.value}`);
+				}
+			}
+		}
+
+		const orderedParamColumns = Array.from(paramColumns).sort();
+		const orderedAttributeColumns = Array.from(attributeColumns).sort();
+		const headers = [
+			...baseColumns,
+			...orderedParamColumns,
+			...orderedAttributeColumns,
+		];
+
+		const rows: ExportRow[] = [];
+
+		for (const product of products) {
+			const paramsMap = new Map(
+				product.params.map((param) => [`${param.key.value}`, param.value.value]),
+			);
+
+			for (const variant of product.variants) {
+				const row: ExportRow = {
+					id: product.id,
+					sourceId: variant.sourceId ?? '',
+					slug: product.slug,
+					name: product.name,
+					imgUrl: variant.imgUrl,
+					price: variant.price ?? '',
+				};
+
+				for (const column of orderedParamColumns) {
+					row[column] = paramsMap.get(column) ?? '';
+				}
+
+				for (const column of orderedAttributeColumns) {
+					row[column] = '';
+				}
+
+				for (const attribute of variant.attributes) {
+					row[`${attribute.key.value}`] = attribute.value.value;
+				}
+
+				rows.push(row);
+			}
+		}
+
+		return await csv.writeToString(rows, { headers });
 	}
 }

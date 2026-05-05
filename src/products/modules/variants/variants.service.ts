@@ -44,17 +44,8 @@ export class VariantsService {
 		const { sourceId, imgUrl, attributeIds, productId, price, discountPrice } = dto;
 		try {
 			const createdVariant: VariantDto =
-				await this.prismaService.productVariant.upsert({
-					where: { sourceId: sourceId || undefined },
-					create: {
-						sourceId,
-						imgUrl,
-						price,
-						discountPrice,
-						attributes: { connect: attributeIds.map((id) => ({ id })) },
-						product: { connect: { id: productId } },
-					},
-					update: {
+				await this.prismaService.productVariant.create({
+					data: {
 						sourceId,
 						imgUrl,
 						price,

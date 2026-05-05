@@ -11,13 +11,17 @@ import {
 	UseGuards,
 	Logger,
 	UploadedFile,
+	Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { ProductsService } from './products.service';
 import {
 	ApiBearerAuth,
 	ApiCreatedResponse,
+	ApiNoContentResponse,
 	ApiOkResponse,
 	ApiTags,
+	ApiProduces,
 } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { PaginationQueryDto } from 'src/shared/pagination/dto';
@@ -32,6 +36,7 @@ import {
 	ProductUpdateDto,
 	ProductImportDto,
 	PaginatedProductDto,
+	ExportProductsQueryDto,
 } from './dto/product.dto';
 import { CategoriesService } from 'src/categories/categories.service';
 import { ApiFileWithBody } from '../files/decorators/api-file.decorator';
@@ -75,6 +80,64 @@ export class ProductsController {
 		return res;
 	}
 
+	@ApiBearerAuth()
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
+	@ApiProduces('text/csv')
+	@ApiOkResponse({
+		description: 'CSV export of product variants',
+		content: {
+			'text/csv': {
+				schema: { type: 'string', format: 'binary' },
+			},
+		},
+	})
+	@Get('/export')
+	async exportProducts(
+		@Query() dto: ExportProductsQueryDto,
+		@Res({ passthrough: true }) response: Response,
+	): Promise<string> {
+		await this.categoriesService.getBySlug(dto.categorySlug);
+
+		const csvContent = await this.productsService.exportProductsToCSV(dto);
+		const fileName = `products-${dto.categorySlug}.csv`;
+
+		response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+		response.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+		return csvContent;
+	}
+
+	@ApiBearerAuth()
+	@ApiCreatedResponse({ type: [ProductDto] })
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
+	@ApiFileWithBody({
+		bodyType: ProductImportDto,
+		fileName: 'file',
+		required: true,
+		mimetype: ['text/csv', 'application/csv'],
+	})
+	@Post('/import')
+	async importProduct(
+		@Body() dto: ProductImportDto,
+		@UploadedFile() file: Express.Multer.File,
+	) {
+		this.logger.log('Product import start');
+
+		// const { url: fileUrl } = await this.filesService.uploadFileToS3(file, {
+		// 	returnOriginalS3Url: true,
+		// });
+
+		const createdProducts: ProductDto[] = await this.productsService.importFromFile(
+			dto,
+			{ file },
+		);
+
+		this.logger.log('Product import end');
+
+		return createdProducts;
+	}
+
 	@Public()
 	@ApiOkResponse({ type: ProductDto })
 	@Get(':slug')
@@ -112,36 +175,5 @@ export class ProductsController {
 	@Delete(':id')
 	async delete(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {
 		return await this.productsService.delete(id);
-	}
-
-	@ApiBearerAuth()
-	@ApiCreatedResponse({ type: [ProductDto] })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
-	@ApiFileWithBody({
-		bodyType: ProductImportDto,
-		fileName: 'file',
-		required: true,
-		mimetype: ['text/csv', 'application/csv'],
-	})
-	@Post('/import')
-	async importProduct(
-		@Body() dto: ProductImportDto,
-		@UploadedFile() file: Express.Multer.File,
-	) {
-		this.logger.log('Product import start');
-
-		// const { url: fileUrl } = await this.filesService.uploadFileToS3(file, {
-		// 	returnOriginalS3Url: true,
-		// });
-
-		const createdProducts: ProductDto[] = await this.productsService.importFromFile(
-			dto,
-			{ file },
-		);
-
-		this.logger.log('Product import end');
-
-		return createdProducts;
 	}
 }

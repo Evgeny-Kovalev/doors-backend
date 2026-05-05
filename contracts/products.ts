@@ -55,6 +55,10 @@ export const RandomProductsQuerySchema = z.object({
 	limit: z.coerce.number().optional().default(6),
 });
 
+export const ExportProductsQuerySchema = z.object({
+	categorySlug: z.string(),
+});
+
 export const ProductCreateSchema = ProductBaseSchema.omit({
 	id: true,
 	slug: true,
@@ -87,3 +91,4 @@ export const ProductUpdateSchema = ProductCreateSchema.partial()
 	});
 
 export type ProductUpdateType = z.infer<typeof ProductUpdateSchema>;
+export type ExportProductsQueryType = z.infer<typeof ExportProductsQuerySchema>;

@@ -8,6 +8,7 @@ import {
 	ProductUpdateSchema,
 	ProductQuerySchema,
 	RandomProductsQuerySchema,
+	ExportProductsQuerySchema,
 } from '../../../contracts';
 
 export class ProductDto extends createZodDto(ProductSchema) {}
@@ -27,3 +28,5 @@ export class PaginatedProductDto extends createZodDto(
 ) {}
 
 export class RandomProductsQueryDto extends createZodDto(RandomProductsQuerySchema) {}
+
+export class ExportProductsQueryDto extends createZodDto(ExportProductsQuerySchema) {}
