@@ -6,6 +6,8 @@ export const ImportTemplateSchema = z
 			sourceIdKey: z.string(),
 			nameKey: z.string(),
 			imgPathKey: z.string(),
+			imgFrontKey: z.string().optional(),
+			imgBackKey: z.string().optional(),
 			priceKey: z.string(),
 			discountPriceKey: z.string(),
 		}),

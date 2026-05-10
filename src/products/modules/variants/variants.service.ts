@@ -41,12 +41,23 @@ export class VariantsService {
 	}
 
 	async createOne(product: ProductDto, dto: VariantCreateDto): Promise<VariantDto> {
-		const { sourceId, imgUrl, attributeIds, productId, price, discountPrice } = dto;
+		const {
+			imgBackUrl,
+			imgFrontUrl,
+			sourceId,
+			imgUrl,
+			attributeIds,
+			productId,
+			price,
+			discountPrice,
+		} = dto;
 		try {
 			const createdVariant: VariantDto =
 				await this.prismaService.productVariant.create({
 					data: {
 						sourceId,
+						imgBackUrl,
+						imgFrontUrl,
 						imgUrl,
 						price,
 						discountPrice,
@@ -65,7 +76,15 @@ export class VariantsService {
 
 	async update(variantId: number, dto: VariantUpdateDto): Promise<VariantDto> {
 		await this.getById(variantId);
-		const { imgUrl, attributeIds, price, discountPrice, tags } = dto;
+		const {
+			imgBackUrl,
+			imgFrontUrl,
+			imgUrl,
+			attributeIds,
+			price,
+			discountPrice,
+			tags,
+		} = dto;
 
 		const newAttributes = attributeIds
 			? (await this.attributesService.getManyByIds(attributeIds)).map(({ id }) => ({
@@ -83,6 +102,8 @@ export class VariantsService {
 				where: { id: variantId },
 				data: {
 					imgUrl,
+					imgBackUrl,
+					imgFrontUrl,
 					price,
 					discountPrice,
 					attributes: newAttributes ? { set: newAttributes } : undefined,

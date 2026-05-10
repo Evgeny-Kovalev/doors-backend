@@ -66,6 +66,8 @@ model Product {
 model ProductVariant {
   id            Int     @id @default(autoincrement())
   imgUrl        String
+  imgFrontUrl   String?
+  imgBackUrl    String?
   price         Int?
   discountPrice Int?
   sourceId      String? @unique

@@ -7,6 +7,8 @@ export const VariantSchema = z.object({
 	sourceId: z.string().optional().nullable(),
 	productId: z.number(),
 	imgUrl: z.string(),
+	imgFrontUrl: z.string().optional().nullable(),
+	imgBackUrl: z.string().optional().nullable(),
 	price: z.number().nullable(),
 	discountPrice: z.number().nullable(),
 	attributes: z.array(AttributeSchema),

@@ -46,7 +46,14 @@ export class ImportService {
 		const productVariantsDtos: VariantCreateDto[] = [];
 
 		//TODO: check keys existing
-		const { imgPathKey, priceKey, discountPriceKey, sourceIdKey } = template.info;
+		const {
+			imgPathKey,
+			imgFrontKey,
+			imgBackKey,
+			priceKey,
+			discountPriceKey,
+			sourceIdKey,
+		} = template.info;
 
 		for (const [index, variantRow] of variantsRows.entries()) {
 			const attributesToAdd = await this.attributesService.getOrCreateMany(
@@ -56,16 +63,35 @@ export class ImportService {
 			);
 
 			const url = variantRow[imgPathKey];
-			const imgUrl = await this.filesService.getOrDownloadFile({
-				url,
-				fileExtensionInS3: '.webp',
-				prefix: `category/${category.slug}/doors`,
-			});
+			const imgFrontData = imgFrontKey && variantRow[imgFrontKey];
+			const imgBackData = imgBackKey && variantRow[imgBackKey];
+
+			const [imgUrl, imgFrontUrl, imgBackUrl] = await Promise.all([
+				this.filesService.getOrDownloadFile({
+					url,
+					fileExtensionInS3: '.webp',
+					prefix: `category/${category.slug}/doors`,
+				}),
+				imgFrontData &&
+					this.filesService.getOrDownloadFile({
+						url: imgFrontData,
+						fileExtensionInS3: '.webp',
+						prefix: `category/${category.slug}/doors`,
+					}),
+				imgBackData &&
+					this.filesService.getOrDownloadFile({
+						url: imgBackData,
+						fileExtensionInS3: '.webp',
+						prefix: `category/${category.slug}/doors`,
+					}),
+			]);
 
 			this.logger.log(`${index + 1} / ${variantsRows.length} images downloaded`);
 
 			const variantResult: VariantCreateDto = {
 				imgUrl,
+				imgFrontUrl,
+				imgBackUrl,
 				sourceId: variantRow[sourceIdKey],
 				attributeIds: attributesToAdd.map((a) => a.id),
 				price: variantRow[priceKey] ? parseInt(variantRow[priceKey]) : undefined,
