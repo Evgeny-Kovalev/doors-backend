@@ -192,7 +192,7 @@ export class ProductsService {
 
 			const slug = slugify(name, { lower: true });
 			const upsertProductData = {
-				slug: slugify(name, { lower: true }),
+				slug,
 				name,
 				description,
 				imgUrl,
