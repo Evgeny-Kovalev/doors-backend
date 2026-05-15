@@ -10,6 +10,7 @@ export const CategorySchema = z.object({
 	slug: z.string(),
 	name: z.string(),
 	imgUrl: z.string(),
+	markdownUrl: z.string().nullable(),
 	categoryType: z.enum([CategoryType.exteriorDoors, CategoryType.interiorDoors]),
 	description: z.string(),
 	isVisible: z.boolean(),
@@ -20,6 +21,7 @@ export type CategoryResponse = z.infer<typeof CategorySchema>;
 
 export const CategoryCreateSchema = CategorySchema.omit({ id: true, slug: true }).partial(
 	{
+		markdownUrl: true,
 		categoryType: true,
 		isVisible: true,
 		parentCategoryId: true,

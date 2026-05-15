@@ -14,11 +14,12 @@ datasource db {
 }
 
 model Category {
-  id          Int    @id @default(autoincrement())
-  slug        String @unique
+  id          Int     @id @default(autoincrement())
+  slug        String  @unique
   name        String
   imgUrl      String
   description String
+  markdownUrl String?
 
   parentCategory   Category?  @relation("ParentSubCategories", fields: [parentCategoryId], references: [id], onDelete: SetNull)
   parentCategoryId Int?
