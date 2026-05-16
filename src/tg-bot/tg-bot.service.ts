@@ -34,10 +34,10 @@ export class TgBotService {
 		return `https://api.telegram.org/bot${this.botToken}/${endpoint}`;
 	}
 
-	async sendPhoneNumber({ name, phone }: TgBotCallbackDto): Promise<void> {
+	async sendPhoneNumber({ name, phone, comment }: TgBotCallbackDto): Promise<void> {
 		try {
 			const url = this.getUrl('sendMessage');
-			const text = `Новый запрос на звонок: ${phone} ${name}`;
+			const text = `Новый запрос на звонок: ${phone} ${name}${comment && comment.length > 0 ? '\nКомментарий: ' + comment : ''}`;
 
 			this.logger.log(
 				`Отправка сообщения в Telegram: ${JSON.stringify({ url, chatIds: this.chatIds, text })}`,

@@ -4,6 +4,7 @@ export const TgBotCallbackSchema = z
 	.object({
 		phone: z.string(),
 		name: z.string().min(1).max(50),
+		comment: z.string().max(500).optional(),
 	})
 	.meta({
 		title: 'Telegram Bot callback request',
