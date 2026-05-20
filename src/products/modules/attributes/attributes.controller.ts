@@ -6,14 +6,25 @@ import {
 	Param,
 	ParseIntPipe,
 	Patch,
+	Post,
 	UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiBearerAuth,
+	ApiCreatedResponse,
+	ApiOkResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
 import { Role } from '@prisma/client';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { AttributesService } from './attributes.service';
-import { AttributeDto, AttributeKeyUpdateDto, AttributeValueUpdateDto } from './dto';
+import {
+	AttributeCreateDto,
+	AttributeDto,
+	AttributeKeyUpdateDto,
+	AttributeValueUpdateDto,
+} from './dto';
 
 @ApiTags('Attributes')
 @Controller({
@@ -27,6 +38,15 @@ export class AttributesController {
 	@ApiOkResponse({ type: [AttributeDto] })
 	async findAll(): Promise<AttributeDto[]> {
 		return this.attributesService.findAll();
+	}
+
+	@ApiBearerAuth()
+	@HasRoles(Role.ADMIN)
+	@UseGuards(RolesGuard)
+	@Post('attributes')
+	@ApiCreatedResponse({ type: AttributeDto })
+	create(@Body() dto: AttributeCreateDto) {
+		return this.attributesService.create(dto);
 	}
 
 	@ApiBearerAuth()

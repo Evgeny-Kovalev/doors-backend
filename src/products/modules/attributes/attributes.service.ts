@@ -28,6 +28,10 @@ export class AttributesService {
 		});
 	}
 
+	async create(dto: AttributeCreateDto): Promise<AttributeDto> {
+		return this.getOrCreateOne(dto);
+	}
+
 	async getOneById(id: number): Promise<Attribute | null> {
 		return await this.prismaService.attribute.findFirst({ where: { id } });
 	}
