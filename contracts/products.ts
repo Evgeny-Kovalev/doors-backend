@@ -31,9 +31,17 @@ export type ProductResponse = z.infer<typeof ProductSchema>;
 
 export type ProductsPaginatedResponse = PaginatedResponse<typeof ProductSchema>;
 
+export const ProductSortSchema = z.enum(['default', 'name', 'price']);
+export type ProductSort = z.infer<typeof ProductSortSchema>;
+
+export const SortOrderSchema = z.enum(['asc', 'desc']);
+export type SortOrder = z.infer<typeof SortOrderSchema>;
+
 export const ProductQuerySchema = z.object({
 	categorySlug: z.string().optional(),
 	q: z.string().optional(),
+	sort: ProductSortSchema.optional().default('default'),
+	order: SortOrderSchema.optional().default('asc'),
 	productTypes: z
 		.preprocess((val) => {
 			if (Array.isArray(val)) return val;
