@@ -1,6 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { EnvModule } from 'src/env/env.module';
+import { EnvModule } from '@/app/env/env.module';
 import { TgBotController } from './tg-bot.controller';
 import { TgBotService } from './tg-bot.service';
 

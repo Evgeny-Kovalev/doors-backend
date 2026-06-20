@@ -19,9 +19,9 @@ import {
 	Query,
 } from '@nestjs/common';
 
-import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
-import { Role } from '@prisma/client';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
+import { Role } from '@/app/generated/prisma';
+import { RolesGuard } from '@/app/auth/guards/roles.guard';
 import {
 	CategoryDto,
 	CategoryCreateDto,

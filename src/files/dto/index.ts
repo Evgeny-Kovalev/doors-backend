@@ -5,5 +5,5 @@ export class DeleteFileDto {
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
-	fileName: string;
+	fileName!: string;
 }

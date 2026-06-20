@@ -1,9 +1,9 @@
-import { createZodDto } from 'nestjs-zod';
+import { createZodDto } from '@/app/shared/create-zod-dto';
 import {
 	AttributeKeyCreateSchema,
 	AttributeKeySchema,
 	AttributeKeyUpdateSchema,
-} from '../../../../../contracts';
+} from '@/contracts';
 
 export class AttributeKeyDto extends createZodDto(AttributeKeySchema) {}
 export class AttributeKeyCreateDto extends createZodDto(AttributeKeyCreateSchema) {}

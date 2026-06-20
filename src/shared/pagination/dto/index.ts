@@ -1,5 +1,5 @@
-import { createZodDto } from 'nestjs-zod';
-import { PaginationQuerySchema } from '../../../../contracts';
+import { createZodDto } from '@/app/shared/create-zod-dto';
+import { PaginationQuerySchema } from '@/contracts';
 
 export class PaginationMetaDto {
 	readonly page: number;

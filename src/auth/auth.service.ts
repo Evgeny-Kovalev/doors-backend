@@ -1,11 +1,11 @@
 import { EnvService } from './../env/env.service';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from '@/app/users/users.service';
 import { JwtPayload, Tokens } from './types';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
-import { User } from '@prisma/client';
+import { User } from '@/app/generated/prisma';
 
 @Injectable()
 export class AuthService {

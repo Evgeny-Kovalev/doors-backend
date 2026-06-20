@@ -23,11 +23,11 @@ import {
 	ApiTags,
 	ApiProduces,
 } from '@nestjs/swagger';
-import { Public } from 'src/auth/decorators/public.decorator';
-import { PaginationQueryDto } from 'src/shared/pagination/dto';
-import { Role } from '@prisma/client';
-import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Public } from '@/app/auth/decorators/public.decorator';
+import { PaginationQueryDto } from '@/app/shared/pagination/dto';
+import { Role } from '@/app/generated/prisma';
+import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
+import { RolesGuard } from '@/app/auth/guards/roles.guard';
 import {
 	ProductDto,
 	ProductQueryDto,
@@ -38,7 +38,7 @@ import {
 	PaginatedProductDto,
 	ExportProductsQueryDto,
 } from './dto/product.dto';
-import { CategoriesService } from 'src/categories/categories.service';
+import { CategoriesService } from '@/app/categories/categories.service';
 import { ApiFileWithBody } from '../files/decorators/api-file.decorator';
 
 @ApiTags('Products')

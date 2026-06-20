@@ -1,5 +1,5 @@
-import { createZodDto } from 'nestjs-zod';
-import { UserCreateSchema, UserSchema, UserUpdateSchema } from '../../../contracts';
+import { createZodDto } from '@/app/shared/create-zod-dto';
+import { UserCreateSchema, UserSchema, UserUpdateSchema } from '@/contracts';
 
 export class UserDto extends createZodDto(UserSchema) {}
 export class UserCreateDto extends createZodDto(UserCreateSchema) {}

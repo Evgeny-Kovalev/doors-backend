@@ -4,7 +4,7 @@ import { FilesService } from './files.service';
 import { ApiUploadFile } from './decorators/api-file.decorator';
 import { ParseFile } from './pipes/parse-file.pipe';
 import { HasRoles } from '../auth/decorators/has-roles.decorator';
-import { Role } from '@prisma/client';
+import { Role } from '@/app/generated/prisma';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('Media Files')

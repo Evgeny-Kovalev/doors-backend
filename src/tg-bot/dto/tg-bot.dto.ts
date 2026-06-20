@@ -3,8 +3,8 @@ import {
 	TgBotCallbackResponseSchema,
 	TgBotFeedbackSchema,
 	TgBotFeedbackResponseSchema,
-} from '../../../contracts';
-import { createZodDto } from 'nestjs-zod';
+} from '@/contracts';
+import { createZodDto } from '@/app/shared/create-zod-dto';
 
 export class TgBotCallbackDto extends createZodDto(TgBotCallbackSchema) {}
 export class TgBotCallbackResponseDto extends createZodDto(TgBotCallbackResponseSchema) {}

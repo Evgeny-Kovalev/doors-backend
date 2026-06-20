@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User } from '@/app/generated/prisma';
 import { PrismaService } from './../prisma/prisma.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserCreateDto, UserDto, UserUpdateDto } from './dto';

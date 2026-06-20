@@ -1,10 +1,6 @@
-import { createZodDto } from 'nestjs-zod';
+import { createZodDto } from '@/app/shared/create-zod-dto';
 import { z } from 'zod';
-import {
-	VariantSchema,
-	VariantCreateSchema,
-	VariantUpdateSchema,
-} from '../../../../contracts';
+import { VariantSchema, VariantCreateSchema, VariantUpdateSchema } from '@/contracts';
 
 export class VariantDto extends createZodDto(VariantSchema) {}
 export class VariantCreateDto extends createZodDto(VariantCreateSchema) {}

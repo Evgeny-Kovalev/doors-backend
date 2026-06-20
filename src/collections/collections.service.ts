@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/app/prisma/prisma.service';
 import { CollectionCreateDto, CollectionDto, CollectionUpdateDto } from './dto';
 
 const DEFAULT_INCLUDE = {

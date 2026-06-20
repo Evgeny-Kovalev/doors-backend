@@ -1,4 +1,4 @@
-import { Tag } from '@prisma/client';
+import { Tag } from '@/app/generated/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 

@@ -14,7 +14,7 @@ export const envSchema = z.object({
 
 	SECRET_JWT: z.string(),
 
-	TOKEN_EXPIRES_IN: z.string(),
+	TOKEN_EXPIRES_IN: z.coerce.number(),
 	AT_SECRET: z.string(),
 	RT_SECRET: z.string(),
 

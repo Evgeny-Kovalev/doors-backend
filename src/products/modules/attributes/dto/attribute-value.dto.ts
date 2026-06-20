@@ -2,8 +2,8 @@ import {
 	AttributeValueCreateSchema,
 	AttributeValueSchema,
 	AttributeValueUpdateSchema,
-} from '../../../../../contracts';
-import { createZodDto } from 'nestjs-zod';
+} from '@/contracts';
+import { createZodDto } from '@/app/shared/create-zod-dto';
 
 export class AttributeValueDto extends createZodDto(AttributeValueSchema) {}
 export class AttributeValueCreateDto extends createZodDto(AttributeValueCreateSchema) {}

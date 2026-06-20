@@ -1,13 +1,13 @@
 import { AttributesService } from './modules/attributes/attributes.service';
 import { VariantsService } from './modules/variants/variants.service';
-import { FilesService } from 'src/files/files.service';
+import { FilesService } from '@/app/files/files.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ImportService } from './services/import.service';
-import { groupBy } from 'src/utils';
+import { groupBy } from '@/app/utils';
 import { ProductVariantFromFile } from './types';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CategoriesService } from 'src/categories/categories.service';
-import { PaginatedDto, PaginationQueryDto } from 'src/shared/pagination/dto';
+import { PrismaService } from '@/app/prisma/prisma.service';
+import { CategoriesService } from '@/app/categories/categories.service';
+import { PaginatedDto, PaginationQueryDto } from '@/app/shared/pagination/dto';
 import {
 	ImportTemplate,
 	ProductCreateDto,
@@ -18,7 +18,7 @@ import {
 } from './dto/product.dto';
 import slugify from 'slugify';
 import { CategoryDto } from '../categories/dto';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/app/generated/prisma';
 import { ExportProductsQueryDto } from './dto/product.dto';
 import * as csv from 'fast-csv';
 

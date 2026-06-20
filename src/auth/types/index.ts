@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role } from '@/app/generated/prisma';
 
 export type JwtPayload = {
 	email: string;

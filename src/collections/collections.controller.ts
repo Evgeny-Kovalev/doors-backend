@@ -1,4 +1,4 @@
-import { Public } from 'src/auth/decorators/public.decorator';
+import { Public } from '@/app/auth/decorators/public.decorator';
 import {
 	Body,
 	Controller,
@@ -12,9 +12,9 @@ import {
 import { CollectionsService } from './collections.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CollectionCreateDto, CollectionDto, CollectionUpdateDto } from './dto';
-import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
-import { Role } from '@prisma/client';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
+import { Role } from '@/app/generated/prisma';
+import { RolesGuard } from '@/app/auth/guards/roles.guard';
 
 @ApiTags('Collections')
 @Controller({

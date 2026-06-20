@@ -25,10 +25,10 @@ import {
 	VariantQueryDto,
 	VariantUpdateDto,
 } from './variant.dto';
-import { Public } from 'src/auth/decorators/public.decorator';
-import { Role } from '@prisma/client';
-import { HasRoles } from 'src/auth/decorators/has-roles.decorator';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Public } from '@/app/auth/decorators/public.decorator';
+import { Role } from '@/app/generated/prisma';
+import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
+import { RolesGuard } from '@/app/auth/guards/roles.guard';
 
 @ApiTags('Product variants')
 @Controller({

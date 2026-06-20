@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { EnvService } from 'src/env/env.service';
+import { EnvService } from '@/app/env/env.service';
 import { TgBotCallbackDto, TgBotFeedbackDto } from './dto/tg-bot.dto';
 
 type TelegramEndpoint = 'sendMessage' | 'getUpdates' | 'getMe';
@@ -61,10 +61,7 @@ export class TgBotService {
 				);
 			}
 		} catch (error) {
-			this.logger.error(
-				`Ошибка при отправке сообщения в Telegram: ${error.message}`,
-				error.response?.data,
-			);
+			this.logger.error(`Ошибка при отправке сообщения в Telegram: ${error}`);
 			throw error;
 		}
 	}
@@ -98,11 +95,8 @@ export class TgBotService {
 					`Некоторые сообщения не были отправлены: ${JSON.stringify(failedResponses)}`,
 				);
 			}
-		} catch (error) {
-			this.logger.error(
-				`Ошибка при отправке сообщения в Telegram: ${error.message}`,
-				error.response?.data,
-			);
+		} catch (error: unknown) {
+			this.logger.error(`Ошибка при отправке сообщения в Telegram: ${error}`);
 			throw error;
 		}
 	}

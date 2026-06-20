@@ -1,10 +1,10 @@
-import { createZodDto } from 'nestjs-zod';
+import { createZodDto } from '@/app/shared/create-zod-dto';
 import {
 	CategorySchema,
 	CategoryCreateSchema,
 	CategoryUpdateSchema,
 	CategoryQuerySchema,
-} from '../../../contracts';
+} from '@/contracts';
 
 export class CategoryDto extends createZodDto(CategorySchema) {}
 export class CategoryCreateDto extends createZodDto(CategoryCreateSchema) {}

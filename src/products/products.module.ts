@@ -2,10 +2,10 @@ import { CategoriesModule } from './../categories/categories.module';
 import { Module } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
-import { FilesModule } from 'src/files/files.module';
+import { FilesModule } from '@/app/files/files.module';
 import { ImportService } from './services/import.service';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { AttributesModule } from 'src/products/modules/attributes/attributes.module';
+import { PrismaModule } from '@/app/prisma/prisma.module';
+import { AttributesModule } from '@/app/products/modules/attributes/attributes.module';
 import { VariantsModule } from './modules/variants/variants.module';
 
 @Module({

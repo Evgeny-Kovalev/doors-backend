@@ -13,6 +13,11 @@ import {
 } from '@aws-sdk/client-s3';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import {
+	getS3ErrorMessage,
+	isS3ObjectMissing,
+	isS3ServiceException,
+} from './utiils/s3-errors';
 
 @Injectable()
 export class FilesService {
@@ -74,8 +79,8 @@ export class FilesService {
 				}),
 			);
 			return { url: this.getS3PublicUrl(key, { returnOriginalS3Url }), key };
-		} catch (error) {
-			this.logger.error(error);
+		} catch (error: unknown) {
+			this.logS3Error('Upload file Error', error);
 			throw new InternalServerErrorException('Failed to upload file');
 		}
 	}
@@ -89,8 +94,8 @@ export class FilesService {
 				}),
 			);
 			return { message: 'File has been successfully deleted' };
-		} catch (error) {
-			this.logger.error(error);
+		} catch (error: unknown) {
+			this.logS3Error('Delete file Error', error);
 			throw new InternalServerErrorException('Failed to delete file');
 		}
 	}
@@ -131,11 +136,9 @@ export class FilesService {
 			);
 			this.logger.log(`FILE with key "${s3Key}" EXISTS`);
 			return this.getS3PublicUrl(s3Key);
-		} catch (error) {
-			const httpStatus = error?.$metadata?.httpStatusCode;
-			const isNotFound = httpStatus === 404 || error?.name === 'NotFound';
-			if (!isNotFound)
-				this.logger.warn(`HEAD failed for ${s3Key}: ${error?.message ?? error}`);
+		} catch (error: unknown) {
+			if (!isS3ObjectMissing(error))
+				this.logger.warn(`HEAD failed for ${s3Key}: ${getS3ErrorMessage(error)}`);
 		}
 
 		this.logger.log(
@@ -165,9 +168,20 @@ export class FilesService {
 			);
 			this.logger.log(`File ${s3Key} downloaded and uploaded to S3 successfully`);
 			return this.getS3PublicUrl(s3Key);
-		} catch (error) {
-			this.logger.error(error);
+		} catch (error: unknown) {
+			this.logS3Error('Fetch and upload file Error', error);
 			throw new InternalServerErrorException('Failed to fetch and upload file');
 		}
+	}
+
+	private logS3Error(action: string, error: unknown): void {
+		if (isS3ServiceException(error)) {
+			this.logger.error(
+				`S3 ${action} failed: ${getS3ErrorMessage(error)}`,
+				error.stack,
+			);
+			return;
+		}
+		this.logger.error(`S3 ${action} failed`, error);
 	}
 }

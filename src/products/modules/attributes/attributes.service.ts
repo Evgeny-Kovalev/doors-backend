@@ -4,9 +4,9 @@ import {
 	InternalServerErrorException,
 	Logger,
 } from '@nestjs/common';
-import { Attribute, AttributeValue } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { ProductVariantFromFile } from 'src/products/types';
+import { Attribute, AttributeValue } from '@/app/generated/prisma';
+import { PrismaService } from '@/app/prisma/prisma.service';
+import { ProductVariantFromFile } from '@/app/products/types';
 import {
 	AttributeCreateDto,
 	AttributeDto,

@@ -1,4 +1,4 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@/app/prisma/prisma.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
 	CategoryCreateDto,
@@ -6,7 +6,7 @@ import {
 	CategoryQueryDto,
 	CategoryUpdateDto,
 } from './dto';
-import { Category } from '@prisma/client';
+import { Category } from '@/app/generated/prisma';
 import slugify from 'slugify';
 
 @Injectable()

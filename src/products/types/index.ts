@@ -1,4 +1,4 @@
-import { $Enums } from '@prisma/client';
+import { $Enums } from '@/app/generated/prisma';
 
 export type CategoryType = $Enums.CategoryType;
 

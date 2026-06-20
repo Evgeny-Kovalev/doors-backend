@@ -1,4 +1,4 @@
-import { createZodDto } from 'nestjs-zod';
+import { createZodDto } from '@/app/shared/create-zod-dto';
 import {
 	ImportTemplateSchema,
 	createPaginatedSchema,
@@ -9,7 +9,7 @@ import {
 	ProductQuerySchema,
 	RandomProductsQuerySchema,
 	ExportProductsQuerySchema,
-} from '../../../contracts';
+} from '@/contracts';
 
 export class ProductDto extends createZodDto(ProductSchema) {}
 

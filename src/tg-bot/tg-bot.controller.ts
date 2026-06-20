@@ -1,6 +1,6 @@
 import { Body, Controller, Logger, Post } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { Public } from 'src/auth/decorators/public.decorator';
+import { Public } from '@/app/auth/decorators/public.decorator';
 import {
 	TgBotCallbackDto,
 	TgBotCallbackResponseDto,
