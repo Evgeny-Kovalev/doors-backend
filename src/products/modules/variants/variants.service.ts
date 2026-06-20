@@ -51,11 +51,15 @@ export class VariantsService {
 			price,
 			discountPrice,
 		} = dto;
+
+		const normalizedSourceId =
+			typeof sourceId === 'string' && sourceId.trim() === '' ? null : sourceId;
+
 		try {
 			const createdVariant: VariantDto =
 				await this.prismaService.productVariant.create({
 					data: {
-						sourceId,
+						sourceId: normalizedSourceId ?? null,
 						imgBackUrl,
 						imgFrontUrl,
 						imgUrl,
