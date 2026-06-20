@@ -28,6 +28,11 @@ export const envSchema = z.object({
 	S3_ACCESS_KEY_ID: z.string(),
 	S3_SECRET_ACCESS_KEY: z.string(),
 	S3_ENDPOINT: z.string().optional(),
+
+	CORS_ORIGINS: z
+		.string()
+		.transform((s) => s.split(',').map((o) => o.trim()))
+		.pipe(z.array(z.url())),
 });
 
 export type Env = z.infer<typeof envSchema>;
