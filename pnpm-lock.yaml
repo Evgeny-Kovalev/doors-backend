@@ -59,6 +59,9 @@ importers:
       axios:
         specifier: ^1.18.0
         version: 1.18.0
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       fast-csv:
         specifier: ^5.0.7
         version: 5.0.7
