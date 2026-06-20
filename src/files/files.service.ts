@@ -150,7 +150,11 @@ export class FilesService {
 
 			if (status >= 400) throw new Error(`Failed to download: ${status}`);
 
-			const contentType = headers['content-type'] || 'application/octet-stream';
+			const contentTypeHeader = headers['content-type'];
+			const contentType =
+				typeof contentTypeHeader === 'string'
+					? contentTypeHeader
+					: 'application/octet-stream';
 			await this.getS3Client().send(
 				new PutObjectCommand({
 					Bucket: this.envService.get('S3_BUCKET'),
