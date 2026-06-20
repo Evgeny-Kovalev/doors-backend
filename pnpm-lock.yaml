@@ -59,12 +59,6 @@ importers:
       axios:
         specifier: ^1.18.0
         version: 1.18.0
-      class-transformer:
-        specifier: ^0.5.1
-        version: 0.5.1
-      class-validator:
-        specifier: ^0.15.1
-        version: 0.15.1
       fast-csv:
         specifier: ^5.0.7
         version: 5.0.7
@@ -5829,7 +5823,8 @@ snapshots:
 
   '@types/triple-beam@1.3.5': {}
 
-  '@types/validator@13.15.10': {}
+  '@types/validator@13.15.10':
+    optional: true
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -6405,13 +6400,15 @@ snapshots:
 
   cjs-module-lexer@2.2.0: {}
 
-  class-transformer@0.5.1: {}
+  class-transformer@0.5.1:
+    optional: true
 
   class-validator@0.15.1:
     dependencies:
       '@types/validator': 13.15.10
       libphonenumber-js: 1.13.7
       validator: 13.15.35
+    optional: true
 
   cli-cursor@3.1.0:
     dependencies:
@@ -7561,7 +7558,8 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  libphonenumber-js@1.13.7: {}
+  libphonenumber-js@1.13.7:
+    optional: true
 
   lines-and-columns@1.2.4: {}
 
@@ -8532,7 +8530,8 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  validator@13.15.35: {}
+  validator@13.15.35:
+    optional: true
 
   vary@1.1.2: {}
 
