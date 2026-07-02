@@ -14,7 +14,7 @@ export const ProductBaseSchema = z.object({
 		message: 'Название должно быть не менее 2 символов.',
 	}),
 	imgUrl: z.string(),
-	description: z.string(),
+	description: z.string().nullable(),
 	isVisible: z.boolean(),
 	productType: ProductTypeSchema,
 });

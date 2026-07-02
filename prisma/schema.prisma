@@ -51,7 +51,7 @@ model Product {
   slug        String      @unique
   name        String
   imgUrl      String
-  description String
+  description String?
   isVisible   Boolean     @default(true)
   productType ProductType @default(full)
 
