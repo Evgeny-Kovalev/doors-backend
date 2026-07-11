@@ -56,8 +56,13 @@ export const ProductQuerySchema = z.object({
 		.optional(),
 });
 
-export type ProductQuery = z.input<typeof ProductQuerySchema>;
-export type ProductQueryOutput = z.output<typeof ProductQuerySchema>;
+export type ProductQuery = {
+	categorySlug?: string;
+	q?: string;
+	sort?: ProductSort;
+	order?: SortOrder;
+	productTypes?: ProductType[];
+};
 
 export const RandomProductsQuerySchema = z.object({
 	categorySlug: z.string(),
