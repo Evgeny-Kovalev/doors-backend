@@ -11,7 +11,7 @@
 		"outDir": "./dist",
 		"paths": {
 			"@/app/*": ["./src/*"],
-			"@/contracts": ["./contracts"]
+			"@/contracts": ["./src/contracts"]
 		},
 		"incremental": true,
 		"skipLibCheck": true,
