@@ -7,6 +7,14 @@ export const TagSchema = z.object({
 });
 export type TagResponse = z.infer<typeof TagSchema>;
 
+export const TagKeys = {
+	bestseller: 'bestseller',
+	new: 'new',
+	sample: 'sample',
+} as const;
+
+export type TagKey = (typeof TagKeys)[keyof typeof TagKeys];
+
 export const TagCreateSchema = TagSchema.omit({ id: true });
 export type TagCreateDtoType = z.infer<typeof TagCreateSchema>;
 
