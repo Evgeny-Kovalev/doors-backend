@@ -1,0 +1,42 @@
+{
+	"name": "@evgeny-kovalev/api-contracts",
+	"version": "0.1.0",
+	"description": "Shared API contracts for Doors applications",
+	"license": "UNLICENSED",
+	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"build": "tsup index.ts --format esm,cjs --clean --external zod && tsc -p tsconfig.build.json",
+		"check": "tsc --noEmit",
+		"prepack": "pnpm run check && pnpm run build"
+	},
+	"peerDependencies": {
+		"zod": "^4.4.0"
+	},
+	"devDependencies": {
+		"tsup": "^8.5.1",
+		"zod": "^4.4.3"
+	},
+	"publishConfig": {
+		"access": "restricted",
+		"registry": "https://npm.pkg.github.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Evgeny-Kovalev/doors-backend.git",
+		"directory": "contracts"
+	}
+}

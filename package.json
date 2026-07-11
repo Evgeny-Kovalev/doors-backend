@@ -1,6 +1,7 @@
 {
 	"name": "shop-backend",
 	"version": "0.0.1",
+	"packageManager": "pnpm@10.33.0",
 	"description": "",
 	"author": "",
 	"private": true,
@@ -9,7 +10,10 @@
 		"seed": "ts-node src/prisma/seed.ts"
 	},
 	"scripts": {
+		"prebuild": "pnpm run contracts:build",
 		"build": "nest build",
+		"contracts:build": "pnpm --filter @evgeny-kovalev/api-contracts build",
+		"contracts:check": "pnpm --filter @evgeny-kovalev/api-contracts check",
 		"format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
 		"start": "nest start",
 		"start:dev": "nest start --watch",

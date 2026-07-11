@@ -1,0 +1,43 @@
+name: Publish API contracts
+
+on:
+  push:
+    tags:
+      - api-contracts-v*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: '@evgeny-kovalev'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify release tag
+        if: github.event_name == 'push'
+        run: |
+          EXPECTED_TAG="api-contracts-v$(node -p "require('./contracts/package.json').version")"
+          test "$GITHUB_REF_NAME" = "$EXPECTED_TAG"
+
+      - name: Publish package
+        run: pnpm --filter @evgeny-kovalev/api-contracts publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
