@@ -5,6 +5,7 @@ import {
 	ProductCreateSchema,
 	ProductImportSchema,
 	ProductSchema,
+	ProductWithSeoSchema,
 	ProductUpdateSchema,
 	ProductQuerySchema,
 	RandomProductsQuerySchema,
@@ -12,6 +13,7 @@ import {
 } from '@/contracts';
 
 export class ProductDto extends createZodDto(ProductSchema) {}
+export class ProductWithSeoDto extends createZodDto(ProductWithSeoSchema) {}
 
 export class ProductCreateDto extends createZodDto(ProductCreateSchema) {}
 

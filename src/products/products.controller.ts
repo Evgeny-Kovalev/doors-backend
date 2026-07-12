@@ -30,6 +30,7 @@ import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
 import { RolesGuard } from '@/app/auth/guards/roles.guard';
 import {
 	ProductDto,
+	ProductWithSeoDto,
 	ProductQueryDto,
 	RandomProductsQueryDto,
 	ProductCreateDto,
@@ -139,11 +140,11 @@ export class ProductsController {
 	}
 
 	@Public()
-	@ApiOkResponse({ type: ProductDto })
+	@ApiOkResponse({ type: ProductWithSeoDto })
 	@Get(':slug')
-	async getProduct(@Param('slug') slug: string): Promise<ProductDto> {
-		const product = await this.productsService.getBySlug(slug);
-		return product;
+	async getProductWithSeo(@Param('slug') slug: string): Promise<ProductWithSeoDto> {
+		const productWithSeo = await this.productsService.getProductWithSeoBySlug(slug);
+		return productWithSeo;
 	}
 
 	@ApiBearerAuth()

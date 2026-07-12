@@ -14,6 +14,7 @@ import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ZodValidationPipe, ZodSerializerInterceptor } from 'nestjs-zod';
 import { HttpExceptionFilter } from './http-exception.filter';
 import { SentryModule } from '@sentry/nestjs/setup';
+import { SeoModule } from './seo/seo.module';
 
 @Module({
 	imports: [
@@ -35,6 +36,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 		TgBotModule,
 		TagsModule,
 		NewsModule,
+		SeoModule,
 	],
 	providers: [
 		{

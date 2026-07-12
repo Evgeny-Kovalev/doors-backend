@@ -3,6 +3,7 @@ import type { PaginatedResponse } from './pagination';
 import { AttributeSchema } from './attributes';
 import { CategorySchema } from './categories';
 import { VariantSchema } from './product-variants';
+import { ResolvedSeoMetadataSchema } from './seo';
 
 export const ProductTypeSchema = z.enum(['full', 'fullSample', 'doorOnlySample']);
 export type ProductType = z.infer<typeof ProductTypeSchema>;
@@ -28,6 +29,11 @@ export const ProductSchema = ProductBaseSchema.extend({
 });
 
 export type ProductResponse = z.infer<typeof ProductSchema>;
+
+export const ProductWithSeoSchema = ProductSchema.extend({
+	seo: ResolvedSeoMetadataSchema,
+});
+export type ProductWithSeoResponse = z.infer<typeof ProductWithSeoSchema>;
 
 export type ProductsPaginatedResponse = PaginatedResponse<typeof ProductSchema>;
 

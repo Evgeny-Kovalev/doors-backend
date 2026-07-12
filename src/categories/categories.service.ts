@@ -2,16 +2,21 @@ import { PrismaService } from '@/app/prisma/prisma.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
 	CategoryCreateDto,
+	CategoryWithSeoDto,
 	CategoryDto,
 	CategoryQueryDto,
 	CategoryUpdateDto,
 } from './dto';
-import { Category } from '@/app/generated/prisma';
+import { Category, SeoEntityType } from '@/app/generated/prisma';
+import { SeoService } from '@/app/seo/seo.service';
 import slugify from 'slugify';
 
 @Injectable()
 export class CategoriesService {
-	constructor(private readonly prismaService: PrismaService) {}
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly seoService: SeoService,
+	) {}
 
 	private readonly logger = new Logger(CategoriesService.name);
 
@@ -39,6 +44,17 @@ export class CategoriesService {
 		const category = await this.prismaService.category.findFirst({ where: { slug } });
 		if (!category) throw new BadRequestException('Category with this slug not found');
 		return category;
+	}
+
+	async getCategoryWithSeoBySlug(slug: string): Promise<CategoryWithSeoDto> {
+		const category = await this.getBySlug(slug);
+		const seo = await this.seoService.resolveMetadata(
+			SeoEntityType.category,
+			category.slug,
+			{ name: category.name },
+		);
+
+		return { ...category, seo };
 	}
 
 	async createOne(dto: CategoryCreateDto): Promise<CategoryDto> {
@@ -123,15 +139,15 @@ export class CategoriesService {
 	async getCategoryHierarchy(category: CategoryDto): Promise<CategoryDto[]> {
 		const categories = await this.prismaService.$queryRaw<Category[]>`
 			WITH RECURSIVE cat_path AS (
-				SELECT id, slug, name, "imgUrl", description, "isVisible", "parentCategoryId", "categoryType", 0 AS depth
+				SELECT id, slug, name, "imgUrl", description, "markdownUrl", "isVisible", "parentCategoryId", "categoryType", "order", 0 AS depth
 				FROM "Category"
 				WHERE id = ${category.id}
 				UNION ALL
-				SELECT c.id, c.slug, c.name, c."imgUrl", c.description, c."isVisible", c."parentCategoryId", c."categoryType", cp.depth + 1
+				SELECT c.id, c.slug, c.name, c."imgUrl", c.description, c."markdownUrl", c."isVisible", c."parentCategoryId", c."categoryType", c."order", cp.depth + 1
 				FROM "Category" c
 				JOIN cat_path cp ON c.id = cp."parentCategoryId"
 			)
-			SELECT id, slug, name, "imgUrl", description, "isVisible", "parentCategoryId", "categoryType"
+			SELECT id, slug, name, "imgUrl", description, "markdownUrl", "isVisible", "parentCategoryId", "categoryType", "order"
 			FROM cat_path
 			ORDER BY depth DESC;
 		`;

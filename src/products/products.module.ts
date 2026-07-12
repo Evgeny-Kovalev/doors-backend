@@ -7,6 +7,7 @@ import { ImportService } from './services/import.service';
 import { PrismaModule } from '@/app/prisma/prisma.module';
 import { AttributesModule } from '@/app/products/modules/attributes/attributes.module';
 import { VariantsModule } from './modules/variants/variants.module';
+import { SeoModule } from '@/app/seo/seo.module';
 
 @Module({
 	controllers: [ProductsController],
@@ -18,6 +19,7 @@ import { VariantsModule } from './modules/variants/variants.module';
 		VariantsModule,
 		AttributesModule,
 		CategoriesModule,
+		SeoModule,
 	],
 })
 export class ProductsModule {}

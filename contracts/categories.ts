@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ResolvedSeoMetadataSchema } from './seo';
 
 export const CategoryType = {
 	interiorDoors: 'interiorDoors',
@@ -18,6 +19,11 @@ export const CategorySchema = z.object({
 	order: z.number().nullable(),
 });
 export type CategoryResponse = z.infer<typeof CategorySchema>;
+
+export const CategoryWithSeoSchema = CategorySchema.extend({
+	seo: ResolvedSeoMetadataSchema,
+});
+export type CategoryWithSeoResponse = z.infer<typeof CategoryWithSeoSchema>;
 
 export const CategoryCreateSchema = CategorySchema.omit({ id: true, slug: true }).partial(
 	{

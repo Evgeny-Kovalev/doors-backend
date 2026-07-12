@@ -25,6 +25,7 @@ import { RolesGuard } from '@/app/auth/guards/roles.guard';
 import {
 	CategoryDto,
 	CategoryCreateDto,
+	CategoryWithSeoDto,
 	CategoryUpdateDto,
 	CategoryQueryDto,
 } from './dto';
@@ -46,10 +47,10 @@ export class CategoriesController {
 	}
 
 	@Public()
-	@ApiOkResponse({ type: CategoryDto })
+	@ApiOkResponse({ type: CategoryWithSeoDto })
 	@Get(':slug')
-	async getCategory(@Param('slug') slug: string): Promise<CategoryDto> {
-		const category = await this.categoriesService.getBySlug(slug);
+	async getCategory(@Param('slug') slug: string): Promise<CategoryWithSeoDto> {
+		const category = await this.categoriesService.getCategoryWithSeoBySlug(slug);
 		return category;
 	}
 

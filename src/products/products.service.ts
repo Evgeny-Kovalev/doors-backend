@@ -11,6 +11,7 @@ import { PaginatedDto, PaginationQueryDto } from '@/app/shared/pagination/dto';
 import {
 	ImportTemplate,
 	ProductCreateDto,
+	ProductWithSeoDto,
 	ProductDto,
 	ProductImportDto,
 	ProductQueryDto,
@@ -18,25 +19,11 @@ import {
 } from './dto/product.dto';
 import slugify from 'slugify';
 import { CategoryDto } from '../categories/dto';
-import { Prisma } from '@/app/generated/prisma';
+import { Prisma, SeoEntityType } from '@/app/generated/prisma';
+import { SeoService } from '@/app/seo/seo.service';
 import { ExportProductsQueryDto } from './dto/product.dto';
 import * as csv from 'fast-csv';
-
-const DEFAULT_INCLUDE = {
-	category: true,
-	params: { include: { key: true, value: true } },
-	variants: {
-		include: {
-			attributes: {
-				include: {
-					key: true,
-					value: true,
-				},
-			},
-			tags: true,
-		},
-	},
-};
+import { DEFAULT_INCLUDE, getProductPriceRange } from './utils';
 
 @Injectable()
 export class ProductsService {
@@ -47,6 +34,7 @@ export class ProductsService {
 		private readonly variantsService: VariantsService,
 		private readonly importService: ImportService,
 		private readonly attributesService: AttributesService,
+		private readonly seoService: SeoService,
 	) {}
 
 	private readonly logger = new Logger(ProductsService.name);
@@ -276,6 +264,23 @@ export class ProductsService {
 		});
 		if (!product) throw new BadRequestException('Product with this slug not found');
 		return product;
+	}
+
+	async getProductWithSeoBySlug(slug: string): Promise<ProductWithSeoDto> {
+		const product = await this.getBySlug(slug);
+		const { minPrice, maxPrice } = getProductPriceRange(product.variants);
+		const seo = await this.seoService.resolveMetadata(
+			SeoEntityType.product,
+			product.slug,
+			{
+				name: product.name,
+				category: product.category?.name ?? '',
+				minPrice,
+				maxPrice,
+			},
+		);
+
+		return { ...product, seo };
 	}
 
 	async createOne(dto: ProductCreateDto): Promise<ProductDto> {
