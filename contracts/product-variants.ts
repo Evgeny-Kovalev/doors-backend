@@ -36,3 +36,43 @@ export const VariantUpdateSchema = VariantSchema.omit({
 		attributeIds: z.array(z.number()).min(1).optional(),
 	});
 export type VariantUpdateType = z.infer<typeof VariantUpdateSchema>;
+
+const parseJsonField = (value: unknown) => {
+	if (typeof value !== 'string') return value;
+
+	try {
+		return JSON.parse(value);
+	} catch {
+		return value;
+	}
+};
+
+export const VariantMultipartUpdateSchema = VariantUpdateSchema.extend({
+	categorySlug: z.string().min(1).optional(),
+	price: z.preprocess(
+		(value) => (value === '' ? null : value),
+		z.coerce.number().nullable().optional(),
+	),
+	discountPrice: z.preprocess(
+		(value) => (value === '' ? null : value),
+		z.coerce.number().nullable().optional(),
+	),
+	attributeIds: z.preprocess(
+		parseJsonField,
+		z.array(z.coerce.number()).min(1).optional(),
+	),
+	tags: z.preprocess(parseJsonField, z.array(TagSchema).optional()),
+});
+
+type VariantMultipartUpdateFields = z.output<typeof VariantMultipartUpdateSchema>;
+
+export type VariantMultipartUpdateBody = VariantMultipartUpdateFields &
+	(
+		| {
+				image: File;
+				categorySlug: string;
+		  }
+		| {
+				image?: undefined;
+		  }
+	);

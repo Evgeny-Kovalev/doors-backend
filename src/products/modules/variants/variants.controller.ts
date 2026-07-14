@@ -8,6 +8,7 @@ import {
 	Patch,
 	Post,
 	Query,
+	UploadedFile,
 	UseGuards,
 } from '@nestjs/common';
 import { VariantsService } from './variants.service';
@@ -22,13 +23,14 @@ import { ProductsService } from '../../products.service';
 import {
 	VariantCreateDto,
 	VariantDto,
+	VariantMultipartUpdateDto,
 	VariantQueryDto,
-	VariantUpdateDto,
 } from './variant.dto';
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Role } from '@/app/generated/prisma';
 import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
 import { RolesGuard } from '@/app/auth/guards/roles.guard';
+import { ApiFileWithBody } from '@/app/files/decorators/api-file.decorator';
 
 @ApiTags('Product variants')
 @Controller({
@@ -74,15 +76,19 @@ export class VariantsController {
 	@ApiOkResponse({ type: VariantDto })
 	@HasRoles(Role.ADMIN)
 	@UseGuards(RolesGuard)
+	@ApiFileWithBody({
+		bodyType: VariantMultipartUpdateDto,
+		fileName: 'image',
+		required: false,
+		mimetype: ['image'],
+	})
 	@Patch(':id')
 	async update(
 		@Param('id', ParseIntPipe) variantId: number,
-		@Body() variantUpdateDto: VariantUpdateDto,
+		@Body() dto: VariantMultipartUpdateDto,
+		@UploadedFile() image?: Express.Multer.File,
 	): Promise<VariantDto> {
-		const updatedVariant = await this.variantsService.update(
-			variantId,
-			variantUpdateDto,
-		);
+		const updatedVariant = await this.variantsService.update(variantId, dto, image);
 		return updatedVariant;
 	}
 

@@ -63,11 +63,13 @@ export class FilesService {
 		{
 			returnOriginalS3Url = false,
 			prefix,
-		}: { returnOriginalS3Url?: boolean; prefix?: string } = {},
+			fileName,
+		}: { returnOriginalS3Url?: boolean; prefix?: string; fileName?: string } = {},
 	): Promise<{ url: string; key: string }> {
 		if (!file?.buffer) throw new BadRequestException('No file buffer');
 
-		const key = prefix ? `${prefix}/${file.originalname}` : file.originalname;
+		const fileNameToUse = fileName ?? file.originalname;
+		const key = prefix ? `${prefix}/${fileNameToUse}` : fileNameToUse;
 
 		try {
 			await this.getS3Client().send(

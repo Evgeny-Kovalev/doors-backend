@@ -7,7 +7,8 @@ import {
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { AttributesService } from '@/app/products/modules/attributes/attributes.service';
 import { ProductDto } from '../../dto/product.dto';
-import { VariantDto, VariantCreateDto, VariantUpdateDto } from './variant.dto';
+import { VariantDto, VariantCreateDto, VariantMultipartUpdateDto } from './variant.dto';
+import { FilesService } from '@/app/files/files.service';
 
 const DEFAULT_INCLUDE = {
 	attributes: { include: { key: true, value: true } },
@@ -19,6 +20,7 @@ export class VariantsService {
 	constructor(
 		private readonly prismaService: PrismaService,
 		private readonly attributesService: AttributesService,
+		private readonly filesService: FilesService,
 	) {}
 
 	private readonly logger = new Logger(VariantsService.name);
@@ -78,7 +80,11 @@ export class VariantsService {
 		}
 	}
 
-	async update(variantId: number, dto: VariantUpdateDto): Promise<VariantDto> {
+	async update(
+		variantId: number,
+		dto: VariantMultipartUpdateDto,
+		image?: Express.Multer.File,
+	): Promise<VariantDto> {
 		await this.getById(variantId);
 		const {
 			imgBackUrl,
@@ -88,6 +94,7 @@ export class VariantsService {
 			price,
 			discountPrice,
 			tags,
+			categorySlug,
 		} = dto;
 
 		const newAttributes = attributeIds
@@ -101,11 +108,22 @@ export class VariantsService {
 				'Attributes with these IDs are missing or there are duplicate ID.',
 			);
 
+		if (image && !categorySlug)
+			throw new BadRequestException('categorySlug is required when image is provided');
+
+		const uploadedImage =
+			image && categorySlug
+				? await this.filesService.uploadFileToS3(image, {
+						prefix: `category/${categorySlug}/custom-images`,
+						fileName: `${variantId}.${image.originalname.split('.').pop()}`,
+					})
+				: undefined;
+
 		try {
 			const updatedVariant = await this.prismaService.productVariant.update({
 				where: { id: variantId },
 				data: {
-					imgUrl,
+					imgUrl: uploadedImage ? `${uploadedImage.url}?v=${Date.now()}` : imgUrl,
 					imgBackUrl,
 					imgFrontUrl,
 					price,
