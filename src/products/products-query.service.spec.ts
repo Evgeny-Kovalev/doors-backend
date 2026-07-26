@@ -4,7 +4,7 @@ import { PrismaService } from '@/app/prisma/prisma.service';
 import { CategoriesService } from '@/app/categories/categories.service';
 import { SeoService } from '@/app/seo/seo.service';
 import { NotFoundException } from '@nestjs/common';
-import type { ProductQuery } from '@/contracts';
+import type { ProductQueryParsed } from '@/contracts';
 
 describe('ProductsQueryService', () => {
 	let service: ProductsQueryService;
@@ -79,7 +79,7 @@ describe('ProductsQueryService', () => {
 			1,
 		]);
 
-		const query: ProductQuery = { sort: 'name', order: 'asc' };
+		const query: ProductQueryParsed = { sort: 'name', order: 'asc' };
 		const result = await service.getAll(query, { page: 1, limit: 10 });
 
 		expect(prisma.$transaction).toHaveBeenCalled();

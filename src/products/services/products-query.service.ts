@@ -17,7 +17,7 @@ import {
 } from '@/app/shared/product-include';
 import { getProductPriceRange } from '../utils';
 import { VisibilityOptions, visibleOnlyWhere } from '@/app/shared/visibility';
-import type { ProductQuery } from '@/contracts';
+import type { ProductQueryParsed } from '@/contracts';
 
 @Injectable()
 export class ProductsQueryService {
@@ -30,15 +30,14 @@ export class ProductsQueryService {
 	private readonly logger = new Logger(ProductsQueryService.name);
 
 	async getAll(
-		query: ProductQuery,
+		query: ProductQueryParsed,
 		{ limit, page }: PaginationQueryDto,
 		options: VisibilityOptions = {},
 	): Promise<PaginatedDto<ProductDto>> {
 		try {
 			const productFilter = await this.buildProductFilter(query, options);
 			const paginationSkip = (page - 1) * limit;
-			const sort = query.sort ?? 'default';
-			const order = query.order ?? 'asc';
+			const { sort, order } = query;
 
 			// sort=name: алфавит по name -> id; категория и теги не учитываются
 			if (sort === 'name') {
@@ -83,7 +82,7 @@ export class ProductsQueryService {
 	}
 
 	async buildProductFilter(
-		query: ProductQuery,
+		query: ProductQueryParsed,
 		options: VisibilityOptions = {},
 	): Promise<Prisma.ProductWhereInput> {
 		const productFilter: Prisma.ProductWhereInput = {
@@ -102,7 +101,7 @@ export class ProductsQueryService {
 	}
 
 	private async buildProductSqlWhere(
-		query: ProductQuery,
+		query: ProductQueryParsed,
 		options: VisibilityOptions = {},
 	): Promise<Prisma.Sql> {
 		const conditions: Prisma.Sql[] = [];
@@ -137,7 +136,7 @@ export class ProductsQueryService {
 	 * "Есть цена" = хотя бы один вариант с COALESCE(discountPrice, price).
 	 */
 	private async getAllDefaultSort(
-		query: ProductQuery,
+		query: ProductQueryParsed,
 		productFilter: Prisma.ProductWhereInput,
 		skip: number,
 		take: number,
@@ -182,7 +181,7 @@ export class ProductsQueryService {
 	 * Без цены — в конец (NULLS LAST).
 	 */
 	private async getAllSortedByPrice(
-		query: ProductQuery,
+		query: ProductQueryParsed,
 		productFilter: Prisma.ProductWhereInput,
 		order: 'asc' | 'desc',
 		skip: number,

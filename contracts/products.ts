@@ -64,7 +64,8 @@ export const ProductQuerySchema = z.object({
 		.optional(),
 });
 
-export type ProductQuery = z.infer<typeof ProductQuerySchema>;
+export type ProductQuery = z.input<typeof ProductQuerySchema>;
+export type ProductQueryParsed = z.infer<typeof ProductQuerySchema>;
 
 export const RandomProductsQuerySchema = z.object({
 	categorySlug: z.string(),

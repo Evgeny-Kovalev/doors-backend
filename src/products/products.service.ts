@@ -15,7 +15,7 @@ import { ProductsQueryService } from './services/products-query.service';
 import { ProductsCommandService } from './services/products-command.service';
 import { ImportService } from './services/import.service';
 import { VisibilityOptions } from '@/app/shared/visibility';
-import type { ProductQuery } from '@/contracts';
+import type { ProductQueryParsed } from '@/contracts';
 
 @Injectable()
 export class ProductsService {
@@ -26,7 +26,7 @@ export class ProductsService {
 	) {}
 
 	getAll(
-		query: ProductQuery,
+		query: ProductQueryParsed,
 		pagination: PaginationQueryDto,
 		options?: VisibilityOptions,
 	): Promise<PaginatedDto<ProductDto>> {
