@@ -8,26 +8,16 @@ import {
 	Body,
 	Query,
 	ParseIntPipe,
-	UseGuards,
 	Logger,
 	UploadedFile,
 	Res,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ProductsService } from './products.service';
-import {
-	ApiBearerAuth,
-	ApiCreatedResponse,
-	ApiNoContentResponse,
-	ApiOkResponse,
-	ApiTags,
-	ApiProduces,
-} from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags, ApiProduces } from '@nestjs/swagger';
 import { Public } from '@/app/auth/decorators/public.decorator';
+import { Admin } from '@/app/auth/decorators/admin.decorator';
 import { PaginationQueryDto } from '@/app/shared/pagination/dto';
-import { Role } from '@/app/generated/prisma';
-import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
-import { RolesGuard } from '@/app/auth/guards/roles.guard';
 import {
 	ProductDto,
 	ProductWithSeoDto,
@@ -83,9 +73,7 @@ export class ProductsController {
 		});
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@ApiProduces('text/csv')
 	@ApiOkResponse({
 		description: 'CSV export of product variants',
@@ -112,10 +100,8 @@ export class ProductsController {
 		return csvContent;
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiCreatedResponse({ type: [ProductDto] })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@ApiFileWithBody({
 		bodyType: ProductImportDto,
 		fileName: 'file',
@@ -150,20 +136,16 @@ export class ProductsController {
 		return this.productsService.getProductWithSeoBySlug(slug);
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiCreatedResponse({ type: ProductDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Post('/')
 	async createProduct(@Body() dto: ProductCreateDto): Promise<ProductDto> {
 		const product = await this.productsService.createOne(dto);
 		return product;
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiOkResponse({ type: ProductDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Patch(':slug')
 	async update(
 		@Param('slug') slug: string,
@@ -173,9 +155,7 @@ export class ProductsController {
 		return updatedProduct;
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Delete(':id')
 	async delete(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {
 		return await this.productsService.delete(id);

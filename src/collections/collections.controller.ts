@@ -1,25 +1,14 @@
 import { Public } from '@/app/auth/decorators/public.decorator';
-import {
-	Body,
-	Controller,
-	Get,
-	Param,
-	ParseIntPipe,
-	Patch,
-	Post,
-	UseGuards,
-} from '@nestjs/common';
+import { Admin } from '@/app/auth/decorators/admin.decorator';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
 	CollectionCreateDto,
 	CollectionDto,
 	CollectionListItemDto,
 	CollectionUpdateDto,
 } from './dto';
-import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
-import { Role } from '@/app/generated/prisma';
-import { RolesGuard } from '@/app/auth/guards/roles.guard';
 
 @ApiTags('Collections')
 @Controller({
@@ -43,17 +32,13 @@ export class CollectionsController {
 		return this.collectionsService.findOne(id);
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Post()
 	create(@Body() dto: CollectionCreateDto) {
 		return this.collectionsService.create(dto);
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Patch(':id')
 	update(@Param('id', ParseIntPipe) id: number, @Body() dto: CollectionUpdateDto) {
 		return this.collectionsService.update(id, dto);

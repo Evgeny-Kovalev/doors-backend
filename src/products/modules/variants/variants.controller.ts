@@ -9,16 +9,9 @@ import {
 	Post,
 	Query,
 	UploadedFile,
-	UseGuards,
 } from '@nestjs/common';
 import { VariantsService } from './variants.service';
-import {
-	ApiBearerAuth,
-	ApiBody,
-	ApiCreatedResponse,
-	ApiOkResponse,
-	ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
 	VariantCreateDto,
 	VariantDto,
@@ -26,9 +19,7 @@ import {
 	VariantQueryDto,
 } from './variant.dto';
 import { Public } from '@/app/auth/decorators/public.decorator';
-import { Role } from '@/app/generated/prisma';
-import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
-import { RolesGuard } from '@/app/auth/guards/roles.guard';
+import { Admin } from '@/app/auth/decorators/admin.decorator';
 import { ApiFileWithBody } from '@/app/files/decorators/api-file.decorator';
 
 @ApiTags('Product variants')
@@ -53,20 +44,16 @@ export class VariantsController {
 		return this.variantsService.getById(variantId);
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiCreatedResponse({ type: VariantDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Post('/')
 	@ApiBody({ type: VariantCreateDto })
 	async createOne(@Body() dto: VariantCreateDto): Promise<VariantDto> {
 		return this.variantsService.createOne(dto.productId, dto);
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiOkResponse({ type: VariantDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@ApiFileWithBody({
 		bodyType: VariantMultipartUpdateDto,
 		fileName: 'image',
@@ -82,9 +69,7 @@ export class VariantsController {
 		return this.variantsService.update(variantId, dto, image);
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Delete(':id')
 	async deleteOne(@Param('id', ParseIntPipe) id: number): Promise<VariantDto> {
 		return this.variantsService.deleteById(id);

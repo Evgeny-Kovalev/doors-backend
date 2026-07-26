@@ -1,10 +1,6 @@
-import { Public } from './../auth/decorators/public.decorator';
-import {
-	ApiBearerAuth,
-	ApiCreatedResponse,
-	ApiOkResponse,
-	ApiTags,
-} from '@nestjs/swagger';
+import { Public } from '@/app/auth/decorators/public.decorator';
+import { Admin } from '@/app/auth/decorators/admin.decorator';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import {
 	Controller,
@@ -15,13 +11,8 @@ import {
 	Patch,
 	Delete,
 	ParseIntPipe,
-	UseGuards,
 	Query,
 } from '@nestjs/common';
-
-import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
-import { Role } from '@/app/generated/prisma';
-import { RolesGuard } from '@/app/auth/guards/roles.guard';
 import {
 	CategoryDto,
 	CategoryCreateDto,
@@ -60,20 +51,16 @@ export class CategoriesController {
 		return this.categoriesService.getCategoryHierarchy(category);
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiCreatedResponse({ type: CategoryDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Post('/')
 	async createCategory(@Body() dto: CategoryCreateDto): Promise<CategoryDto> {
 		const createdCategory = await this.categoriesService.createOne(dto);
 		return createdCategory;
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiOkResponse({ type: CategoryDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Patch(':id')
 	async update(
 		@Param('id', ParseIntPipe) categoryId: number,
@@ -82,9 +69,7 @@ export class CategoriesController {
 		return await this.categoriesService.update(categoryId, categoryUpdateDto);
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Delete(':id')
 	delete(@Param('id', ParseIntPipe) id: number) {
 		return this.categoriesService.delete(id);

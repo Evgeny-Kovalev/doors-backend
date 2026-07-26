@@ -1,20 +1,16 @@
-import { Controller, Delete, Param, Post, UploadedFile, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Controller, Delete, Param, Post, UploadedFile } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { FilesService } from './files.service';
 import { ApiUploadFile } from './decorators/api-file.decorator';
 import { ParseFile } from './pipes/parse-file.pipe';
-import { HasRoles } from '../auth/decorators/has-roles.decorator';
-import { Role } from '@/app/generated/prisma';
-import { RolesGuard } from '../auth/guards/roles.guard';
+import { Admin } from '@/app/auth/decorators/admin.decorator';
 
 @ApiTags('Media Files')
-@ApiBearerAuth()
 @Controller({ path: 'files', version: '1' })
 export class FilesController {
 	constructor(private readonly filesService: FilesService) {}
 
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Post('files')
 	@ApiUploadFile()
 	async uploadFile(@UploadedFile(ParseFile) file: Express.Multer.File) {
@@ -22,8 +18,7 @@ export class FilesController {
 		return { url, name: key };
 	}
 
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Delete('files/:url')
 	async deleteFile(@Param('url') url: string) {
 		return await this.filesService.deleteFile(url);

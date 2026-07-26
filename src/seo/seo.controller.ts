@@ -1,18 +1,9 @@
-import {
-	Body,
-	Controller,
-	Get,
-	Param,
-	ParseEnumPipe,
-	Patch,
-	UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseEnumPipe, Patch } from '@nestjs/common';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
-import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
+import { Admin } from '@/app/auth/decorators/admin.decorator';
 import { Public } from '@/app/auth/decorators/public.decorator';
-import { RolesGuard } from '@/app/auth/guards/roles.guard';
-import { Role, SeoEntityType } from '@/app/generated/prisma';
+import { SeoEntityType } from '@/app/generated/prisma';
 
 import {
 	SeoMetadataDto,
@@ -30,19 +21,15 @@ import { SeoService } from './seo.service';
 export class SeoController {
 	constructor(private readonly seoService: SeoService) {}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiOkResponse({ type: [SeoTemplateDto] })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Get('templates')
 	getTemplates(): Promise<SeoTemplateDto[]> {
 		return this.seoService.getTemplates();
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiOkResponse({ type: SeoTemplateDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Patch('templates/:entityType')
 	updateTemplate(
 		@Param('entityType', new ParseEnumPipe(SeoEntityType))
@@ -63,10 +50,8 @@ export class SeoController {
 		return this.seoService.getMetadata(entityType, entityKey);
 	}
 
-	@ApiBearerAuth()
+	@Admin()
 	@ApiOkResponse({ type: SeoMetadataDto })
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
 	@Patch('metadata/:entityType/:entityKey')
 	updateMetadata(
 		@Param('entityType', new ParseEnumPipe(SeoEntityType)) entityType: SeoEntityType,

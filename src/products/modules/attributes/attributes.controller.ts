@@ -1,23 +1,7 @@
 import { Public } from '@/app/auth/decorators/public.decorator';
-import {
-	Body,
-	Controller,
-	Get,
-	Param,
-	ParseIntPipe,
-	Patch,
-	Post,
-	UseGuards,
-} from '@nestjs/common';
-import {
-	ApiBearerAuth,
-	ApiCreatedResponse,
-	ApiOkResponse,
-	ApiTags,
-} from '@nestjs/swagger';
-import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
-import { Role } from '@/app/generated/prisma';
-import { RolesGuard } from '@/app/auth/guards/roles.guard';
+import { Admin } from '@/app/auth/decorators/admin.decorator';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AttributesService } from './attributes.service';
 import {
 	AttributeCreateDto,
@@ -40,26 +24,20 @@ export class AttributesController {
 		return this.attributesService.findAll();
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Post('attributes')
 	@ApiCreatedResponse({ type: AttributeDto })
 	create(@Body() dto: AttributeCreateDto) {
 		return this.attributesService.create(dto);
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Patch('attribute-keys/:id')
 	updateKey(@Param('id', ParseIntPipe) id: number, @Body() dto: AttributeKeyUpdateDto) {
 		return this.attributesService.updateKey(id, dto);
 	}
 
-	@ApiBearerAuth()
-	@HasRoles(Role.ADMIN)
-	@UseGuards(RolesGuard)
+	@Admin()
 	@Patch('attribute-values/:id')
 	updateValue(
 		@Param('id', ParseIntPipe) id: number,
