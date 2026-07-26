@@ -1,6 +1,15 @@
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Param,
+	ParseIntPipe,
+	Patch,
+	Post,
+} from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -42,5 +51,12 @@ export class CollectionsController {
 	@Patch(':id')
 	update(@Param('id', ParseIntPipe) id: number, @Body() dto: CollectionUpdateDto) {
 		return this.collectionsService.update(id, dto);
+	}
+
+	@Admin()
+	@Delete(':id')
+	@ApiOkResponse({ type: CollectionDto })
+	delete(@Param('id', ParseIntPipe) id: number) {
+		return this.collectionsService.delete(id);
 	}
 }

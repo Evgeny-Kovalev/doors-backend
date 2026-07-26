@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	Logger,
+	NotFoundException,
+} from '@nestjs/common';
 import { Attribute, AttributeValue } from '@/app/generated/prisma';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { ProductVariantFromFile } from '@/app/products/types';
@@ -169,5 +174,16 @@ export class AttributesService {
 				imgUrl: dto.imgUrl,
 			},
 		});
+	}
+
+	async delete(id: number): Promise<AttributeDto> {
+		try {
+			return await this.prismaService.attribute.delete({
+				where: { id },
+				include: { key: true, value: true },
+			});
+		} catch {
+			throw new NotFoundException('Attribute with this id not found');
+		}
 	}
 }

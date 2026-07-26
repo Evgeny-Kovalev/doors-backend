@@ -1,6 +1,15 @@
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Param,
+	ParseIntPipe,
+	Patch,
+	Post,
+} from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AttributesService } from './attributes.service';
 import {
@@ -44,5 +53,12 @@ export class AttributesController {
 		@Body() dto: AttributeValueUpdateDto,
 	) {
 		return this.attributesService.updateValue(id, dto);
+	}
+
+	@Admin()
+	@Delete('attributes/:id')
+	@ApiOkResponse({ type: AttributeDto })
+	delete(@Param('id', ParseIntPipe) id: number): Promise<AttributeDto> {
+		return this.attributesService.delete(id);
 	}
 }

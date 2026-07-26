@@ -73,4 +73,15 @@ export class CollectionsService {
 			throw new BadRequestException('Cannot create the collection');
 		}
 	}
+
+	async delete(id: number): Promise<CollectionDto> {
+		try {
+			return await this.prismaService.collection.delete({
+				where: { id },
+				include: COLLECTION_ADMIN_INCLUDE,
+			});
+		} catch {
+			throw new NotFoundException('Collection with this id not found');
+		}
+	}
 }
