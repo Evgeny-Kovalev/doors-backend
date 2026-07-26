@@ -15,6 +15,7 @@ import { Tokens } from './types';
 import { GetCurrentUserId } from './decorators/get-current-user-id.decorator';
 import { GetCurrentUser } from './decorators/get-current-user.decorator';
 import { RtGuard } from './guards/rt.guard';
+import { Admin } from './decorators/admin.decorator';
 
 @ApiTags('Auth')
 @Controller({
@@ -26,7 +27,7 @@ export class AuthController {
 
 	private readonly logger = new Logger(AuthController.name);
 
-	@Public()
+	@Admin()
 	@Post('signup')
 	@HttpCode(HttpStatus.CREATED)
 	signup(@Body() dto: AuthDto): Promise<Tokens> {
