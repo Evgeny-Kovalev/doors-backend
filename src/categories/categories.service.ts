@@ -1,5 +1,10 @@
 import { PrismaService } from '@/app/prisma/prisma.service';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+	Injectable,
+	Logger,
+	NotFoundException,
+	BadRequestException,
+} from '@nestjs/common';
 import {
 	CategoryCreateDto,
 	CategoryWithSeoDto,
@@ -10,6 +15,10 @@ import {
 import { Category, SeoEntityType } from '@/app/generated/prisma';
 import { SeoService } from '@/app/seo/seo.service';
 import slugify from 'slugify';
+import {
+	VisibilityOptions,
+	visibleOnlyWhere,
+} from '@/app/shared/visibility';
 
 @Injectable()
 export class CategoriesService {
@@ -20,12 +29,16 @@ export class CategoriesService {
 
 	private readonly logger = new Logger(CategoriesService.name);
 
-	async getAll(dto: CategoryQueryDto): Promise<CategoryDto[]> {
+	async getAll(
+		dto: CategoryQueryDto,
+		options: VisibilityOptions = {},
+	): Promise<CategoryDto[]> {
 		const categories: Category[] = await this.prismaService.category.findMany({
 			where: {
 				parentCategory: {
 					slug: dto.parentCategorySlug,
 				},
+				...visibleOnlyWhere(options),
 			},
 			orderBy: {
 				order: 'asc',
@@ -36,18 +49,29 @@ export class CategoriesService {
 
 	async getById(id: number): Promise<CategoryDto> {
 		const category = await this.prismaService.category.findFirst({ where: { id } });
-		if (!category) throw new BadRequestException('Category with this id not found');
+		if (!category) throw new NotFoundException('Category with this id not found');
 		return category;
 	}
 
-	async getBySlug(slug: string): Promise<CategoryDto> {
-		const category = await this.prismaService.category.findFirst({ where: { slug } });
-		if (!category) throw new BadRequestException('Category with this slug not found');
+	async getBySlug(
+		slug: string,
+		options: VisibilityOptions = {},
+	): Promise<CategoryDto> {
+		const category = await this.prismaService.category.findFirst({
+			where: {
+				slug,
+				...visibleOnlyWhere(options),
+			},
+		});
+		if (!category) throw new NotFoundException('Category with this slug not found');
 		return category;
 	}
 
-	async getCategoryWithSeoBySlug(slug: string): Promise<CategoryWithSeoDto> {
-		const category = await this.getBySlug(slug);
+	async getCategoryWithSeoBySlug(
+		slug: string,
+		options: VisibilityOptions = {},
+	): Promise<CategoryWithSeoDto> {
+		const category = await this.getBySlug(slug, options);
 		const seo = await this.seoService.resolveMetadata(
 			SeoEntityType.category,
 			category.slug,
@@ -155,11 +179,16 @@ export class CategoriesService {
 		return categories;
 	}
 
-	async getChildren(category: CategoryDto): Promise<CategoryDto[]> {
-		const categories = await this.prismaService.category.findMany({
-			where: { parentCategoryId: category.id },
+	async getChildren(
+		category: CategoryDto,
+		options: VisibilityOptions = {},
+	): Promise<CategoryDto[]> {
+		return this.prismaService.category.findMany({
+			where: {
+				parentCategoryId: category.id,
+				...visibleOnlyWhere(options),
+			},
 		});
-		return categories;
 	}
 
 	async getDescendantCategoryIdsBySlug(slug: string): Promise<number[]> {

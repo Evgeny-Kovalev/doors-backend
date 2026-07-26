@@ -1,7 +1,7 @@
 import { User } from '@/app/generated/prisma';
 import { PrismaService } from './../prisma/prisma.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { UserCreateDto, UserDto, UserUpdateDto } from './dto';
+import { UserCreateDto } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -18,7 +18,7 @@ export class UsersService {
 
 	async createOne({ email, password }: UserCreateDto): Promise<User> {
 		try {
-			return this.prismaService.user.create({
+			return await this.prismaService.user.create({
 				data: {
 					email,
 					password,
@@ -30,7 +30,10 @@ export class UsersService {
 		}
 	}
 
-	async updateOne(id: Pick<UserDto, 'id'>['id'], dto: UserUpdateDto) {
+	async updateOne(
+		id: number,
+		dto: { refreshToken?: string | null; password?: string },
+	): Promise<User> {
 		try {
 			return await this.prismaService.user.update({
 				where: { id },

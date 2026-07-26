@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { NewsPreviewDto } from './dto';
 import { toNewsPreviewDto } from './utils';
@@ -16,7 +16,7 @@ export class NewsService {
 
 	async findOneBySlug(slug: string): Promise<NewsPreviewDto> {
 		const row = await this.prismaService.news.findUnique({ where: { slug } });
-		if (!row) throw new BadRequestException('News with this slug not found');
+		if (!row) throw new NotFoundException('News with this slug not found');
 		return toNewsPreviewDto(row);
 	}
 }

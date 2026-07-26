@@ -1,5 +1,6 @@
-import { Body, Controller, Logger, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '@/app/auth/decorators/public.decorator';
 import {
 	TgBotCallbackDto,
@@ -16,33 +17,25 @@ import { TgBotService } from './tg-bot.service';
 export class TgBotController {
 	constructor(private readonly tgBotService: TgBotService) {}
 
-	private readonly logger = new Logger(TgBotController.name);
-
 	@Public()
+	@Throttle({ default: { limit: 5, ttl: 60_000 } })
+	@HttpCode(HttpStatus.OK)
 	@ApiBody({ type: TgBotCallbackDto })
 	@ApiOkResponse({ type: TgBotCallbackResponseDto })
 	@Post('callback')
 	async callback(@Body() body: TgBotCallbackDto): Promise<TgBotCallbackResponseDto> {
-		try {
-			await this.tgBotService.sendPhoneNumber(body);
-			return { success: true };
-		} catch (error) {
-			this.logger.error(error);
-			return { success: false };
-		}
+		await this.tgBotService.sendPhoneNumber(body);
+		return { success: true };
 	}
 
 	@Public()
+	@Throttle({ default: { limit: 5, ttl: 60_000 } })
+	@HttpCode(HttpStatus.OK)
 	@ApiBody({ type: TgBotFeedbackDto })
 	@ApiOkResponse({ type: TgBotFeedbackResponseDto })
 	@Post('feedback')
 	async feedback(@Body() body: TgBotFeedbackDto): Promise<TgBotFeedbackResponseDto> {
-		try {
-			await this.tgBotService.sendFeedbackData(body);
-			return { success: true };
-		} catch (error) {
-			this.logger.error(error);
-			return { success: false };
-		}
+		await this.tgBotService.sendFeedbackData(body);
+		return { success: true };
 	}
 }

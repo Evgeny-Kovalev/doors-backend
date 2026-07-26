@@ -14,19 +14,3 @@ export const getProductPriceRange = (variants: ProductDto['variants']) => {
 		maxPrice: String(Math.max(...prices)),
 	};
 };
-
-export const DEFAULT_INCLUDE = {
-	category: true,
-	params: { include: { key: true, value: true } },
-	variants: {
-		include: {
-			attributes: {
-				include: {
-					key: true,
-					value: true,
-				},
-			},
-			tags: true,
-		},
-	},
-};

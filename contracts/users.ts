@@ -3,7 +3,6 @@ import { z } from 'zod';
 export const UserSchema = z.object({
 	id: z.number(),
 	email: z.email(),
-	refreshToken: z.string().nullable().default(null).optional(),
 });
 
 export const UserCreateSchema = UserSchema.omit({ id: true }).extend({

@@ -1,53 +1,46 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { NotFoundException, Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/app/prisma/prisma.service';
-import { CollectionCreateDto, CollectionDto, CollectionUpdateDto } from './dto';
-
-const DEFAULT_INCLUDE = {
-	categories: true,
-	products: {
-		include: {
-			category: true,
-			params: { include: { key: true, value: true } },
-			variants: {
-				include: {
-					attributes: {
-						include: {
-							key: true,
-							value: true,
-						},
-					},
-					tags: true,
-				},
-			},
-		},
-	},
-};
+import {
+	CollectionCreateDto,
+	CollectionDto,
+	CollectionListItemDto,
+	CollectionUpdateDto,
+} from './dto';
+import {
+	COLLECTION_ADMIN_INCLUDE,
+	COLLECTION_DETAIL_INCLUDE,
+	COLLECTION_LIST_INCLUDE,
+	COLLECTION_LIST_INCLUDE_WITH_HIDDEN,
+} from '@/app/shared/product-include';
+import { VisibilityOptions } from '@/app/shared/visibility';
 
 @Injectable()
 export class CollectionsService {
 	constructor(private readonly prismaService: PrismaService) {}
 
-	async findOne(id: number): Promise<CollectionDto> {
-		const collection: CollectionDto | null =
-			await this.prismaService.collection.findFirst({
-				where: { id },
-				include: DEFAULT_INCLUDE,
-			});
-		if (!collection) throw new BadRequestException('Collection with this id not found');
+	async findOne(id: number, options: VisibilityOptions = {}): Promise<CollectionDto> {
+		const collection = await this.prismaService.collection.findFirst({
+			where: { id },
+			include: options.includeHidden
+				? COLLECTION_ADMIN_INCLUDE
+				: COLLECTION_DETAIL_INCLUDE,
+		});
+		if (!collection) throw new NotFoundException('Collection with this id not found');
 		return collection;
 	}
 
-	async findAll(): Promise<CollectionDto[]> {
-		const collections: CollectionDto[] = await this.prismaService.collection.findMany({
-			include: DEFAULT_INCLUDE,
+	async findAll(options: VisibilityOptions = {}): Promise<CollectionListItemDto[]> {
+		return this.prismaService.collection.findMany({
+			include: options.includeHidden
+				? COLLECTION_LIST_INCLUDE_WITH_HIDDEN
+				: COLLECTION_LIST_INCLUDE,
 		});
-		return collections;
 	}
 
 	async update(id: number, dto: CollectionUpdateDto): Promise<CollectionDto> {
 		const { title, categoryIds, productIds } = dto;
 		try {
-			const updatedCollection = await this.prismaService.collection.update({
+			return await this.prismaService.collection.update({
 				where: { id },
 				data: {
 					title,
@@ -58,27 +51,24 @@ export class CollectionsService {
 						? { set: productIds.map((id) => ({ id })) }
 						: undefined,
 				},
-				include: DEFAULT_INCLUDE,
+				include: COLLECTION_ADMIN_INCLUDE,
 			});
-
-			return updatedCollection;
 		} catch (e) {
 			throw new BadRequestException('Cannot update the collection');
 		}
 	}
 
-	async create(dto: CollectionCreateDto) {
+	async create(dto: CollectionCreateDto): Promise<CollectionDto> {
 		const { title, categoryIds, productIds } = dto;
 		try {
-			const createdCollection = await this.prismaService.collection.create({
+			return await this.prismaService.collection.create({
 				data: {
 					title,
 					categories: { connect: categoryIds.map((id) => ({ id })) },
 					products: { connect: productIds.map((id) => ({ id })) },
 				},
-				include: DEFAULT_INCLUDE,
+				include: COLLECTION_ADMIN_INCLUDE,
 			});
-			return createdCollection;
 		} catch (e) {
 			throw new BadRequestException('Cannot create the collection');
 		}

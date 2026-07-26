@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { CategorySchema } from './categories';
-import { ProductSchema } from './products';
+import { ProductBaseSchema, ProductSchema } from './products';
 
 export const CollectionSchema = z.object({
 	id: z.number(),
@@ -10,9 +10,22 @@ export const CollectionSchema = z.object({
 });
 export type CollectionType = z.infer<typeof CollectionSchema>;
 
+export const CollectionListItemSchema = z.object({
+	id: z.number(),
+	title: z.string(),
+	categories: z.array(CategorySchema),
+	products: z.array(
+		ProductBaseSchema.extend({
+			category: CategorySchema.optional().nullable(),
+		}),
+	),
+});
+export type CollectionListItemType = z.infer<typeof CollectionListItemSchema>;
+
 export const CollectionCreateSchema = CollectionSchema.omit({
 	id: true,
 	categories: true,
+	products: true,
 }).extend({
 	categoryIds: z.array(z.number()),
 	productIds: z.array(z.number()),

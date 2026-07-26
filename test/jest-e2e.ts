@@ -19,6 +19,8 @@ const config: Config = {
 	moduleNameMapper: {
 		'^@/app/(.*)$': '<rootDir>/src/$1',
 		'^src/(.*)$': '<rootDir>/src/$1',
+		'^@/contracts$': '<rootDir>/src/contracts.ts',
+		'^@evgeny-kovalev/api-contracts$': '<rootDir>/contracts/index.ts',
 	},
 };
 

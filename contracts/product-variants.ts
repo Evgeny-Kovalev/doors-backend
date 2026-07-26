@@ -19,12 +19,18 @@ export type VariantResponse = z.infer<typeof VariantSchema>;
 export const VariantCreateSchema = VariantSchema.omit({
 	id: true,
 	attributes: true,
+	tags: true,
 })
 	.partial({ price: true, discountPrice: true })
 	.extend({
 		attributeIds: z.array(z.number()).min(1),
 	});
 export type VariantCreateType = z.infer<typeof VariantCreateSchema>;
+
+export const VariantQuerySchema = z.object({
+	productId: z.coerce.number().int().positive(),
+});
+export type VariantQueryType = z.infer<typeof VariantQuerySchema>;
 
 export const VariantUpdateSchema = VariantSchema.omit({
 	id: true,

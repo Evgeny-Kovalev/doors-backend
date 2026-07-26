@@ -17,7 +17,7 @@ import {
 	getS3ErrorMessage,
 	isS3ObjectMissing,
 	isS3ServiceException,
-} from './utiils/s3-errors';
+} from './utils/s3-errors';
 
 @Injectable()
 export class FilesService {

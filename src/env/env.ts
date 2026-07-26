@@ -12,9 +12,6 @@ export const envSchema = z.object({
 
 	APP_FILES_URL: z.url(),
 
-	SECRET_JWT: z.string(),
-
-	TOKEN_EXPIRES_IN: z.coerce.number(),
 	AT_SECRET: z.string(),
 	RT_SECRET: z.string(),
 

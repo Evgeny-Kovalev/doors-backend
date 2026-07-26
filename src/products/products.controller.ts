@@ -77,8 +77,10 @@ export class ProductsController {
 		@Query() query: RandomProductsQueryDto,
 	): Promise<ProductDto[]> {
 		const category = await this.categoriesService.getBySlug(query.categorySlug);
-		const res = await this.productsService.getRandom({ category, limit: query.limit });
-		return res;
+		return this.productsService.getRandom({
+			category,
+			limit: query.limit,
+		});
 	}
 
 	@ApiBearerAuth()
@@ -98,7 +100,9 @@ export class ProductsController {
 		@Query() dto: ExportProductsQueryDto,
 		@Res({ passthrough: true }) response: Response,
 	): Promise<string> {
-		await this.categoriesService.getBySlug(dto.categorySlug);
+		await this.categoriesService.getBySlug(dto.categorySlug, {
+			includeHidden: true,
+		});
 
 		const csvContent = await this.productsService.exportProductsToCSV(dto);
 		const fileName = `products-${dto.categorySlug}.csv`;
@@ -143,8 +147,7 @@ export class ProductsController {
 	@ApiOkResponse({ type: ProductWithSeoDto })
 	@Get(':slug')
 	async getProductWithSeo(@Param('slug') slug: string): Promise<ProductWithSeoDto> {
-		const productWithSeo = await this.productsService.getProductWithSeoBySlug(slug);
-		return productWithSeo;
+		return this.productsService.getProductWithSeoBySlug(slug);
 	}
 
 	@ApiBearerAuth()

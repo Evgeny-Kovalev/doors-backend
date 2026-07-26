@@ -42,16 +42,14 @@ export class CategoriesController {
 	@ApiOkResponse({ type: [CategoryDto] })
 	@Get('/')
 	async getAllCategories(@Query() query: CategoryQueryDto): Promise<CategoryDto[]> {
-		const allCategories = await this.categoriesService.getAll(query);
-		return allCategories;
+		return this.categoriesService.getAll(query);
 	}
 
 	@Public()
 	@ApiOkResponse({ type: CategoryWithSeoDto })
 	@Get(':slug')
 	async getCategory(@Param('slug') slug: string): Promise<CategoryWithSeoDto> {
-		const category = await this.categoriesService.getCategoryWithSeoBySlug(slug);
-		return category;
+		return this.categoriesService.getCategoryWithSeoBySlug(slug);
 	}
 
 	@Public()
@@ -59,8 +57,7 @@ export class CategoriesController {
 	@Get(':slug/hierarchy')
 	async getCategoryHierarchy(@Param('slug') slug: string): Promise<CategoryDto[]> {
 		const category = await this.categoriesService.getBySlug(slug);
-		const categories = await this.categoriesService.getCategoryHierarchy(category);
-		return categories;
+		return this.categoriesService.getCategoryHierarchy(category);
 	}
 
 	@ApiBearerAuth()

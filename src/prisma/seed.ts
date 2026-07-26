@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/app//generated/prisma';
+import { PrismaClient } from '@/app/generated/prisma';
 import { PrismaPg } from '@prisma/adapter-pg';
 import slugify from 'slugify';
 

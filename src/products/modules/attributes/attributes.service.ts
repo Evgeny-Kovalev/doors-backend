@@ -1,9 +1,4 @@
-import {
-	BadRequestException,
-	Injectable,
-	InternalServerErrorException,
-	Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Attribute, AttributeValue } from '@/app/generated/prisma';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { ProductVariantFromFile } from '@/app/products/types';
@@ -59,35 +54,9 @@ export class AttributesService {
 
 	async getOrCreateOne(dto: AttributeCreateDto): Promise<AttributeDto> {
 		try {
-			const key = dto.key.value;
-			const value = dto.value.value;
-
-			const isAttributeExist = await this.isExist(key);
-
-			if (isAttributeExist) {
-				const attributeValues = await this.getValuesByKey(key);
-
-				if (attributeValues.find((attr) => attr.value === value)) {
-					// attribute with the same value already exists, just push
-					const existedAttribute = await this.getOne(key, value);
-					if (!existedAttribute) throw new InternalServerErrorException();
-					return existedAttribute;
-				} else {
-					// add value to existing attribute
-					const newAttribute = await this.createOne({
-						key: { ...dto.key },
-						value: { ...dto.value },
-					});
-					return newAttribute;
-				}
-			} else {
-				// create new attribute
-				const newAttribute = await this.createOne({
-					key: { ...dto.key },
-					value: { ...dto.value },
-				});
-				return newAttribute;
-			}
+			const existing = await this.getOne(dto.key.value, dto.value.value);
+			if (existing) return existing;
+			return await this.createOne(dto);
 		} catch (e) {
 			this.logger.error(e);
 			throw new BadRequestException('Cannot get/create the attribute');
@@ -201,6 +170,4 @@ export class AttributesService {
 			},
 		});
 	}
-
-	async delete() {}
 }

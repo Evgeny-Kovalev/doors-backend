@@ -11,7 +11,12 @@ import {
 } from '@nestjs/common';
 import { CollectionsService } from './collections.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { CollectionCreateDto, CollectionDto, CollectionUpdateDto } from './dto';
+import {
+	CollectionCreateDto,
+	CollectionDto,
+	CollectionListItemDto,
+	CollectionUpdateDto,
+} from './dto';
 import { HasRoles } from '@/app/auth/decorators/has-roles.decorator';
 import { Role } from '@/app/generated/prisma';
 import { RolesGuard } from '@/app/auth/guards/roles.guard';
@@ -26,14 +31,14 @@ export class CollectionsController {
 
 	@Public()
 	@Get()
-	@ApiOkResponse({ type: [CollectionDto] })
-	async findAll(): Promise<CollectionDto[]> {
+	@ApiOkResponse({ type: [CollectionListItemDto] })
+	async findAll(): Promise<CollectionListItemDto[]> {
 		return this.collectionsService.findAll();
 	}
 
 	@Public()
 	@Get(':id')
-	@ApiOkResponse({ type: [CollectionDto] })
+	@ApiOkResponse({ type: CollectionDto })
 	async findOne(@Param('id', ParseIntPipe) id: number): Promise<CollectionDto> {
 		return this.collectionsService.findOne(id);
 	}

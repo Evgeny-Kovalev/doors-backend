@@ -14,10 +14,9 @@ export class TagsController {
 	constructor(private readonly tagsService: TagsService) {}
 
 	@Public()
-	@ApiOkResponse({ type: [TagsService] })
+	@ApiOkResponse({ type: [TagDto] })
 	@Get('/')
 	async getAll(): Promise<TagDto[]> {
-		const tags = await this.tagsService.findAll();
-		return tags;
+		return this.tagsService.findAll();
 	}
 }

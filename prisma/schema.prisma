@@ -33,6 +33,9 @@ model Category {
   collections Collection[]
 
   order Int?
+
+  @@index([parentCategoryId])
+  @@index([isVisible])
 }
 
 enum CategoryType {
@@ -62,6 +65,11 @@ model Product {
   params   Attribute[]
 
   collections Collection[]
+
+  @@index([categoryId])
+  @@index([productType])
+  @@index([categoryId, name])
+  @@index([isVisible])
 }
 
 model SeoTemplate {
@@ -103,6 +111,8 @@ model ProductVariant {
 
   attributes Attribute[]
   tags       Tag[]
+
+  @@index([productId])
 }
 
 model Attribute {

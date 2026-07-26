@@ -1,4 +1,3 @@
-import { EnvService } from '@/app/env/env.service';
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
@@ -9,7 +8,6 @@ import { PassportModule } from '@nestjs/passport';
 import { AtGuard } from './guards/at.guard';
 import { AtStrategy } from './strategies/at.strategy';
 import { RtStrategy } from './strategies/rt.strategy';
-import { PrismaModule } from '@/app/prisma/prisma.module';
 
 @Module({
 	providers: [
@@ -22,17 +20,6 @@ import { PrismaModule } from '@/app/prisma/prisma.module';
 		},
 	],
 	controllers: [AuthController],
-	imports: [
-		UsersModule,
-		PrismaModule,
-		PassportModule,
-		JwtModule.registerAsync({
-			inject: [EnvService],
-			useFactory: (envService: EnvService) => ({
-				secret: envService.get('SECRET_JWT'),
-				signOptions: { expiresIn: envService.get('TOKEN_EXPIRES_IN') },
-			}),
-		}),
-	],
+	imports: [UsersModule, PassportModule, JwtModule.register({})],
 })
 export class AuthModule {}

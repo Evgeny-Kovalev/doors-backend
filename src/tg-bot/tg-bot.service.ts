@@ -1,10 +1,14 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
+import {
+	BadGatewayException,
+	Injectable,
+	Logger,
+} from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { EnvService } from '@/app/env/env.service';
 import { TgBotCallbackDto, TgBotFeedbackDto } from './dto/tg-bot.dto';
 
-type TelegramEndpoint = 'sendMessage' | 'getUpdates' | 'getMe';
+type TelegramEndpoint = 'sendMessage';
 
 interface TelegramResponse {
 	ok: boolean;
@@ -34,70 +38,56 @@ export class TgBotService {
 		return `https://api.telegram.org/bot${this.botToken}/${endpoint}`;
 	}
 
-	async sendPhoneNumber({ name, phone, comment }: TgBotCallbackDto): Promise<void> {
-		try {
-			const url = this.getUrl('sendMessage');
-			const text = `Новый запрос на звонок: ${phone} ${name}${comment && comment.length > 0 ? '\nКомментарий: ' + comment : ''}`;
+	private async sendToChats(text: string): Promise<void> {
+		const url = this.getUrl('sendMessage');
 
-			this.logger.log(
-				`Отправка сообщения в Telegram: ${JSON.stringify({ url, chatIds: this.chatIds, text })}`,
-			);
+		this.logger.log(`Sending Telegram message to ${this.chatIds.length} chat(s)`);
 
-			const responses = await Promise.all(
-				this.chatIds.map((chatId) =>
-					firstValueFrom(
-						this.httpService.post<TelegramResponse>(url, {
-							chat_id: chatId,
-							text: text,
-						}),
-					),
+		const responses = await Promise.all(
+			this.chatIds.map((chatId) =>
+				firstValueFrom(
+					this.httpService.post<TelegramResponse>(url, {
+						chat_id: chatId,
+						text,
+					}),
 				),
-			);
+			),
+		);
 
-			const failedResponses = responses.filter((response) => !response.data.ok);
-			if (failedResponses.length > 0) {
-				this.logger.warn(
-					`Некоторые сообщения не были отправлены: ${JSON.stringify(failedResponses)}`,
-				);
-			}
-		} catch (error) {
-			this.logger.error(`Ошибка при отправке сообщения в Telegram: ${error}`);
-			throw error;
+		const failedResponses = responses.filter((response) => !response.data.ok);
+		if (failedResponses.length > 0) {
+			this.logger.warn(
+				`Some Telegram messages failed: ${failedResponses.length}/${responses.length}`,
+			);
+			throw new BadGatewayException('Failed to deliver Telegram message');
 		}
 	}
+
+	async sendPhoneNumber({ name, phone, comment }: TgBotCallbackDto): Promise<void> {
+		const text = `Новый запрос на звонок: ${phone} ${name}${comment && comment.length > 0 ? '\nКомментарий: ' + comment : ''}`;
+		try {
+			await this.sendToChats(text);
+		} catch (error) {
+			this.logger.error('Failed to send callback to Telegram');
+			throw error instanceof BadGatewayException
+				? error
+				: new BadGatewayException('Failed to send callback to Telegram');
+		}
+	}
+
 	async sendFeedbackData({
 		name,
 		phone,
 		text: content,
 	}: TgBotFeedbackDto): Promise<void> {
+		const text = `Новый отзыв\n\nИмя: ${name}\nТелефон: ${phone}\n\nОтзыв:\n\n${content}`;
 		try {
-			const url = this.getUrl('sendMessage');
-			const text = `Новый отзыв\n\nИмя: ${name}\nТелефон: ${phone}\n\nОтзыв:\n\n${content}`;
-
-			this.logger.log(
-				`Отправка сообщения в Telegram: ${JSON.stringify({ url, chatIds: this.chatIds, text })}`,
-			);
-
-			const responses = await Promise.all(
-				this.chatIds.map((chatId) =>
-					firstValueFrom(
-						this.httpService.post<TelegramResponse>(url, {
-							chat_id: chatId,
-							text: text,
-						}),
-					),
-				),
-			);
-
-			const failedResponses = responses.filter((response) => !response.data.ok);
-			if (failedResponses.length > 0) {
-				this.logger.warn(
-					`Некоторые сообщения не были отправлены: ${JSON.stringify(failedResponses)}`,
-				);
-			}
-		} catch (error: unknown) {
-			this.logger.error(`Ошибка при отправке сообщения в Telegram: ${error}`);
-			throw error;
+			await this.sendToChats(text);
+		} catch (error) {
+			this.logger.error('Failed to send feedback to Telegram');
+			throw error instanceof BadGatewayException
+				? error
+				: new BadGatewayException('Failed to send feedback to Telegram');
 		}
 	}
 }

@@ -1,5 +1,5 @@
 import { Controller, Delete, Param, Post, UploadedFile, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FilesService } from './files.service';
 import { ApiUploadFile } from './decorators/api-file.decorator';
 import { ParseFile } from './pipes/parse-file.pipe';
@@ -8,6 +8,7 @@ import { Role } from '@/app/generated/prisma';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('Media Files')
+@ApiBearerAuth()
 @Controller({ path: 'files', version: '1' })
 export class FilesController {
 	constructor(private readonly filesService: FilesService) {}

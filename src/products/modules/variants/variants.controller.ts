@@ -19,7 +19,6 @@ import {
 	ApiOkResponse,
 	ApiTags,
 } from '@nestjs/swagger';
-import { ProductsService } from '../../products.service';
 import {
 	VariantCreateDto,
 	VariantDto,
@@ -38,26 +37,20 @@ import { ApiFileWithBody } from '@/app/files/decorators/api-file.decorator';
 	version: '1',
 })
 export class VariantsController {
-	constructor(
-		private readonly variantsService: VariantsService,
-		private readonly productsService: ProductsService,
-	) {}
+	constructor(private readonly variantsService: VariantsService) {}
 
 	@Public()
 	@ApiOkResponse({ type: [VariantDto] })
 	@Get('/')
 	async getAll(@Query() query: VariantQueryDto): Promise<VariantDto[]> {
-		const product = await this.productsService.getById(query.productId);
-		const variants = await this.variantsService.getAll(product);
-		return variants;
+		return this.variantsService.getAll(query.productId);
 	}
 
 	@Public()
 	@ApiOkResponse({ type: VariantDto })
 	@Get(':id')
 	async getOne(@Param('id', ParseIntPipe) variantId: number): Promise<VariantDto> {
-		const variant = await this.variantsService.getById(variantId);
-		return variant;
+		return this.variantsService.getById(variantId);
 	}
 
 	@ApiBearerAuth()
@@ -67,9 +60,7 @@ export class VariantsController {
 	@Post('/')
 	@ApiBody({ type: VariantCreateDto })
 	async createOne(@Body() dto: VariantCreateDto): Promise<VariantDto> {
-		const product = await this.productsService.getById(dto.productId);
-		const variant = await this.variantsService.createOne(product, dto);
-		return variant;
+		return this.variantsService.createOne(dto.productId, dto);
 	}
 
 	@ApiBearerAuth()
@@ -88,8 +79,7 @@ export class VariantsController {
 		@Body() dto: VariantMultipartUpdateDto,
 		@UploadedFile() image?: Express.Multer.File,
 	): Promise<VariantDto> {
-		const updatedVariant = await this.variantsService.update(variantId, dto, image);
-		return updatedVariant;
+		return this.variantsService.update(variantId, dto, image);
 	}
 
 	@ApiBearerAuth()
@@ -97,6 +87,6 @@ export class VariantsController {
 	@UseGuards(RolesGuard)
 	@Delete(':id')
 	async deleteOne(@Param('id', ParseIntPipe) id: number): Promise<VariantDto> {
-		return await this.variantsService.deleteById(id);
+		return this.variantsService.deleteById(id);
 	}
 }

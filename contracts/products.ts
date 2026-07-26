@@ -49,26 +49,22 @@ export const ProductQuerySchema = z.object({
 	sort: ProductSortSchema.optional().default('default'),
 	order: SortOrderSchema.optional().default('asc'),
 	productTypes: z
-		.preprocess((val) => {
-			if (Array.isArray(val)) return val;
-			if (typeof val === 'string') {
-				return val
-					.split(',')
-					.map((s) => s.trim())
-					.filter(Boolean);
-			}
-			return val;
-		}, z.array(ProductTypeSchema))
+		.union([
+			z.array(ProductTypeSchema),
+			z
+				.string()
+				.transform((val) =>
+					val
+						.split(',')
+						.map((s) => s.trim())
+						.filter(Boolean),
+				)
+				.pipe(z.array(ProductTypeSchema)),
+		])
 		.optional(),
 });
 
-export type ProductQuery = {
-	categorySlug?: string;
-	q?: string;
-	sort?: ProductSort;
-	order?: SortOrder;
-	productTypes?: ProductType[];
-};
+export type ProductQuery = z.infer<typeof ProductQuerySchema>;
 
 export const RandomProductsQuerySchema = z.object({
 	categorySlug: z.string(),

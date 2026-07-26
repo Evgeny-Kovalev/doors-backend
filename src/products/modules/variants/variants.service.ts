@@ -3,17 +3,13 @@ import {
 	Injectable,
 	InternalServerErrorException,
 	Logger,
+	NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { AttributesService } from '@/app/products/modules/attributes/attributes.service';
-import { ProductDto } from '../../dto/product.dto';
 import { VariantDto, VariantCreateDto, VariantMultipartUpdateDto } from './variant.dto';
 import { FilesService } from '@/app/files/files.service';
-
-const DEFAULT_INCLUDE = {
-	attributes: { include: { key: true, value: true } },
-	tags: true,
-};
+import { VARIANT_INCLUDE } from '@/app/shared/product-include';
 
 @Injectable()
 export class VariantsService {
@@ -25,31 +21,40 @@ export class VariantsService {
 
 	private readonly logger = new Logger(VariantsService.name);
 
-	async getAll(product: ProductDto): Promise<VariantDto[]> {
-		const variants: VariantDto[] = await this.prismaService.productVariant.findMany({
-			where: { productId: product.id },
-			include: DEFAULT_INCLUDE,
+	async ensureProductExists(productId: number): Promise<void> {
+		const product = await this.prismaService.product.findUnique({
+			where: { id: productId },
+			select: { id: true },
 		});
-		return variants;
+		if (!product) throw new NotFoundException('Product with this id not found');
+	}
+
+	async getAll(productId: number): Promise<VariantDto[]> {
+		await this.ensureProductExists(productId);
+		return this.prismaService.productVariant.findMany({
+			where: { productId },
+			include: VARIANT_INCLUDE,
+		});
 	}
 
 	async getById(id: number): Promise<VariantDto> {
 		const variant = await this.prismaService.productVariant.findFirst({
 			where: { id },
-			include: DEFAULT_INCLUDE,
+			include: VARIANT_INCLUDE,
 		});
-		if (!variant) throw new BadRequestException('Variant with this id not found');
+		if (!variant) throw new NotFoundException('Variant with this id not found');
 		return variant;
 	}
 
-	async createOne(product: ProductDto, dto: VariantCreateDto): Promise<VariantDto> {
+	async createOne(productId: number, dto: VariantCreateDto): Promise<VariantDto> {
+		await this.ensureProductExists(productId);
+
 		const {
 			imgBackUrl,
 			imgFrontUrl,
 			sourceId,
 			imgUrl,
 			attributeIds,
-			productId,
 			price,
 			discountPrice,
 		} = dto;
@@ -70,7 +75,7 @@ export class VariantsService {
 						attributes: { connect: attributeIds.map((id) => ({ id })) },
 						product: { connect: { id: productId } },
 					},
-					include: DEFAULT_INCLUDE,
+					include: VARIANT_INCLUDE,
 				});
 			this.logger.log(`Created variant id: ${createdVariant.id}`);
 			return createdVariant;
@@ -131,12 +136,12 @@ export class VariantsService {
 					attributes: newAttributes ? { set: newAttributes } : undefined,
 					tags: tags ? { set: tags } : undefined,
 				},
-				include: DEFAULT_INCLUDE,
+				include: VARIANT_INCLUDE,
 			});
 			return updatedVariant;
 		} catch (e) {
 			this.logger.error(e);
-			throw new BadRequestException('Cannnot update the product variant');
+			throw new BadRequestException('Cannot update the product variant');
 		}
 	}
 
@@ -145,7 +150,7 @@ export class VariantsService {
 		try {
 			return this.prismaService.productVariant.delete({
 				where: { id },
-				include: DEFAULT_INCLUDE,
+				include: VARIANT_INCLUDE,
 			});
 		} catch (e) {
 			this.logger.error(e);
