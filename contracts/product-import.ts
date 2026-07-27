@@ -11,6 +11,7 @@ export const ImportTemplateSchema = z
 			priceKey: z.string(),
 			discountPriceKey: z.string(),
 			tagsKey: z.string().optional(),
+			isMainKey: z.string().optional(),
 		}),
 		paramsKeysInDoc: z.array(z.string()),
 		attributesKeysInDoc: z.array(z.string()),

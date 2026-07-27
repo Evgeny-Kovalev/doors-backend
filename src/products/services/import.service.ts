@@ -40,6 +40,25 @@ export class ImportService {
 			.filter(Boolean);
 	}
 
+	private isMainValue(raw: string | undefined): boolean {
+		if (!raw?.trim()) return false;
+		const value = raw.trim().toLowerCase();
+		return value === '1' || value === 'true' || value === 'yes' || value === 'y';
+	}
+
+	private getMainVariantRowIndex(
+		variantsRows: ProductVariantFromFile[],
+		template: ImportTemplate,
+	): number {
+		const { isMainKey } = template.info;
+		if (!isMainKey) return 0;
+
+		const mainIndex = variantsRows.findIndex((row) =>
+			this.isMainValue(row[isMainKey]),
+		);
+		return mainIndex >= 0 ? mainIndex : 0;
+	}
+
 	async parseCsvFile<T>(file: Express.Multer.File): Promise<T[]> {
 		const source = Readable.from(file.buffer);
 
@@ -179,10 +198,16 @@ export class ImportService {
 		const createdProducts: ProductDto[] = [];
 
 		for (const [index, productVariants] of allProducts.entries()) {
+			const mainVariantIndex = this.getMainVariantRowIndex(
+				productVariants,
+				dto.template,
+			);
+
 			const productDto = await this.getProductDtoFromFile(
 				productVariants,
 				category,
 				dto.template,
+				mainVariantIndex,
 			);
 
 			const createdProduct = await this.productsCommandService.createOne({
@@ -203,6 +228,14 @@ export class ImportService {
 					this.variantsService.createOne(createdProduct.id, variantDto),
 			);
 
+			const mainVariantImgUrl = productVariantsDtos[mainVariantIndex]?.imgUrl;
+			if (mainVariantImgUrl && mainVariantImgUrl !== createdProduct.imgUrl) {
+				await this.prismaService.product.update({
+					where: { id: createdProduct.id },
+					data: { imgUrl: mainVariantImgUrl },
+				});
+			}
+
 			const productWithVariants = await this.productsQueryService.getById(
 				createdProduct.id,
 			);
@@ -219,12 +252,14 @@ export class ImportService {
 		productVariantsFromFile: ProductVariantFromFile[],
 		category: CategoryDto,
 		template: ImportTemplate,
+		mainVariantIndex = 0,
 	): Promise<ProductCreateDto> {
 		// keys in doc
 		const { imgPathKey, nameKey } = template.info;
 		// TODO: check for keys in file
 
-		const mainVariant = productVariantsFromFile[0];
+		const mainVariant =
+			productVariantsFromFile[mainVariantIndex] ?? productVariantsFromFile[0];
 
 		const params = await this.attributesService.getOrCreateMany(
 			template.paramsKeysInDoc,
@@ -283,6 +318,7 @@ export class ImportService {
 			'imgUrl',
 			'price',
 			'tags',
+			'isMain',
 		];
 		const paramColumns = new Set<string>();
 		const attributeColumns = new Set<string>();
@@ -322,6 +358,7 @@ export class ImportService {
 					imgUrl: variant.imgUrl,
 					price: variant.price ?? '',
 					tags: variant.tags.map((tag) => tag.key).join(','),
+					isMain: variant.imgUrl === product.imgUrl ? 'true' : '',
 				};
 
 				for (const column of orderedParamColumns) {
