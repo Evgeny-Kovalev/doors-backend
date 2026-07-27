@@ -12,6 +12,7 @@ import { VariantsService } from '../modules/variants/variants.service';
 import { ProductsCommandService } from './products-command.service';
 import { ProductsQueryService } from './products-query.service';
 import { PrismaService } from '@/app/prisma/prisma.service';
+import { TagsService } from '@/app/tags/tags.service';
 import { groupBy, mapWithConcurrency } from '@/app/utils';
 
 const VARIANT_CREATE_CONCURRENCY = 5;
@@ -26,9 +27,18 @@ export class ImportService {
 		private readonly productsCommandService: ProductsCommandService,
 		private readonly productsQueryService: ProductsQueryService,
 		private readonly prismaService: PrismaService,
+		private readonly tagsService: TagsService,
 	) {}
 
 	private readonly logger = new Logger(ImportService.name);
+
+	private parseTagKeys(raw: string | undefined): string[] {
+		if (!raw?.trim()) return [];
+		return raw
+			.split(',')
+			.map((key) => key.trim())
+			.filter(Boolean);
+	}
 
 	async parseCsvFile<T>(file: Express.Multer.File): Promise<T[]> {
 		const source = Readable.from(file.buffer);
@@ -66,6 +76,7 @@ export class ImportService {
 			priceKey,
 			discountPriceKey,
 			sourceIdKey,
+			tagsKey,
 		} = template.info;
 
 		for (const [index, variantRow] of variantsRows.entries()) {
@@ -101,12 +112,20 @@ export class ImportService {
 
 			this.logger.log(`${index + 1} / ${variantsRows.length} images downloaded`);
 
+			const tagKeys = tagsKey
+				? this.parseTagKeys(variantRow[tagsKey])
+				: [];
+			const tags = tagKeys.length
+				? await this.tagsService.findManyByKeys(tagKeys)
+				: [];
+
 			const variantResult: VariantCreateDto = {
 				imgUrl,
 				imgFrontUrl,
 				imgBackUrl,
 				sourceId: variantRow[sourceIdKey],
 				attributeIds: attributesToAdd.map((a) => a.id),
+				tagIds: tags.length ? tags.map((tag) => tag.id) : undefined,
 				price: variantRow[priceKey] ? parseInt(variantRow[priceKey]) : undefined,
 				productId: product.id,
 				discountPrice: variantRow[discountPriceKey]
@@ -248,6 +267,7 @@ export class ImportService {
 				variants: {
 					include: {
 						attributes: { include: { key: true, value: true } },
+						tags: true,
 					},
 				},
 			},
@@ -255,7 +275,15 @@ export class ImportService {
 		});
 
 		type ExportRow = Record<string, string | number>;
-		const baseColumns = ['id', 'sourceId', 'slug', 'name', 'imgUrl', 'price'];
+		const baseColumns = [
+			'id',
+			'sourceId',
+			'slug',
+			'name',
+			'imgUrl',
+			'price',
+			'tags',
+		];
 		const paramColumns = new Set<string>();
 		const attributeColumns = new Set<string>();
 
@@ -293,6 +321,7 @@ export class ImportService {
 					name: product.name,
 					imgUrl: variant.imgUrl,
 					price: variant.price ?? '',
+					tags: variant.tags.map((tag) => tag.key).join(','),
 				};
 
 				for (const column of orderedParamColumns) {

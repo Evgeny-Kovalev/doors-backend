@@ -9,6 +9,7 @@ import { ProductsCommandService } from './services/products-command.service';
 import { AttributesModule } from '@/app/products/modules/attributes/attributes.module';
 import { VariantsModule } from './modules/variants/variants.module';
 import { SeoModule } from '@/app/seo/seo.module';
+import { TagsModule } from '@/app/tags/tags.module';
 
 @Module({
 	controllers: [ProductsController],
@@ -25,6 +26,7 @@ import { SeoModule } from '@/app/seo/seo.module';
 		AttributesModule,
 		CategoriesModule,
 		SeoModule,
+		TagsModule,
 	],
 })
 export class ProductsModule {}

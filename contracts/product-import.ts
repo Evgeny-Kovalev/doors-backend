@@ -10,6 +10,7 @@ export const ImportTemplateSchema = z
 			imgBackKey: z.string().optional(),
 			priceKey: z.string(),
 			discountPriceKey: z.string(),
+			tagsKey: z.string().optional(),
 		}),
 		paramsKeysInDoc: z.array(z.string()),
 		attributesKeysInDoc: z.array(z.string()),

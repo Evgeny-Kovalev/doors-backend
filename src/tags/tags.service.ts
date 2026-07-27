@@ -18,6 +18,25 @@ export class TagsService {
 		return this.prismaService.tag.findMany({ orderBy: { id: 'asc' } });
 	}
 
+	async findManyByKeys(keys: string[]): Promise<Tag[]> {
+		const uniqueKeys = [...new Set(keys.map((key) => key.trim()).filter(Boolean))];
+		if (!uniqueKeys.length) return [];
+
+		const tags = await this.prismaService.tag.findMany({
+			where: { key: { in: uniqueKeys } },
+		});
+
+		const foundKeys = new Set(tags.map((tag) => tag.key));
+		const missingKeys = uniqueKeys.filter((key) => !foundKeys.has(key));
+		if (missingKeys.length) {
+			throw new BadRequestException(
+				`Unknown tag keys: ${missingKeys.join(', ')}`,
+			);
+		}
+
+		return tags;
+	}
+
 	async create(dto: TagCreateDtoType): Promise<Tag> {
 		try {
 			return await this.prismaService.tag.create({

@@ -24,6 +24,7 @@ export const VariantCreateSchema = VariantSchema.omit({
 	.partial({ price: true, discountPrice: true })
 	.extend({
 		attributeIds: z.array(z.number()).min(1),
+		tagIds: z.array(z.number()).optional(),
 	});
 export type VariantCreateType = z.infer<typeof VariantCreateSchema>;
 

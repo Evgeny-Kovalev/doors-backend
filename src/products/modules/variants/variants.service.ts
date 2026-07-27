@@ -55,6 +55,7 @@ export class VariantsService {
 			sourceId,
 			imgUrl,
 			attributeIds,
+			tagIds,
 			price,
 			discountPrice,
 		} = dto;
@@ -73,6 +74,9 @@ export class VariantsService {
 						price,
 						discountPrice,
 						attributes: { connect: attributeIds.map((id) => ({ id })) },
+						tags: tagIds?.length
+							? { connect: tagIds.map((id) => ({ id })) }
+							: undefined,
 						product: { connect: { id: productId } },
 					},
 					include: VARIANT_INCLUDE,
