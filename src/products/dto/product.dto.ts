@@ -1,6 +1,5 @@
 import { createZodDto } from '@/app/shared/create-zod-dto';
 import {
-	ImportTemplateSchema,
 	createPaginatedSchema,
 	ProductCreateSchema,
 	ProductImportSchema,
@@ -22,8 +21,6 @@ export class ProductUpdateDto extends createZodDto(ProductUpdateSchema) {}
 export class ProductQueryDto extends createZodDto(ProductQuerySchema) {}
 
 export class ProductImportDto extends createZodDto(ProductImportSchema) {}
-
-export class ImportTemplate extends createZodDto(ImportTemplateSchema) {}
 
 export class PaginatedProductDto extends createZodDto(
 	createPaginatedSchema(ProductSchema),

@@ -175,6 +175,17 @@ model Tag {
   productVariant ProductVariant[]
 }
 
+model ImportTemplate {
+  id                  Int      @id @default(autoincrement())
+  slug                String   @unique
+  name                String
+  info                Json
+  paramsKeysInDoc     String[]
+  attributesKeysInDoc String[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
 enum NewsType {
   NEWS
   PROMOTION

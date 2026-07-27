@@ -11,6 +11,7 @@ import { CollectionsModule } from './collections/collections.module';
 import { TgBotModule } from './tg-bot/tg-bot.module';
 import { TagsModule } from './tags/tags.module';
 import { NewsModule } from './news/news.module';
+import { ImportTemplatesModule } from './import-templates/import-templates.module';
 import { APP_PIPE, APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ZodValidationPipe, ZodSerializerInterceptor } from 'nestjs-zod';
 import { HttpExceptionFilter } from './http-exception.filter';
@@ -46,6 +47,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 		TagsModule,
 		NewsModule,
 		SeoModule,
+		ImportTemplatesModule,
 	],
 	providers: [
 		{

@@ -1,11 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as csv from 'fast-csv';
-import {
-	ImportTemplate,
-	ProductDto,
-	ProductCreateDto,
-	ProductImportDto,
-} from '../dto/product.dto';
+import { ProductDto, ProductCreateDto, ProductImportDto } from '../dto/product.dto';
 import { CategoryDto } from '../../categories/dto';
 import { ProductVariantFromFile } from '../types';
 import { FilesService } from '@/app/files/files.service';
@@ -18,7 +13,9 @@ import { ProductsCommandService } from './products-command.service';
 import { ProductsQueryService } from './products-query.service';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { TagsService } from '@/app/tags/tags.service';
+import { ImportTemplatesService } from '@/app/import-templates/import-templates.service';
 import { groupBy, mapWithConcurrency } from '@/app/utils';
+import type { ImportTemplateConfig } from '@/contracts';
 
 const VARIANT_CREATE_CONCURRENCY = 5;
 
@@ -33,6 +30,7 @@ export class ProductsImportService {
 		private readonly productsQueryService: ProductsQueryService,
 		private readonly prismaService: PrismaService,
 		private readonly tagsService: TagsService,
+		private readonly importTemplatesService: ImportTemplatesService,
 	) {}
 
 	private readonly logger = new Logger(ProductsImportService.name);
@@ -44,6 +42,9 @@ export class ProductsImportService {
 		const GROUP_BY_KEY = 'name';
 
 		const category = await this.categoriesService.getById(dto.categoryId);
+		const template = await this.importTemplatesService.getConfigByTemplateId(
+			dto.templateId,
+		);
 
 		let productsFromFile: ProductVariantFromFile[] = [];
 
@@ -77,29 +78,29 @@ export class ProductsImportService {
 
 		const createdProducts: ProductDto[] = [];
 
-		for (const [index, productVariants] of allProducts.entries()) {
+		for (const [index, productVariantsFromFile] of allProducts.entries()) {
 			const mainVariantIndex = this.getMainVariantRowIndex(
-				productVariants,
-				dto.template,
+				productVariantsFromFile,
+				template,
 			);
 
-			const productDto = await this.getProductDtoFromFile(
-				productVariants,
+			const productDto = await this.getProductDtoFromFile({
+				productVariantsFromFile,
 				category,
-				dto.template,
+				template,
 				mainVariantIndex,
-			);
+			});
 
 			const createdProduct = await this.productsCommandService.createOne({
 				...productDto,
 			});
 
-			const productVariantsDtos = await this.getVariantDtosFromFile(
-				createdProduct,
+			const productVariantsDtos = await this.getVariantDtosFromFile({
+				product: createdProduct,
 				category,
-				productVariants,
-				dto.template,
-			);
+				productVariantsFromFile,
+				template,
+			});
 
 			await mapWithConcurrency(
 				productVariantsDtos,
@@ -143,7 +144,7 @@ export class ProductsImportService {
 
 	private getMainVariantRowIndex(
 		variantsRows: ProductVariantFromFile[],
-		template: ImportTemplate,
+		template: ImportTemplateConfig,
 	): number {
 		const { isMainKey } = template.info;
 		if (!isMainKey) return 0;
@@ -172,12 +173,17 @@ export class ProductsImportService {
 		});
 	}
 
-	private async getVariantDtosFromFile(
-		product: ProductDto,
-		category: CategoryDto,
-		variantsRows: ProductVariantFromFile[],
-		template: ImportTemplate,
-	): Promise<VariantCreateDto[]> {
+	private async getVariantDtosFromFile({
+		product,
+		category,
+		productVariantsFromFile,
+		template,
+	}: {
+		product: ProductDto;
+		category: CategoryDto;
+		productVariantsFromFile: ProductVariantFromFile[];
+		template: ImportTemplateConfig;
+	}): Promise<VariantCreateDto[]> {
 		const productVariantsDtos: VariantCreateDto[] = [];
 
 		//TODO: check keys existing
@@ -191,11 +197,11 @@ export class ProductsImportService {
 			tagsKey,
 		} = template.info;
 
-		for (const [index, variantRow] of variantsRows.entries()) {
+		for (const [index, variantRow] of productVariantsFromFile.entries()) {
 			const attributesToAdd = await this.attributesService.getOrCreateMany(
 				template.attributesKeysInDoc,
 				variantRow,
-				variantsRows,
+				productVariantsFromFile,
 			);
 
 			const url = variantRow[imgPathKey];
@@ -222,7 +228,9 @@ export class ProductsImportService {
 					}),
 			]);
 
-			this.logger.log(`${index + 1} / ${variantsRows.length} images downloaded`);
+			this.logger.log(
+				`${index + 1} / ${productVariantsFromFile.length} images downloaded`,
+			);
 
 			const tagKeys = tagsKey ? this.parseTagKeys(variantRow[tagsKey]) : [];
 			const tags = tagKeys.length
@@ -247,12 +255,17 @@ export class ProductsImportService {
 		return productVariantsDtos;
 	}
 
-	private async getProductDtoFromFile(
-		productVariantsFromFile: ProductVariantFromFile[],
-		category: CategoryDto,
-		template: ImportTemplate,
+	private async getProductDtoFromFile({
+		productVariantsFromFile,
+		category,
+		template,
 		mainVariantIndex = 0,
-	): Promise<ProductCreateDto> {
+	}: {
+		productVariantsFromFile: ProductVariantFromFile[];
+		category: CategoryDto;
+		template: ImportTemplateConfig;
+		mainVariantIndex: number;
+	}): Promise<ProductCreateDto> {
 		// keys in doc
 		const { imgPathKey, nameKey } = template.info;
 		// TODO: check for keys in file

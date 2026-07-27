@@ -11,6 +11,7 @@ import { AttributesModule } from '@/app/products/modules/attributes/attributes.m
 import { VariantsModule } from './modules/variants/variants.module';
 import { SeoModule } from '@/app/seo/seo.module';
 import { TagsModule } from '@/app/tags/tags.module';
+import { ImportTemplatesModule } from '@/app/import-templates/import-templates.module';
 
 @Module({
 	controllers: [ProductsController],
@@ -29,6 +30,7 @@ import { TagsModule } from '@/app/tags/tags.module';
 		CategoriesModule,
 		SeoModule,
 		TagsModule,
+		ImportTemplatesModule,
 	],
 })
 export class ProductsModule {}
