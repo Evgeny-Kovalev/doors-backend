@@ -1,6 +1,11 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as csv from 'fast-csv';
-import { ImportTemplate, ProductDto, ProductCreateDto, ProductImportDto, ExportProductsQueryDto } from '../dto/product.dto';
+import {
+	ImportTemplate,
+	ProductDto,
+	ProductCreateDto,
+	ProductImportDto,
+} from '../dto/product.dto';
 import { CategoryDto } from '../../categories/dto';
 import { ProductVariantFromFile } from '../types';
 import { FilesService } from '@/app/files/files.service';
@@ -18,7 +23,7 @@ import { groupBy, mapWithConcurrency } from '@/app/utils';
 const VARIANT_CREATE_CONCURRENCY = 5;
 
 @Injectable()
-export class ImportService {
+export class ProductsImportService {
 	constructor(
 		private readonly attributesService: AttributesService,
 		private readonly filesService: FilesService,
@@ -30,131 +35,7 @@ export class ImportService {
 		private readonly tagsService: TagsService,
 	) {}
 
-	private readonly logger = new Logger(ImportService.name);
-
-	private parseTagKeys(raw: string | undefined): string[] {
-		if (!raw?.trim()) return [];
-		return raw
-			.split(',')
-			.map((key) => key.trim())
-			.filter(Boolean);
-	}
-
-	private isMainValue(raw: string | undefined): boolean {
-		if (!raw?.trim()) return false;
-		const value = raw.trim().toLowerCase();
-		return value === '1' || value === 'true' || value === 'yes' || value === 'y';
-	}
-
-	private getMainVariantRowIndex(
-		variantsRows: ProductVariantFromFile[],
-		template: ImportTemplate,
-	): number {
-		const { isMainKey } = template.info;
-		if (!isMainKey) return 0;
-
-		const mainIndex = variantsRows.findIndex((row) =>
-			this.isMainValue(row[isMainKey]),
-		);
-		return mainIndex >= 0 ? mainIndex : 0;
-	}
-
-	async parseCsvFile<T>(file: Express.Multer.File): Promise<T[]> {
-		const source = Readable.from(file.buffer);
-
-		return new Promise((resolve, reject) => {
-			const results: T[] = [];
-			source
-				.pipe(
-					csv.parse({
-						headers: true,
-						ignoreEmpty: true,
-					}),
-				)
-				.on('error', (error) => reject(error))
-				.on('data', (row) => {
-					results.push(row);
-				})
-				.on('end', () => resolve(results));
-		});
-	}
-
-	async getVariantDtosFromFile(
-		product: ProductDto,
-		category: CategoryDto,
-		variantsRows: ProductVariantFromFile[],
-		template: ImportTemplate,
-	): Promise<VariantCreateDto[]> {
-		const productVariantsDtos: VariantCreateDto[] = [];
-
-		//TODO: check keys existing
-		const {
-			imgPathKey,
-			imgFrontKey,
-			imgBackKey,
-			priceKey,
-			discountPriceKey,
-			sourceIdKey,
-			tagsKey,
-		} = template.info;
-
-		for (const [index, variantRow] of variantsRows.entries()) {
-			const attributesToAdd = await this.attributesService.getOrCreateMany(
-				template.attributesKeysInDoc,
-				variantRow,
-				variantsRows,
-			);
-
-			const url = variantRow[imgPathKey];
-			const imgFrontData = imgFrontKey && variantRow[imgFrontKey];
-			const imgBackData = imgBackKey && variantRow[imgBackKey];
-
-			const [imgUrl, imgFrontUrl, imgBackUrl] = await Promise.all([
-				this.filesService.getOrDownloadFile({
-					url,
-					fileExtensionInS3: '.webp',
-					prefix: `category/${category.slug}/doors`,
-				}),
-				imgFrontData &&
-					this.filesService.getOrDownloadFile({
-						url: imgFrontData,
-						fileExtensionInS3: '.webp',
-						prefix: `category/${category.slug}/doors`,
-					}),
-				imgBackData &&
-					this.filesService.getOrDownloadFile({
-						url: imgBackData,
-						fileExtensionInS3: '.webp',
-						prefix: `category/${category.slug}/doors`,
-					}),
-			]);
-
-			this.logger.log(`${index + 1} / ${variantsRows.length} images downloaded`);
-
-			const tagKeys = tagsKey
-				? this.parseTagKeys(variantRow[tagsKey])
-				: [];
-			const tags = tagKeys.length
-				? await this.tagsService.findManyByKeys(tagKeys)
-				: [];
-
-			const variantResult: VariantCreateDto = {
-				imgUrl,
-				imgFrontUrl,
-				imgBackUrl,
-				sourceId: variantRow[sourceIdKey],
-				attributeIds: attributesToAdd.map((a) => a.id),
-				tagIds: tags.length ? tags.map((tag) => tag.id) : undefined,
-				price: variantRow[priceKey] ? parseInt(variantRow[priceKey]) : undefined,
-				productId: product.id,
-				discountPrice: variantRow[discountPriceKey]
-					? parseInt(variantRow[discountPriceKey])
-					: undefined,
-			};
-			productVariantsDtos.push(variantResult);
-		}
-		return productVariantsDtos;
-	}
+	private readonly logger = new Logger(ProductsImportService.name);
 
 	async importFromFile(
 		dto: ProductImportDto,
@@ -167,8 +48,7 @@ export class ImportService {
 		let productsFromFile: ProductVariantFromFile[] = [];
 
 		try {
-			productsFromFile =
-				await this.parseCsvFile<ProductVariantFromFile>(file);
+			productsFromFile = await this.parseCsvFile<ProductVariantFromFile>(file);
 		} catch (e) {
 			this.logger.error(e);
 			throw new BadRequestException('File parse error');
@@ -224,8 +104,7 @@ export class ImportService {
 			await mapWithConcurrency(
 				productVariantsDtos,
 				VARIANT_CREATE_CONCURRENCY,
-				(variantDto) =>
-					this.variantsService.createOne(createdProduct.id, variantDto),
+				(variantDto) => this.variantsService.createOne(createdProduct.id, variantDto),
 			);
 
 			const mainVariantImgUrl = productVariantsDtos[mainVariantIndex]?.imgUrl;
@@ -248,7 +127,127 @@ export class ImportService {
 		return createdProducts;
 	}
 
-	async getProductDtoFromFile(
+	private parseTagKeys(raw: string | undefined): string[] {
+		if (!raw?.trim()) return [];
+		return raw
+			.split(',')
+			.map((key) => key.trim())
+			.filter(Boolean);
+	}
+
+	private isMainValue(raw: string | undefined): boolean {
+		if (!raw?.trim()) return false;
+		const value = raw.trim().toLowerCase();
+		return value === '1' || value === 'true' || value === 'yes' || value === 'y';
+	}
+
+	private getMainVariantRowIndex(
+		variantsRows: ProductVariantFromFile[],
+		template: ImportTemplate,
+	): number {
+		const { isMainKey } = template.info;
+		if (!isMainKey) return 0;
+
+		const mainIndex = variantsRows.findIndex((row) => this.isMainValue(row[isMainKey]));
+		return mainIndex >= 0 ? mainIndex : 0;
+	}
+
+	private async parseCsvFile<T>(file: Express.Multer.File): Promise<T[]> {
+		const source = Readable.from(file.buffer);
+
+		return new Promise((resolve, reject) => {
+			const results: T[] = [];
+			source
+				.pipe(
+					csv.parse({
+						headers: true,
+						ignoreEmpty: true,
+					}),
+				)
+				.on('error', (error) => reject(error))
+				.on('data', (row) => {
+					results.push(row);
+				})
+				.on('end', () => resolve(results));
+		});
+	}
+
+	private async getVariantDtosFromFile(
+		product: ProductDto,
+		category: CategoryDto,
+		variantsRows: ProductVariantFromFile[],
+		template: ImportTemplate,
+	): Promise<VariantCreateDto[]> {
+		const productVariantsDtos: VariantCreateDto[] = [];
+
+		//TODO: check keys existing
+		const {
+			imgPathKey,
+			imgFrontKey,
+			imgBackKey,
+			priceKey,
+			discountPriceKey,
+			sourceIdKey,
+			tagsKey,
+		} = template.info;
+
+		for (const [index, variantRow] of variantsRows.entries()) {
+			const attributesToAdd = await this.attributesService.getOrCreateMany(
+				template.attributesKeysInDoc,
+				variantRow,
+				variantsRows,
+			);
+
+			const url = variantRow[imgPathKey];
+			const imgFrontData = imgFrontKey && variantRow[imgFrontKey];
+			const imgBackData = imgBackKey && variantRow[imgBackKey];
+
+			const [imgUrl, imgFrontUrl, imgBackUrl] = await Promise.all([
+				this.filesService.getOrDownloadFile({
+					url,
+					fileExtensionInS3: '.webp',
+					prefix: `category/${category.slug}/doors`,
+				}),
+				imgFrontData &&
+					this.filesService.getOrDownloadFile({
+						url: imgFrontData,
+						fileExtensionInS3: '.webp',
+						prefix: `category/${category.slug}/doors`,
+					}),
+				imgBackData &&
+					this.filesService.getOrDownloadFile({
+						url: imgBackData,
+						fileExtensionInS3: '.webp',
+						prefix: `category/${category.slug}/doors`,
+					}),
+			]);
+
+			this.logger.log(`${index + 1} / ${variantsRows.length} images downloaded`);
+
+			const tagKeys = tagsKey ? this.parseTagKeys(variantRow[tagsKey]) : [];
+			const tags = tagKeys.length
+				? await this.tagsService.findManyByKeys(tagKeys)
+				: [];
+
+			const variantResult: VariantCreateDto = {
+				imgUrl,
+				imgFrontUrl,
+				imgBackUrl,
+				sourceId: variantRow[sourceIdKey],
+				attributeIds: attributesToAdd.map((a) => a.id),
+				tagIds: tags.length ? tags.map((tag) => tag.id) : undefined,
+				price: variantRow[priceKey] ? parseInt(variantRow[priceKey]) : undefined,
+				productId: product.id,
+				discountPrice: variantRow[discountPriceKey]
+					? parseInt(variantRow[discountPriceKey])
+					: undefined,
+			};
+			productVariantsDtos.push(variantResult);
+		}
+		return productVariantsDtos;
+	}
+
+	private async getProductDtoFromFile(
 		productVariantsFromFile: ProductVariantFromFile[],
 		category: CategoryDto,
 		template: ImportTemplate,
@@ -283,100 +282,5 @@ export class ImportService {
 			paramIds: params.map((param) => param.id),
 		};
 		return productDto;
-	}
-
-	async exportProductsToCSV(dto: ExportProductsQueryDto): Promise<string> {
-		const categoryIds = await this.categoriesService.getDescendantCategoryIdsBySlug(
-			dto.categorySlug,
-		);
-
-		const products = await this.prismaService.product.findMany({
-			where: {
-				categoryId:
-					categoryIds.length === 1
-						? { equals: categoryIds[0] }
-						: { in: categoryIds },
-			},
-			include: {
-				params: { include: { key: true, value: true } },
-				variants: {
-					include: {
-						attributes: { include: { key: true, value: true } },
-						tags: true,
-					},
-				},
-			},
-			orderBy: [{ id: 'asc' }],
-		});
-
-		type ExportRow = Record<string, string | number>;
-		const baseColumns = [
-			'id',
-			'sourceId',
-			'slug',
-			'name',
-			'imgUrl',
-			'price',
-			'tags',
-			'isMain',
-		];
-		const paramColumns = new Set<string>();
-		const attributeColumns = new Set<string>();
-
-		for (const product of products) {
-			for (const param of product.params) {
-				paramColumns.add(`${param.key.value}`);
-			}
-			for (const variant of product.variants) {
-				for (const attribute of variant.attributes) {
-					attributeColumns.add(`${attribute.key.value}`);
-				}
-			}
-		}
-
-		const orderedParamColumns = Array.from(paramColumns).sort();
-		const orderedAttributeColumns = Array.from(attributeColumns).sort();
-		const headers = [
-			...baseColumns,
-			...orderedParamColumns,
-			...orderedAttributeColumns,
-		];
-
-		const rows: ExportRow[] = [];
-
-		for (const product of products) {
-			const paramsMap = new Map(
-				product.params.map((param) => [`${param.key.value}`, param.value.value]),
-			);
-
-			for (const variant of product.variants) {
-				const row: ExportRow = {
-					id: product.id,
-					sourceId: variant.sourceId ?? '',
-					slug: product.slug,
-					name: product.name,
-					imgUrl: variant.imgUrl,
-					price: variant.price ?? '',
-					tags: variant.tags.map((tag) => tag.key).join(','),
-					isMain: variant.imgUrl === product.imgUrl ? 'true' : '',
-				};
-
-				for (const column of orderedParamColumns) {
-					row[column] = paramsMap.get(column) ?? '';
-				}
-
-				for (const column of orderedAttributeColumns) {
-					row[column] = '';
-				}
-
-				for (const attribute of variant.attributes) {
-					row[`${attribute.key.value}`] = attribute.value.value;
-				}
-
-				rows.push(row);
-			}
-		}
-
-		return await csv.writeToString(rows, { headers });
 	}
 }

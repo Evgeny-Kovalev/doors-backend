@@ -3,7 +3,8 @@ import { Module } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { FilesModule } from '@/app/files/files.module';
-import { ImportService } from './services/import.service';
+import { ProductsImportService } from './services/products-import.service';
+import { ProductsExportService } from './services/products-export.service';
 import { ProductsQueryService } from './services/products-query.service';
 import { ProductsCommandService } from './services/products-command.service';
 import { AttributesModule } from '@/app/products/modules/attributes/attributes.module';
@@ -17,7 +18,8 @@ import { TagsModule } from '@/app/tags/tags.module';
 		ProductsService,
 		ProductsQueryService,
 		ProductsCommandService,
-		ImportService,
+		ProductsImportService,
+		ProductsExportService,
 	],
 	exports: [ProductsService, ProductsQueryService],
 	imports: [
