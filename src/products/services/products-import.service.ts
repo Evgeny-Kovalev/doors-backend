@@ -41,7 +41,7 @@ export class ProductsImportService {
 	): Promise<ProductDto[]> {
 		const GROUP_BY_KEY = 'name';
 
-		const category = await this.categoriesService.getById(dto.categoryId);
+		const fallbackCategory = await this.categoriesService.getById(dto.categoryId);
 		const template = await this.importTemplatesService.getConfigByTemplateId(
 			dto.templateId,
 		);
@@ -83,6 +83,13 @@ export class ProductsImportService {
 				productVariantsFromFile,
 				template,
 			);
+
+			const category = await this.resolveCategory({
+				fallbackCategory,
+				productVariantsFromFile,
+				mainVariantIndex,
+				template,
+			});
 
 			const productDto = await this.getProductDtoFromFile({
 				productVariantsFromFile,
@@ -126,6 +133,46 @@ export class ProductsImportService {
 
 		this.logger.log(`Created products length: ${createdProducts.length}`);
 		return createdProducts;
+	}
+
+	private async resolveCategory({
+		fallbackCategory,
+		productVariantsFromFile,
+		mainVariantIndex,
+		template,
+	}: {
+		fallbackCategory: CategoryDto;
+		productVariantsFromFile: ProductVariantFromFile[];
+		mainVariantIndex: number;
+		template: ImportTemplateConfig;
+	}): Promise<CategoryDto> {
+		const categoryBySlug = new Map<string, CategoryDto | null>();
+
+		const mainVariant =
+			productVariantsFromFile[mainVariantIndex] ?? productVariantsFromFile[0];
+		const categorySlugKey = template.info.categorySlugKey;
+		if (!categorySlugKey) return fallbackCategory;
+
+		const slug = mainVariant?.[categorySlugKey]?.trim();
+		if (!slug) return fallbackCategory;
+
+		if (categoryBySlug.has(slug)) {
+			return categoryBySlug.get(slug) ?? fallbackCategory;
+		}
+
+		const found = await this.prismaService.category.findFirst({
+			where: { slug },
+		});
+		categoryBySlug.set(slug, found);
+
+		if (!found) {
+			this.logger.warn(
+				`Category slug "${slug}" not found, using fallback categoryId=${fallbackCategory.id}`,
+			);
+			return fallbackCategory;
+		}
+
+		return found;
 	}
 
 	private parseTagKeys(raw: string | undefined): string[] {

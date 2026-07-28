@@ -10,6 +10,7 @@ export const ImportTemplateInfoSchema = z.object({
 	discountPriceKey: z.string(),
 	tagsKey: z.string().optional(),
 	isMainKey: z.string().optional(),
+	categorySlugKey: z.string().optional(),
 });
 export type ImportTemplateInfoType = z.infer<typeof ImportTemplateInfoSchema>;
 

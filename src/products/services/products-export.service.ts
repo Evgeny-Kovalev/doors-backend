@@ -24,6 +24,7 @@ export class ProductsExportService {
 						: { in: categoryIds },
 			},
 			include: {
+				category: true,
 				params: { include: { key: true, value: true } },
 				variants: {
 					include: {
@@ -41,6 +42,7 @@ export class ProductsExportService {
 			'sourceId',
 			'slug',
 			'name',
+			'categorySlug',
 			'imgUrl',
 			'price',
 			'tags',
@@ -81,6 +83,7 @@ export class ProductsExportService {
 					sourceId: variant.sourceId ?? '',
 					slug: product.slug,
 					name: product.name,
+					categorySlug: product.category?.slug ?? '',
 					imgUrl: variant.imgUrl,
 					price: variant.price ?? '',
 					tags: variant.tags.map((tag) => tag.key).join(','),
