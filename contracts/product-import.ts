@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ProductSchema } from './products';
 
 export const ImportTemplateInfoSchema = z.object({
 	sourceIdKey: z.string(),
@@ -51,3 +52,44 @@ export const ProductImportSchema = z
 	});
 
 export type ProductImportType = z.infer<typeof ProductImportSchema>;
+
+export const ProductImportProgressEventSchema = z
+	.object({
+		type: z.literal('progress'),
+		current: z.number().int().positive(),
+		total: z.number().int().positive(),
+		productName: z.string(),
+	})
+	.meta({
+		title: 'Product Import Progress Event',
+	});
+export type ProductImportProgressEvent = z.infer<
+	typeof ProductImportProgressEventSchema
+>;
+
+export const ProductImportDoneEventSchema = z
+	.object({
+		type: z.literal('done'),
+		products: z.array(ProductSchema),
+	})
+	.meta({
+		title: 'Product Import Done Event',
+	});
+export type ProductImportDoneEvent = z.infer<typeof ProductImportDoneEventSchema>;
+
+export const ProductImportErrorEventSchema = z
+	.object({
+		type: z.literal('error'),
+		message: z.string(),
+	})
+	.meta({
+		title: 'Product Import Error Event',
+	});
+export type ProductImportErrorEvent = z.infer<typeof ProductImportErrorEventSchema>;
+
+export const ProductImportEventSchema = z.discriminatedUnion('type', [
+	ProductImportProgressEventSchema,
+	ProductImportDoneEventSchema,
+	ProductImportErrorEventSchema,
+]);
+export type ProductImportEvent = z.infer<typeof ProductImportEventSchema>;

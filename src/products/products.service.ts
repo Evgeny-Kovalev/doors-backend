@@ -14,7 +14,7 @@ import { ProductsCommandService } from './services/products-command.service';
 import { ProductsImportService } from './services/products-import.service';
 import { ProductsExportService } from './services/products-export.service';
 import { VisibilityOptions } from '@/app/shared/visibility';
-import type { ProductQueryParsed } from '@/contracts';
+import type { ProductImportEvent, ProductQueryParsed } from '@/contracts';
 
 @Injectable()
 export class ProductsService {
@@ -63,7 +63,7 @@ export class ProductsService {
 	importFromFile(
 		dto: ProductImportDto,
 		files: { file: Express.Multer.File },
-	): Promise<ProductDto[]> {
+	): AsyncGenerator<ProductImportEvent> {
 		return this.productsImportService.importFromFile(dto, files);
 	}
 

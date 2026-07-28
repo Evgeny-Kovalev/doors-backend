@@ -11,10 +11,18 @@ import {
 	Logger,
 	UploadedFile,
 	Res,
+	HttpException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ProductsService } from './products.service';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags, ApiProduces } from '@nestjs/swagger';
+import {
+	ApiCreatedResponse,
+	ApiOkResponse,
+	ApiTags,
+	ApiProduces,
+	ApiExtraModels,
+	getSchemaPath,
+} from '@nestjs/swagger';
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
 import { PaginationQueryDto } from '@/app/shared/pagination/dto';
@@ -26,11 +34,15 @@ import {
 	ProductCreateDto,
 	ProductUpdateDto,
 	ProductImportDto,
+	ProductImportProgressEventDto,
+	ProductImportDoneEventDto,
+	ProductImportErrorEventDto,
 	PaginatedProductDto,
 	ExportProductsQueryDto,
 } from './dto/product.dto';
 import { CategoriesService } from '@/app/categories/categories.service';
 import { ApiFileWithBody } from '../files/decorators/api-file.decorator';
+import type { ProductImportEvent } from '@/contracts';
 
 @ApiTags('Products')
 @Controller({
@@ -101,7 +113,27 @@ export class ProductsController {
 	}
 
 	@Admin()
-	@ApiCreatedResponse({ type: [ProductDto] })
+	@ApiExtraModels(
+		ProductImportProgressEventDto,
+		ProductImportDoneEventDto,
+		ProductImportErrorEventDto,
+	)
+	@ApiProduces('text/event-stream')
+	@ApiOkResponse({
+		description:
+			'SSE stream of import events (progress / done / error). Each event is sent as `event: <type>` with JSON `data`.',
+		content: {
+			'text/event-stream': {
+				schema: {
+					oneOf: [
+						{ $ref: getSchemaPath(ProductImportProgressEventDto) },
+						{ $ref: getSchemaPath(ProductImportDoneEventDto) },
+						{ $ref: getSchemaPath(ProductImportErrorEventDto) },
+					],
+				},
+			},
+		},
+	})
 	@ApiFileWithBody({
 		bodyType: ProductImportDto,
 		fileName: 'file',
@@ -109,24 +141,39 @@ export class ProductsController {
 		mimetype: ['text/csv', 'application/csv'],
 	})
 	@Post('/import')
-	async importProduct(
+	async importProducts(
 		@Body() dto: ProductImportDto,
 		@UploadedFile() file: Express.Multer.File,
+		@Res() res: Response,
 	) {
 		this.logger.log('Product import start');
 
-		// const { url: fileUrl } = await this.filesService.uploadFileToS3(file, {
-		// 	returnOriginalS3Url: true,
-		// });
+		res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+		res.setHeader('Cache-Control', 'no-cache, no-transform');
+		res.setHeader('Connection', 'keep-alive');
+		res.setHeader('X-Accel-Buffering', 'no');
+		res.flushHeaders();
 
-		const createdProducts: ProductDto[] = await this.productsService.importFromFile(
-			dto,
-			{ file },
-		);
+		const writeEvent = (event: ProductImportEvent) => {
+			res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+		};
 
-		this.logger.log('Product import end');
-
-		return createdProducts;
+		try {
+			for await (const event of this.productsService.importFromFile(dto, {
+				file,
+			})) {
+				writeEvent(event);
+			}
+		} catch (error) {
+			this.logger.error(error);
+			writeEvent({
+				type: 'error',
+				message: this.getImportErrorMessage(error),
+			});
+		} finally {
+			res.end();
+			this.logger.log('Product import end');
+		}
 	}
 
 	@Public()
@@ -159,5 +206,18 @@ export class ProductsController {
 	@Delete(':id')
 	async delete(@Param('id', ParseIntPipe) id: number): Promise<ProductDto> {
 		return await this.productsService.delete(id);
+	}
+
+	private getImportErrorMessage(error: unknown): string {
+		if (error instanceof HttpException) {
+			const response = error.getResponse();
+			if (typeof response === 'string') return response;
+			if (typeof response === 'object' && response !== null && 'message' in response) {
+				const message = (response as { message: string | string[] }).message;
+				return Array.isArray(message) ? message.join(', ') : message;
+			}
+		}
+		if (error instanceof Error) return error.message;
+		return 'Import failed';
 	}
 }

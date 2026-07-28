@@ -15,7 +15,7 @@ import { PrismaService } from '@/app/prisma/prisma.service';
 import { TagsService } from '@/app/tags/tags.service';
 import { ImportTemplatesService } from '@/app/import-templates/import-templates.service';
 import { groupBy, mapWithConcurrency } from '@/app/utils';
-import type { ImportTemplateConfig } from '@/contracts';
+import type { ImportTemplateConfig, ProductImportEvent } from '@/contracts';
 
 const VARIANT_CREATE_CONCURRENCY = 5;
 
@@ -35,10 +35,10 @@ export class ProductsImportService {
 
 	private readonly logger = new Logger(ProductsImportService.name);
 
-	async importFromFile(
+	async *importFromFile(
 		dto: ProductImportDto,
 		{ file }: { file: Express.Multer.File },
-	): Promise<ProductDto[]> {
+	): AsyncGenerator<ProductImportEvent> {
 		const GROUP_BY_KEY = 'name';
 
 		const fallbackCategory = await this.categoriesService.getById(dto.categoryId);
@@ -69,12 +69,13 @@ export class ProductsImportService {
 		);
 
 		const allProducts = Object.values(groupedProducts);
+		const total = allProducts.length;
 
 		this.logger.log(
 			'Grouped products names:',
 			allProducts.map((p) => p[0].name),
 		);
-		this.logger.log(`Grouped products length: ${allProducts.length}`);
+		this.logger.log(`Grouped products length: ${total}`);
 
 		const createdProducts: ProductDto[] = [];
 
@@ -127,12 +128,23 @@ export class ProductsImportService {
 				createdProduct.id,
 			);
 
-			this.logger.log(`${index + 1} / ${allProducts.length} products created.`);
+			const current = index + 1;
+			this.logger.log(`${current} / ${total} products created.`);
 			createdProducts.push(productWithVariants);
+
+			yield {
+				type: 'progress',
+				current,
+				total,
+				productName: productWithVariants.name,
+			};
 		}
 
 		this.logger.log(`Created products length: ${createdProducts.length}`);
-		return createdProducts;
+		yield {
+			type: 'done',
+			products: createdProducts,
+		};
 	}
 
 	private async resolveCategory({

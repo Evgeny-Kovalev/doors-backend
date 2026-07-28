@@ -3,6 +3,9 @@ import {
 	createPaginatedSchema,
 	ProductCreateSchema,
 	ProductImportSchema,
+	ProductImportProgressEventSchema,
+	ProductImportDoneEventSchema,
+	ProductImportErrorEventSchema,
 	ProductSchema,
 	ProductWithSeoSchema,
 	ProductUpdateSchema,
@@ -21,6 +24,18 @@ export class ProductUpdateDto extends createZodDto(ProductUpdateSchema) {}
 export class ProductQueryDto extends createZodDto(ProductQuerySchema) {}
 
 export class ProductImportDto extends createZodDto(ProductImportSchema) {}
+
+export class ProductImportProgressEventDto extends createZodDto(
+	ProductImportProgressEventSchema,
+) {}
+
+export class ProductImportDoneEventDto extends createZodDto(
+	ProductImportDoneEventSchema,
+) {}
+
+export class ProductImportErrorEventDto extends createZodDto(
+	ProductImportErrorEventSchema,
+) {}
 
 export class PaginatedProductDto extends createZodDto(
 	createPaginatedSchema(ProductSchema),

@@ -1,6 +1,6 @@
 {
 	"name": "@evgeny-kovalev/api-contracts",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"description": "Shared API contracts for Doors applications",
 	"license": "UNLICENSED",
 	"type": "module",
