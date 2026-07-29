@@ -6,6 +6,15 @@
 	"author": "",
 	"private": true,
 	"license": "UNLICENSED",
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@prisma/engines",
+			"argon2",
+			"esbuild",
+			"prisma",
+			"unrs-resolver"
+		]
+	},
 	"prisma": {
 		"seed": "ts-node src/prisma/seed.ts"
 	},
