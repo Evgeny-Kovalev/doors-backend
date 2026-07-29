@@ -1,6 +1,6 @@
 import { createLogger, format } from 'winston';
 import * as Sentry from '@sentry/node';
-import Transport = require('winston-transport');
+import Transport from 'winston-transport';
 
 const SentryWinstonTransport = Sentry.createSentryWinstonTransport(Transport);
 
