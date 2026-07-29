@@ -28,7 +28,7 @@ services:
       env_file:
          - .env
       ports:
-         - "${PORT:-4000}:${PORT:-4000}"
+         - "4000:4000"
       depends_on:
          db:
             condition: service_healthy
