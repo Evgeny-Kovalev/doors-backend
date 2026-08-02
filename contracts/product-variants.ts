@@ -40,7 +40,7 @@ export const VariantUpdateSchema = VariantSchema.omit({
 })
 	.partial()
 	.extend({
-		attributeIds: z.array(z.number()).min(1).optional(),
+		attributeIds: z.array(z.number()).optional(),
 	});
 export type VariantUpdateType = z.infer<typeof VariantUpdateSchema>;
 
@@ -64,10 +64,7 @@ export const VariantMultipartUpdateSchema = VariantUpdateSchema.extend({
 		(value) => (value === '' ? null : value),
 		z.coerce.number().nullable().optional(),
 	),
-	attributeIds: z.preprocess(
-		parseJsonField,
-		z.array(z.coerce.number()).min(1).optional(),
-	),
+	attributeIds: z.preprocess(parseJsonField, z.array(z.coerce.number()).optional()),
 	tags: z.preprocess(parseJsonField, z.array(TagSchema).optional()),
 });
 
