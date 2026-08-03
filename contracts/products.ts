@@ -109,3 +109,20 @@ export const ProductUpdateSchema = ProductCreateSchema.partial()
 
 export type ProductUpdateType = z.infer<typeof ProductUpdateSchema>;
 export type ExportProductsQueryType = z.infer<typeof ExportProductsQuerySchema>;
+
+export const ProductBulkUpdateItemSchema = ProductUpdateSchema.extend({
+	slug: z.string().min(1),
+}).meta({
+	title: 'Product Bulk Update Item',
+});
+
+export const ProductBulkUpdateSchema = z
+	.object({
+		items: z.array(ProductBulkUpdateItemSchema).min(1).max(200),
+	})
+	.meta({
+		title: 'Product Bulk Update',
+	});
+
+export type ProductBulkUpdateItemType = z.infer<typeof ProductBulkUpdateItemSchema>;
+export type ProductBulkUpdateType = z.infer<typeof ProductBulkUpdateSchema>;

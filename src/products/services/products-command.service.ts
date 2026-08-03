@@ -7,7 +7,12 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '@/app/prisma/prisma.service';
-import { ProductCreateDto, ProductDto, ProductUpdateDto } from '../dto/product.dto';
+import {
+	ProductBulkUpdateDto,
+	ProductCreateDto,
+	ProductDto,
+	ProductUpdateDto,
+} from '../dto/product.dto';
 import slugify from 'slugify';
 import { Prisma } from '@/app/generated/prisma';
 import { PRODUCT_DETAIL_INCLUDE } from '../../shared/product-include';
@@ -124,6 +129,15 @@ export class ProductsCommandService {
 			this.logger.error(e);
 			throw new BadRequestException('Cannot update product');
 		}
+	}
+
+	async updateMany(dto: ProductBulkUpdateDto): Promise<ProductDto[]> {
+		const results: ProductDto[] = [];
+		for (const item of dto.items) {
+			const { slug, ...updateDto } = item;
+			results.push(await this.update(slug, updateDto));
+		}
+		return results;
 	}
 
 	async delete(id: number): Promise<ProductDto> {

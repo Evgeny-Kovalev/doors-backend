@@ -31,6 +31,7 @@ import {
 	ProductWithSeoDto,
 	ProductQueryDto,
 	RandomProductsQueryDto,
+	ProductBulkUpdateDto,
 	ProductCreateDto,
 	ProductUpdateDto,
 	ProductImportDto,
@@ -189,6 +190,13 @@ export class ProductsController {
 	async createProduct(@Body() dto: ProductCreateDto): Promise<ProductDto> {
 		const product = await this.productsService.createOne(dto);
 		return product;
+	}
+
+	@Admin()
+	@ApiOkResponse({ type: [ProductDto] })
+	@Patch('/')
+	async updateMany(@Body() dto: ProductBulkUpdateDto): Promise<ProductDto[]> {
+		return this.productsService.updateMany(dto);
 	}
 
 	@Admin()

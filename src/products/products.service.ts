@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PaginatedDto, PaginationQueryDto } from '@/app/shared/pagination/dto';
 import {
+	ProductBulkUpdateDto,
 	ProductCreateDto,
 	ProductWithSeoDto,
 	ProductDto,
@@ -54,6 +55,10 @@ export class ProductsService {
 
 	update(slug: string, dto: ProductUpdateDto): Promise<ProductDto> {
 		return this.productsCommandService.update(slug, dto);
+	}
+
+	updateMany(dto: ProductBulkUpdateDto): Promise<ProductDto[]> {
+		return this.productsCommandService.updateMany(dto);
 	}
 
 	delete(id: number): Promise<ProductDto> {
