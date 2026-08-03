@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { AttributeSchema } from './attributes';
 import { TagSchema } from './tags';
-import { BULK_UPDATE_MAX_ITEMS } from './bulk';
+import { BULK_MAX_ITEMS } from './bulk';
 
 export const VariantSchema = z.object({
 	id: z.number(),
@@ -29,6 +29,15 @@ export const VariantCreateSchema = VariantSchema.omit({
 	});
 export type VariantCreateType = z.infer<typeof VariantCreateSchema>;
 
+export const VariantBulkCreateSchema = z
+	.object({
+		items: z.array(VariantCreateSchema).min(1).max(BULK_MAX_ITEMS),
+	})
+	.meta({
+		title: 'Variant Bulk Create',
+	});
+export type VariantBulkCreateType = z.infer<typeof VariantBulkCreateSchema>;
+
 export const VariantQuerySchema = z.object({
 	productId: z.coerce.number().int().positive(),
 });
@@ -53,7 +62,7 @@ export const VariantBulkUpdateItemSchema = VariantUpdateSchema.extend({
 
 export const VariantBulkUpdateSchema = z
 	.object({
-		items: z.array(VariantBulkUpdateItemSchema).min(1).max(BULK_UPDATE_MAX_ITEMS),
+		items: z.array(VariantBulkUpdateItemSchema).min(1).max(BULK_MAX_ITEMS),
 	})
 	.meta({
 		title: 'Variant Bulk Update',

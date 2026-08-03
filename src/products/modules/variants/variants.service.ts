@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { AttributesService } from '@/app/products/modules/attributes/attributes.service';
 import {
+	VariantBulkCreateDto,
 	VariantBulkUpdateDto,
 	VariantDto,
 	VariantCreateDto,
@@ -92,6 +93,14 @@ export class VariantsService {
 			this.logger.error(e);
 			throw new InternalServerErrorException('Cannot create the variant');
 		}
+	}
+
+	async createMany(dto: VariantBulkCreateDto): Promise<VariantDto[]> {
+		const results: VariantDto[] = [];
+		for (const item of dto.items) {
+			results.push(await this.createOne(item.productId, item));
+		}
+		return results;
 	}
 
 	async update(
