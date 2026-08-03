@@ -13,6 +13,7 @@ import {
 import { VariantsService } from './variants.service';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
+	VariantBulkUpdateDto,
 	VariantCreateDto,
 	VariantDto,
 	VariantMultipartUpdateDto,
@@ -50,6 +51,13 @@ export class VariantsController {
 	@ApiBody({ type: VariantCreateDto })
 	async createOne(@Body() dto: VariantCreateDto): Promise<VariantDto> {
 		return this.variantsService.createOne(dto.productId, dto);
+	}
+
+	@Admin()
+	@ApiOkResponse({ type: [VariantDto] })
+	@Patch('/')
+	async updateMany(@Body() dto: VariantBulkUpdateDto): Promise<VariantDto[]> {
+		return this.variantsService.updateMany(dto);
 	}
 
 	@Admin()

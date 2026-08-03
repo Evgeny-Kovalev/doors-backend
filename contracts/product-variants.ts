@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AttributeSchema } from './attributes';
 import { TagSchema } from './tags';
+import { BULK_UPDATE_MAX_ITEMS } from './bulk';
 
 export const VariantSchema = z.object({
 	id: z.number(),
@@ -43,6 +44,23 @@ export const VariantUpdateSchema = VariantSchema.omit({
 		attributeIds: z.array(z.number()).optional(),
 	});
 export type VariantUpdateType = z.infer<typeof VariantUpdateSchema>;
+
+export const VariantBulkUpdateItemSchema = VariantUpdateSchema.extend({
+	id: VariantSchema.shape.id,
+}).meta({
+	title: 'Variant Bulk Update Item',
+});
+
+export const VariantBulkUpdateSchema = z
+	.object({
+		items: z.array(VariantBulkUpdateItemSchema).min(1).max(BULK_UPDATE_MAX_ITEMS),
+	})
+	.meta({
+		title: 'Variant Bulk Update',
+	});
+
+export type VariantBulkUpdateItemType = z.infer<typeof VariantBulkUpdateItemSchema>;
+export type VariantBulkUpdateType = z.infer<typeof VariantBulkUpdateSchema>;
 
 const parseJsonField = (value: unknown) => {
 	if (typeof value !== 'string') return value;

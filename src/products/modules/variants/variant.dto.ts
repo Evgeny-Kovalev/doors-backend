@@ -3,6 +3,7 @@ import {
 	VariantSchema,
 	VariantCreateSchema,
 	VariantUpdateSchema,
+	VariantBulkUpdateSchema,
 	VariantMultipartUpdateSchema,
 	VariantQuerySchema,
 } from '@/contracts';
@@ -10,6 +11,7 @@ import {
 export class VariantDto extends createZodDto(VariantSchema) {}
 export class VariantCreateDto extends createZodDto(VariantCreateSchema) {}
 export class VariantUpdateDto extends createZodDto(VariantUpdateSchema) {}
+export class VariantBulkUpdateDto extends createZodDto(VariantBulkUpdateSchema) {}
 export class VariantMultipartUpdateDto extends createZodDto(
 	VariantMultipartUpdateSchema,
 ) {}

@@ -7,6 +7,7 @@ export * from './collections';
 export * from './attributes';
 export * from './product-import';
 export * from './pagination';
+export * from './bulk';
 export * from './tg-bot';
 export * from './tags';
 export * from './news';

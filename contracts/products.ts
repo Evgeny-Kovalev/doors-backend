@@ -4,6 +4,7 @@ import { AttributeSchema } from './attributes';
 import { CategorySchema } from './categories';
 import { VariantSchema } from './product-variants';
 import { ResolvedSeoMetadataSchema } from './seo';
+import { BULK_UPDATE_MAX_ITEMS } from './bulk';
 
 export const ProductTypeSchema = z.enum(['full', 'fullSample', 'doorOnlySample']);
 export type ProductType = z.infer<typeof ProductTypeSchema>;
@@ -118,7 +119,7 @@ export const ProductBulkUpdateItemSchema = ProductUpdateSchema.extend({
 
 export const ProductBulkUpdateSchema = z
 	.object({
-		items: z.array(ProductBulkUpdateItemSchema).min(1).max(200),
+		items: z.array(ProductBulkUpdateItemSchema).min(1).max(BULK_UPDATE_MAX_ITEMS),
 	})
 	.meta({
 		title: 'Product Bulk Update',

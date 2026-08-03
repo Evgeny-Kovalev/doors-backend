@@ -7,7 +7,12 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { AttributesService } from '@/app/products/modules/attributes/attributes.service';
-import { VariantDto, VariantCreateDto, VariantMultipartUpdateDto } from './variant.dto';
+import {
+	VariantBulkUpdateDto,
+	VariantDto,
+	VariantCreateDto,
+	VariantUpdateDto,
+} from './variant.dto';
 import { FilesService } from '@/app/files/files.service';
 import { VARIANT_INCLUDE } from '@/app/shared/product-include';
 
@@ -91,7 +96,7 @@ export class VariantsService {
 
 	async update(
 		variantId: number,
-		dto: VariantMultipartUpdateDto,
+		dto: VariantUpdateDto & { categorySlug?: string },
 		image?: Express.Multer.File,
 	): Promise<VariantDto> {
 		await this.getById(variantId);
@@ -147,6 +152,15 @@ export class VariantsService {
 			this.logger.error(e);
 			throw new BadRequestException('Cannot update the product variant');
 		}
+	}
+
+	async updateMany(dto: VariantBulkUpdateDto): Promise<VariantDto[]> {
+		const results: VariantDto[] = [];
+		for (const item of dto.items) {
+			const { id, ...updateDto } = item;
+			results.push(await this.update(id, updateDto));
+		}
+		return results;
 	}
 
 	async deleteById(id: number): Promise<VariantDto> {
