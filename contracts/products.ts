@@ -5,6 +5,7 @@ import { CategorySchema } from './categories';
 import { VariantSchema } from './product-variants';
 import { ResolvedSeoMetadataSchema } from './seo';
 import { BULK_MAX_ITEMS } from './bulk';
+import { parseJsonField } from './utils';
 
 export const ProductTypeSchema = z.enum(['full', 'fullSample', 'doorOnlySample']);
 export type ProductType = z.infer<typeof ProductTypeSchema>;
@@ -127,3 +128,38 @@ export const ProductBulkUpdateSchema = z
 
 export type ProductBulkUpdateItemType = z.infer<typeof ProductBulkUpdateItemSchema>;
 export type ProductBulkUpdateType = z.infer<typeof ProductBulkUpdateSchema>;
+
+export const ProductMultipartUpdateSchema = ProductUpdateSchema.extend({
+	categorySlug: z.string().min(1).optional(),
+	categoryId: z.preprocess(
+		(value) => (value === '' ? null : value),
+		z.coerce.number().nullable().optional(),
+	),
+	price: z.preprocess(
+		(value) => (value === '' ? null : value),
+		z.coerce.number().nullable().optional(),
+	),
+	discountPrice: z.preprocess(
+		(value) => (value === '' ? null : value),
+		z.coerce.number().nullable().optional(),
+	),
+	paramIds: z.preprocess(parseJsonField, z.array(z.coerce.number()).optional()),
+	isVisible: z.preprocess((value) => {
+		if (value === 'true') return true;
+		if (value === 'false') return false;
+		return value;
+	}, z.boolean().optional()),
+});
+
+type ProductMultipartUpdateFields = z.output<typeof ProductMultipartUpdateSchema>;
+
+export type ProductMultipartUpdateBody = ProductMultipartUpdateFields &
+	(
+		| {
+				image: File;
+				categorySlug: string;
+		  }
+		| {
+				image?: undefined;
+		  }
+	);

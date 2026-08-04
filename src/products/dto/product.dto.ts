@@ -10,6 +10,7 @@ import {
 	ProductSchema,
 	ProductWithSeoSchema,
 	ProductUpdateSchema,
+	ProductMultipartUpdateSchema,
 	ProductQuerySchema,
 	RandomProductsQuerySchema,
 	ExportProductsQuerySchema,
@@ -21,6 +22,10 @@ export class ProductWithSeoDto extends createZodDto(ProductWithSeoSchema) {}
 export class ProductCreateDto extends createZodDto(ProductCreateSchema) {}
 
 export class ProductUpdateDto extends createZodDto(ProductUpdateSchema) {}
+
+export class ProductMultipartUpdateDto extends createZodDto(
+	ProductMultipartUpdateSchema,
+) {}
 
 export class ProductBulkUpdateDto extends createZodDto(ProductBulkUpdateSchema) {}
 

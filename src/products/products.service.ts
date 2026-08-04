@@ -53,8 +53,12 @@ export class ProductsService {
 		return this.productsCommandService.createOne(dto);
 	}
 
-	update(slug: string, dto: ProductUpdateDto): Promise<ProductDto> {
-		return this.productsCommandService.update(slug, dto);
+	update(
+		slug: string,
+		dto: ProductUpdateDto,
+		image?: Express.Multer.File,
+	): Promise<ProductDto> {
+		return this.productsCommandService.update(slug, dto, image);
 	}
 
 	updateMany(dto: ProductBulkUpdateDto): Promise<ProductDto[]> {

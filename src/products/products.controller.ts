@@ -33,7 +33,7 @@ import {
 	RandomProductsQueryDto,
 	ProductBulkUpdateDto,
 	ProductCreateDto,
-	ProductUpdateDto,
+	ProductMultipartUpdateDto,
 	ProductImportDto,
 	ProductImportProgressEventDto,
 	ProductImportDoneEventDto,
@@ -201,13 +201,19 @@ export class ProductsController {
 
 	@Admin()
 	@ApiOkResponse({ type: ProductDto })
+	@ApiFileWithBody({
+		bodyType: ProductMultipartUpdateDto,
+		fileName: 'image',
+		required: false,
+		mimetype: ['image'],
+	})
 	@Patch(':slug')
 	async update(
 		@Param('slug') slug: string,
-		@Body() productUpdateDto: ProductUpdateDto,
+		@Body() productUpdateDto: ProductMultipartUpdateDto,
+		@UploadedFile() image?: Express.Multer.File,
 	): Promise<ProductDto> {
-		const updatedProduct = await this.productsService.update(slug, productUpdateDto);
-		return updatedProduct;
+		return this.productsService.update(slug, productUpdateDto, image);
 	}
 
 	@Admin()

@@ -17,6 +17,7 @@ import slugify from 'slugify';
 import { Prisma } from '@/app/generated/prisma';
 import { PRODUCT_DETAIL_INCLUDE } from '../../shared/product-include';
 import { ProductsQueryService } from './products-query.service';
+import { FilesService } from '@/app/files/files.service';
 
 @Injectable()
 export class ProductsCommandService {
@@ -24,6 +25,7 @@ export class ProductsCommandService {
 		private readonly prismaService: PrismaService,
 		private readonly attributesService: AttributesService,
 		private readonly productsQueryService: ProductsQueryService,
+		private readonly filesService: FilesService,
 	) {}
 
 	private readonly logger = new Logger(ProductsCommandService.name);
@@ -67,7 +69,11 @@ export class ProductsCommandService {
 		}
 	}
 
-	async update(slug: string, dto: ProductUpdateDto): Promise<ProductDto> {
+	async update(
+		slug: string,
+		dto: ProductUpdateDto & { categorySlug?: string },
+		image?: Express.Multer.File,
+	): Promise<ProductDto> {
 		try {
 			const product = await this.productsQueryService.getBySlug(slug, {
 				includeHidden: true,
@@ -82,6 +88,7 @@ export class ProductsCommandService {
 				productType,
 				price,
 				discountPrice,
+				categorySlug,
 			} = dto;
 
 			const newParams = paramIds
@@ -95,13 +102,19 @@ export class ProductsCommandService {
 					'Params with these IDs are missing or there are duplicate ID.',
 				);
 
+			const uploadedImgUrl = await this.uploadProductImage({
+				slug: product.slug,
+				categorySlug,
+				image,
+			});
+
 			const updatedProduct: ProductDto = await this.prismaService.product.update({
 				where: { id: product.id },
 				data: {
 					// slug: name && slugify(name, { lower: true }),
 					name,
 					description,
-					imgUrl,
+					imgUrl: uploadedImgUrl ?? imgUrl,
 					isVisible,
 					productType,
 					category: categoryId ? { connect: { id: categoryId } } : undefined,
@@ -129,6 +142,30 @@ export class ProductsCommandService {
 			this.logger.error(e);
 			throw new BadRequestException('Cannot update product');
 		}
+	}
+
+	private async uploadProductImage({
+		slug,
+		categorySlug,
+		image,
+	}: {
+		slug: string;
+		categorySlug?: string;
+		image?: Express.Multer.File;
+	}): Promise<string | undefined> {
+		if (!image) return undefined;
+
+		if (!categorySlug)
+			throw new BadRequestException(
+				'categorySlug is required when an image is provided',
+			);
+
+		const ext = image.originalname.split('.').pop();
+		const uploaded = await this.filesService.uploadFileToS3(image, {
+			prefix: `category/${categorySlug}/custom-images`,
+			fileName: `${slug}.${ext}`,
+		});
+		return `${uploaded.url}?v=${Date.now()}`;
 	}
 
 	async updateMany(dto: ProductBulkUpdateDto): Promise<ProductDto[]> {

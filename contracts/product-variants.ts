@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { AttributeSchema } from './attributes';
 import { TagSchema } from './tags';
 import { BULK_MAX_ITEMS } from './bulk';
+import { parseJsonField } from './utils';
 
 export const VariantSchema = z.object({
 	id: z.number(),
@@ -70,16 +71,6 @@ export const VariantBulkUpdateSchema = z
 
 export type VariantBulkUpdateItemType = z.infer<typeof VariantBulkUpdateItemSchema>;
 export type VariantBulkUpdateType = z.infer<typeof VariantBulkUpdateSchema>;
-
-const parseJsonField = (value: unknown) => {
-	if (typeof value !== 'string') return value;
-
-	try {
-		return JSON.parse(value);
-	} catch {
-		return value;
-	}
-};
 
 export const VariantMultipartUpdateSchema = VariantUpdateSchema.extend({
 	categorySlug: z.string().min(1).optional(),
