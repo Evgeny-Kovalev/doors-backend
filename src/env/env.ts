@@ -30,6 +30,14 @@ export const envSchema = z.object({
 		.string()
 		.transform((s) => s.split(',').map((o) => o.trim()))
 		.pipe(z.array(z.url())),
+
+	COOKIE_DOMAIN: z
+		.string()
+		.optional()
+		.transform((value) => {
+			const trimmed = value?.trim();
+			return trimmed ? trimmed : undefined;
+		}),
 });
 
 export type Env = z.infer<typeof envSchema>;

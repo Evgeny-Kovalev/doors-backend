@@ -8,10 +8,12 @@ import { PassportModule } from '@nestjs/passport';
 import { AtGuard } from './guards/at.guard';
 import { AtStrategy } from './strategies/at.strategy';
 import { RtStrategy } from './strategies/rt.strategy';
+import { AuthCookiesService } from './utils/auth-cookies';
 
 @Module({
 	providers: [
 		AuthService,
+		AuthCookiesService,
 		AtStrategy,
 		RtStrategy,
 		{

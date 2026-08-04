@@ -9,12 +9,19 @@ import { WinstonModule } from 'nest-winston';
 import { winstonLogger } from './logger/winston.logger';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { Logger } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
+import { API_DEFAULT_VERSION, API_GLOBAL_PREFIX } from './shared/api';
+import { ACCESS_TOKEN_COOKIE } from './auth/constants/cookies';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
-	app.setGlobalPrefix('api');
-	app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+	app.setGlobalPrefix(API_GLOBAL_PREFIX);
+	app.enableVersioning({
+		type: VersioningType.URI,
+		defaultVersion: API_DEFAULT_VERSION,
+	});
+	app.use(cookieParser());
 
 	const envService = app.get(EnvService);
 	const port = envService.get('PORT');
@@ -40,20 +47,15 @@ async function bootstrap() {
 	const config = new DocumentBuilder()
 		.setTitle('Shop backend')
 		.setVersion('1.0')
-		.addBearerAuth()
-		.addBearerAuth(
-			{
-				type: 'http',
-				scheme: 'bearer',
-				bearerFormat: 'JWT',
-				description: 'Provide refresh token as Bearer <token>',
-			},
-			'refresh',
-		)
+		.addCookieAuth(ACCESS_TOKEN_COOKIE)
 		.build();
 	const document = SwaggerModule.createDocument(app, config);
 
-	SwaggerModule.setup(`api/:version/docs`, app, cleanupOpenApiDoc(document));
+	SwaggerModule.setup(
+		`${API_GLOBAL_PREFIX}/:version/docs`,
+		app,
+		cleanupOpenApiDoc(document),
+	);
 
 	await app.listen(port);
 }

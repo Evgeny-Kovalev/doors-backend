@@ -6,6 +6,7 @@ import { JwtPayload, Tokens } from './types';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
 import { User } from '@/app/generated/prisma';
+import { ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL } from './constants/tokens';
 
 @Injectable()
 export class AuthService {
@@ -81,11 +82,11 @@ export class AuthService {
 		const [accessToken, refreshToken] = await Promise.all([
 			this.jwtService.signAsync(jwtPayload, {
 				secret: this.envService.get('AT_SECRET'),
-				expiresIn: '15m',
+				expiresIn: ACCESS_TOKEN_TTL.jwt,
 			}),
 			this.jwtService.signAsync(jwtPayload, {
 				secret: this.envService.get('RT_SECRET'),
-				expiresIn: '7d',
+				expiresIn: REFRESH_TOKEN_TTL.jwt,
 			}),
 		]);
 
