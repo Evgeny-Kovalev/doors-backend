@@ -1,6 +1,7 @@
 import {
 	Body,
 	Controller,
+	Get,
 	HttpCode,
 	HttpStatus,
 	Logger,
@@ -18,6 +19,7 @@ import { GetCurrentUser } from './decorators/get-current-user.decorator';
 import { RtGuard } from './guards/rt.guard';
 import { Admin } from './decorators/admin.decorator';
 import { AuthCookiesService } from './utils/auth-cookies';
+import { JwtPayload } from './types';
 import {
 	API_DEFAULT_VERSION,
 	AUTH_CONTROLLER_PATH,
@@ -60,6 +62,12 @@ export class AuthController {
 		this.logger.log('User signin');
 		const tokens = await this.authService.signIn(dto);
 		this.authCookiesService.setAuthCookies(res, tokens);
+	}
+
+	@Get('me')
+	@HttpCode(HttpStatus.OK)
+	me(@GetCurrentUser() user: JwtPayload): JwtPayload {
+		return user;
 	}
 
 	@Public()
