@@ -97,13 +97,20 @@ export const VariantMultipartUpdateSchema = VariantUpdateSchema.extend({
 
 type VariantMultipartUpdateFields = z.output<typeof VariantMultipartUpdateSchema>;
 
+type VariantMultipartFiles = {
+	image?: File;
+	imageFront?: File;
+	imageBack?: File;
+};
+
 export type VariantMultipartUpdateBody = VariantMultipartUpdateFields &
 	(
-		| {
-				image: File;
-				categorySlug: string;
-		  }
+		| (VariantMultipartFiles & { image: File; categorySlug: string })
+		| (VariantMultipartFiles & { imageFront: File; categorySlug: string })
+		| (VariantMultipartFiles & { imageBack: File; categorySlug: string })
 		| {
 				image?: undefined;
+				imageFront?: undefined;
+				imageBack?: undefined;
 		  }
 	);

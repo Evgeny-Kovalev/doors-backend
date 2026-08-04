@@ -8,7 +8,7 @@ import {
 	Patch,
 	Post,
 	Query,
-	UploadedFile,
+	UploadedFiles,
 } from '@nestjs/common';
 import { VariantsService } from './variants.service';
 import { ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
@@ -21,7 +21,7 @@ import {
 } from './variant.dto';
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
-import { ApiFileWithBody } from '@/app/files/decorators/api-file.decorator';
+import { ApiFilesWithBody } from '@/app/files/decorators/api-file.decorator';
 
 @ApiTags('Product variants')
 @Controller({
@@ -62,19 +62,27 @@ export class VariantsController {
 
 	@Admin()
 	@ApiOkResponse({ type: VariantDto })
-	@ApiFileWithBody({
+	@ApiFilesWithBody({
 		bodyType: VariantMultipartUpdateDto,
-		fileName: 'image',
-		required: false,
+		fileFields: [{ name: 'image' }, { name: 'imageFront' }, { name: 'imageBack' }],
 		mimetype: ['image'],
 	})
 	@Patch(':id')
 	async update(
 		@Param('id', ParseIntPipe) variantId: number,
 		@Body() dto: VariantMultipartUpdateDto,
-		@UploadedFile() image?: Express.Multer.File,
+		@UploadedFiles()
+		files?: {
+			image?: Express.Multer.File[];
+			imageFront?: Express.Multer.File[];
+			imageBack?: Express.Multer.File[];
+		},
 	): Promise<VariantDto> {
-		return this.variantsService.update(variantId, dto, image);
+		return this.variantsService.update(variantId, dto, {
+			image: files?.image?.[0],
+			imageFront: files?.imageFront?.[0],
+			imageBack: files?.imageBack?.[0],
+		});
 	}
 
 	@Admin()

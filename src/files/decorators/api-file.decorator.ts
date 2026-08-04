@@ -1,5 +1,5 @@
 import { applyDecorators, UseInterceptors, Type } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { ApiBody, ApiConsumes, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { fileMimetypeFilter } from '../file-mimetype-filter';
@@ -82,6 +82,47 @@ export function ApiFileWithBody<TModel extends Type<unknown>>({
 								format: 'binary',
 							},
 						},
+					},
+				],
+			},
+		}),
+	);
+}
+
+export function ApiFilesWithBody<TModel extends Type<unknown>>({
+	bodyType,
+	fileFields,
+	mimetype,
+}: {
+	bodyType: TModel;
+	fileFields: Array<{ name: string; required?: boolean; maxCount?: number }>;
+	mimetype: string[];
+}) {
+	const requiredFields = fileFields.filter((f) => f.required).map((f) => f.name);
+	const properties = Object.fromEntries(
+		fileFields.map((f) => [f.name, { type: 'string', format: 'binary' }]),
+	);
+
+	return applyDecorators(
+		ApiExtraModels(bodyType),
+		UseInterceptors(
+			FileFieldsInterceptor(
+				fileFields.map((f) => ({ name: f.name, maxCount: f.maxCount ?? 1 })),
+				{
+					fileFilter: fileMimetypeFilter(...mimetype),
+					storage: memoryStorage(),
+				},
+			),
+		),
+		ApiConsumes('multipart/form-data'),
+		ApiBody({
+			schema: {
+				allOf: [
+					{ $ref: getSchemaPath(bodyType) },
+					{
+						type: 'object',
+						...(requiredFields.length ? { required: requiredFields } : {}),
+						properties,
 					},
 				],
 			},

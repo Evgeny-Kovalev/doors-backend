@@ -106,9 +106,13 @@ export class VariantsService {
 	async update(
 		variantId: number,
 		dto: VariantUpdateDto & { categorySlug?: string },
-		image?: Express.Multer.File,
+		files?: {
+			image?: Express.Multer.File;
+			imageFront?: Express.Multer.File;
+			imageBack?: Express.Multer.File;
+		},
 	): Promise<VariantDto> {
-		await this.getById(variantId);
+		const variant = await this.getById(variantId);
 		const {
 			imgBackUrl,
 			imgFrontUrl,
@@ -131,24 +135,20 @@ export class VariantsService {
 				'Attributes with these IDs are missing or there are duplicate ID.',
 			);
 
-		if (image && !categorySlug)
-			throw new BadRequestException('categorySlug is required when image is provided');
-
-		const uploadedImage =
-			image && categorySlug
-				? await this.filesService.uploadFileToS3(image, {
-						prefix: `category/${categorySlug}/custom-images`,
-						fileName: `${variantId}.${image.originalname.split('.').pop()}`,
-					})
-				: undefined;
+		const uploadedImages = await this.uploadVariantImages({
+			variantId,
+			productId: variant.productId,
+			categorySlug,
+			files,
+		});
 
 		try {
 			const updatedVariant = await this.prismaService.productVariant.update({
 				where: { id: variantId },
 				data: {
-					imgUrl: uploadedImage ? `${uploadedImage.url}?v=${Date.now()}` : imgUrl,
-					imgBackUrl,
-					imgFrontUrl,
+					imgUrl: uploadedImages.imgUrl ?? imgUrl,
+					imgFrontUrl: uploadedImages.imgFrontUrl ?? imgFrontUrl,
+					imgBackUrl: uploadedImages.imgBackUrl ?? imgBackUrl,
 					price,
 					discountPrice,
 					attributes: newAttributes ? { set: newAttributes } : undefined,
@@ -161,6 +161,63 @@ export class VariantsService {
 			this.logger.error(e);
 			throw new BadRequestException('Cannot update the product variant');
 		}
+	}
+
+	private async uploadVariantImages({
+		variantId,
+		productId,
+		categorySlug,
+		files,
+	}: {
+		variantId: number;
+		productId: number;
+		categorySlug?: string;
+		files?: {
+			image?: Express.Multer.File;
+			imageFront?: Express.Multer.File;
+			imageBack?: Express.Multer.File;
+		};
+	}): Promise<{
+		imgUrl?: string;
+		imgFrontUrl?: string;
+		imgBackUrl?: string;
+	}> {
+		const { image, imageFront, imageBack } = files ?? {};
+		if (!image && !imageFront && !imageBack) return {};
+
+		if (!categorySlug)
+			throw new BadRequestException(
+				'categorySlug is required when an image is provided',
+			);
+
+		const product = await this.prismaService.product.findUnique({
+			where: { id: productId },
+			select: { slug: true },
+		});
+		if (!product) throw new NotFoundException('Product with this id not found');
+
+		const prefix = `category/${categorySlug}/custom-images`;
+		const cacheBust = Date.now();
+
+		const upload = async (file: Express.Multer.File, suffix?: string) => {
+			const ext = file.originalname.split('.').pop();
+			const fileName = suffix
+				? `${product.slug}-${variantId}-${suffix}.${ext}`
+				: `${product.slug}-${variantId}.${ext}`;
+			const uploaded = await this.filesService.uploadFileToS3(file, {
+				prefix,
+				fileName,
+			});
+			return `${uploaded.url}?v=${cacheBust}`;
+		};
+
+		const [imgUrl, imgFrontUrl, imgBackUrl] = await Promise.all([
+			image ? upload(image) : undefined,
+			imageFront ? upload(imageFront, 'front') : undefined,
+			imageBack ? upload(imageBack, 'back') : undefined,
+		]);
+
+		return { imgUrl, imgFrontUrl, imgBackUrl };
 	}
 
 	async updateMany(dto: VariantBulkUpdateDto): Promise<VariantDto[]> {
