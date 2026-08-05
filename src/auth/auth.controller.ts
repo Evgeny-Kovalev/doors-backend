@@ -20,17 +20,11 @@ import { RtGuard } from './guards/rt.guard';
 import { Admin } from './decorators/admin.decorator';
 import { AuthCookiesService } from './utils/auth-cookies';
 import { JwtPayload } from './types';
-import {
-	API_DEFAULT_VERSION,
-	AUTH_CONTROLLER_PATH,
-	AUTH_LOGOUT_ROUTE,
-	AUTH_REFRESH_ROUTE,
-} from '@/app/shared/api';
 
 @ApiTags('Auth')
 @Controller({
-	path: AUTH_CONTROLLER_PATH,
-	version: API_DEFAULT_VERSION,
+	path: 'auth',
+	version: '1',
 })
 export class AuthController {
 	constructor(
@@ -72,7 +66,7 @@ export class AuthController {
 
 	@Public()
 	@UseGuards(RtGuard)
-	@Post(AUTH_LOGOUT_ROUTE)
+	@Post('logout')
 	@HttpCode(HttpStatus.OK)
 	async logout(
 		@GetCurrentUserId() userId: number,
@@ -84,7 +78,7 @@ export class AuthController {
 
 	@Public()
 	@UseGuards(RtGuard)
-	@Post(AUTH_REFRESH_ROUTE)
+	@Post('refresh')
 	@HttpCode(HttpStatus.OK)
 	async refreshTokens(
 		@GetCurrentUserId() userId: number,

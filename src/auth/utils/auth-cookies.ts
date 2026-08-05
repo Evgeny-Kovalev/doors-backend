@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CookieOptions, Response } from 'express';
 import { EnvService } from '@/app/env/env.service';
 import { Tokens } from '../types';
-import {
-	ACCESS_TOKEN_COOKIE,
-	REFRESH_TOKEN_COOKIE,
-	REFRESH_TOKEN_COOKIE_PATH,
-} from '../constants/cookies';
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../constants/cookies';
 import { ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL } from '../constants/tokens';
 
 @Injectable()
@@ -45,7 +41,7 @@ export class AuthCookiesService {
 	private refreshCookieBase(): CookieOptions {
 		return {
 			...this.baseCookieOptions(),
-			path: REFRESH_TOKEN_COOKIE_PATH,
+			path: '/',
 		};
 	}
 
