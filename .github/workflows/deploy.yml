@@ -70,5 +70,5 @@ jobs:
                  docker compose pull api
                  docker compose run --rm api npx prisma migrate deploy
                  docker compose up -d api
-                 docker image prune -f
+                 docker image prune -af
                  docker logout ghcr.io
