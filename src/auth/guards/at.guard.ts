@@ -10,12 +10,29 @@ export class AtGuard extends AuthGuard('jwt') {
 	}
 
 	canActivate(context: ExecutionContext) {
-		const isPublic = this.reflector.getAllAndOverride(IS_PUBLIC_KEY, [
+		// Always attempt JWT so public endpoints can still recognize an admin
+		// when an access-token cookie is present.
+		return super.canActivate(context);
+	}
+
+	handleRequest<TUser>(
+		err: Error | null,
+		user: TUser,
+		info: unknown,
+		context: ExecutionContext,
+		status?: unknown,
+	): TUser {
+		const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
 			context.getHandler(),
 			context.getClass(),
 		]);
-		if (isPublic) return true;
 
-		return super.canActivate(context);
+		if (isPublic) {
+			// Missing/invalid token is fine on public routes - treat as anonymous.
+			if (err || !user) return undefined as TUser;
+			return user;
+		}
+
+		return super.handleRequest(err, user, info, context, status);
 	}
 }

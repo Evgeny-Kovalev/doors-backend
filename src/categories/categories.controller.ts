@@ -1,5 +1,7 @@
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
+import { GetCurrentUser } from '@/app/auth/decorators/get-current-user.decorator';
+import type { JwtPayload } from '@/app/auth/types';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import {
@@ -20,6 +22,7 @@ import {
 	CategoryUpdateDto,
 	CategoryQueryDto,
 } from './dto';
+import { visibilityOptionsForUser } from '@/app/shared/visibility';
 
 @ApiTags('Categories')
 @Controller({
@@ -32,22 +35,37 @@ export class CategoriesController {
 	@Public()
 	@ApiOkResponse({ type: [CategoryDto] })
 	@Get('/')
-	async getAllCategories(@Query() query: CategoryQueryDto): Promise<CategoryDto[]> {
-		return this.categoriesService.getAll(query);
+	async getAllCategories(
+		@Query() query: CategoryQueryDto,
+		@GetCurrentUser() user?: JwtPayload,
+	): Promise<CategoryDto[]> {
+		return this.categoriesService.getAll(query, visibilityOptionsForUser(user));
 	}
 
 	@Public()
 	@ApiOkResponse({ type: CategoryWithSeoDto })
 	@Get(':slug')
-	async getCategory(@Param('slug') slug: string): Promise<CategoryWithSeoDto> {
-		return this.categoriesService.getCategoryWithSeoBySlug(slug);
+	async getCategory(
+		@Param('slug') slug: string,
+		@GetCurrentUser() user?: JwtPayload,
+	): Promise<CategoryWithSeoDto> {
+		return this.categoriesService.getCategoryWithSeoBySlug(
+			slug,
+			visibilityOptionsForUser(user),
+		);
 	}
 
 	@Public()
 	@ApiOkResponse({ type: [CategoryDto] })
 	@Get(':slug/hierarchy')
-	async getCategoryHierarchy(@Param('slug') slug: string): Promise<CategoryDto[]> {
-		const category = await this.categoriesService.getBySlug(slug);
+	async getCategoryHierarchy(
+		@Param('slug') slug: string,
+		@GetCurrentUser() user?: JwtPayload,
+	): Promise<CategoryDto[]> {
+		const category = await this.categoriesService.getBySlug(
+			slug,
+			visibilityOptionsForUser(user),
+		);
 		return this.categoriesService.getCategoryHierarchy(category);
 	}
 

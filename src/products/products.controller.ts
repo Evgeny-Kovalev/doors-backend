@@ -25,7 +25,10 @@ import {
 } from '@nestjs/swagger';
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
+import { GetCurrentUser } from '@/app/auth/decorators/get-current-user.decorator';
+import type { JwtPayload } from '@/app/auth/types';
 import { PaginationQueryDto } from '@/app/shared/pagination/dto';
+import { visibilityOptionsForUser } from '@/app/shared/visibility';
 import {
 	ProductDto,
 	ProductWithSeoDto,
@@ -64,13 +67,18 @@ export class ProductsController {
 	async getAllProducts(
 		@Query() query: ProductQueryDto,
 		@Query() paginationDto: PaginationQueryDto,
+		@GetCurrentUser() user?: JwtPayload,
 	): Promise<PaginatedProductDto> {
 		const { page, limit } = paginationDto;
 
-		return await this.productsService.getAll(query, {
-			page,
-			limit,
-		});
+		return await this.productsService.getAll(
+			query,
+			{
+				page,
+				limit,
+			},
+			visibilityOptionsForUser(user),
+		);
 	}
 
 	@Public()
@@ -180,8 +188,14 @@ export class ProductsController {
 	@Public()
 	@ApiOkResponse({ type: ProductWithSeoDto })
 	@Get(':slug')
-	async getProductWithSeo(@Param('slug') slug: string): Promise<ProductWithSeoDto> {
-		return this.productsService.getProductWithSeoBySlug(slug);
+	async getProductWithSeo(
+		@Param('slug') slug: string,
+		@GetCurrentUser() user?: JwtPayload,
+	): Promise<ProductWithSeoDto> {
+		return this.productsService.getProductWithSeoBySlug(
+			slug,
+			visibilityOptionsForUser(user),
+		);
 	}
 
 	@Admin()

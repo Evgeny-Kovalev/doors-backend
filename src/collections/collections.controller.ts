@@ -1,5 +1,7 @@
 import { Public } from '@/app/auth/decorators/public.decorator';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
+import { GetCurrentUser } from '@/app/auth/decorators/get-current-user.decorator';
+import type { JwtPayload } from '@/app/auth/types';
 import {
 	Body,
 	Controller,
@@ -18,6 +20,7 @@ import {
 	CollectionListItemDto,
 	CollectionUpdateDto,
 } from './dto';
+import { visibilityOptionsForUser } from '@/app/shared/visibility';
 
 @ApiTags('Collections')
 @Controller({
@@ -30,15 +33,20 @@ export class CollectionsController {
 	@Public()
 	@Get()
 	@ApiOkResponse({ type: [CollectionListItemDto] })
-	async findAll(): Promise<CollectionListItemDto[]> {
-		return this.collectionsService.findAll();
+	async findAll(
+		@GetCurrentUser() user?: JwtPayload,
+	): Promise<CollectionListItemDto[]> {
+		return this.collectionsService.findAll(visibilityOptionsForUser(user));
 	}
 
 	@Public()
 	@Get(':id')
 	@ApiOkResponse({ type: CollectionDto })
-	async findOne(@Param('id', ParseIntPipe) id: number): Promise<CollectionDto> {
-		return this.collectionsService.findOne(id);
+	async findOne(
+		@Param('id', ParseIntPipe) id: number,
+		@GetCurrentUser() user?: JwtPayload,
+	): Promise<CollectionDto> {
+		return this.collectionsService.findOne(id, visibilityOptionsForUser(user));
 	}
 
 	@Admin()
