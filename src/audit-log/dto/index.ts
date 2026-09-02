@@ -1,10 +1,12 @@
 import { createZodDto } from '@/app/shared/create-zod-dto';
 import {
-	AuditLogQuerySchema,
+	AuditLogListQuerySchema,
+	AuditLogListResponseSchema,
+	AuditLogParamsSchema,
 	AuditLogSchema,
-	PaginatedAuditLogSchema,
 } from '@/contracts';
 
 export class AuditLogDto extends createZodDto(AuditLogSchema) {}
-export class AuditLogQueryDto extends createZodDto(AuditLogQuerySchema) {}
-export class PaginatedAuditLogDto extends createZodDto(PaginatedAuditLogSchema) {}
+export class AuditLogListQueryDto extends createZodDto(AuditLogListQuerySchema) {}
+export class AuditLogListResponseDto extends createZodDto(AuditLogListResponseSchema) {}
+export class AuditLogParamsDto extends createZodDto(AuditLogParamsSchema) {}

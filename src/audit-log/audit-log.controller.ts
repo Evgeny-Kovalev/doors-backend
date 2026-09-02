@@ -1,8 +1,13 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Admin } from '@/app/auth/decorators/admin.decorator';
 import { AuditLogService } from './audit-log.service';
-import { AuditLogQueryDto, PaginatedAuditLogDto } from './dto';
+import {
+	AuditLogDto,
+	AuditLogListQueryDto,
+	AuditLogListResponseDto,
+	AuditLogParamsDto,
+} from './dto';
 
 @ApiTags('Audit Log')
 @Controller({
@@ -14,8 +19,16 @@ export class AuditLogController {
 
 	@Admin()
 	@Get('/')
-	@ApiOkResponse({ type: PaginatedAuditLogDto })
-	findAll(@Query() query: AuditLogQueryDto): Promise<PaginatedAuditLogDto> {
+	@ApiOkResponse({ type: AuditLogListResponseDto })
+	findAll(@Query() query: AuditLogListQueryDto): Promise<AuditLogListResponseDto> {
 		return this.auditLogService.findAll(query);
+	}
+
+	@Admin()
+	@Get(':id')
+	@ApiOkResponse({ type: AuditLogDto })
+	@ApiNotFoundResponse({ description: 'Audit log event not found' })
+	findOne(@Param() { id }: AuditLogParamsDto): Promise<AuditLogDto> {
+		return this.auditLogService.findOne(id);
 	}
 }

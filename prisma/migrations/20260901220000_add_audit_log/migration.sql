@@ -18,14 +18,24 @@ CREATE TABLE "AuditLog" (
 CREATE INDEX "AuditLog_createdAt_id_idx" ON "AuditLog"("createdAt", "id");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_entityType_entityId_createdAt_idx"
-ON "AuditLog"("entityType", "entityId", "createdAt");
+CREATE INDEX "AuditLog_entityType_entityId_createdAt_id_idx"
+ON "AuditLog"("entityType", "entityId", "createdAt", "id");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_actorId_createdAt_idx" ON "AuditLog"("actorId", "createdAt");
+CREATE INDEX "AuditLog_actorId_createdAt_id_idx"
+ON "AuditLog"("actorId", "createdAt", "id");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_batchId_idx" ON "AuditLog"("batchId");
+CREATE INDEX "AuditLog_batchId_createdAt_id_idx"
+ON "AuditLog"("batchId", "createdAt", "id");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_action_createdAt_id_idx"
+ON "AuditLog"("action", "createdAt", "id");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_actorEmail_createdAt_id_idx"
+ON "AuditLog"("actorEmail", "createdAt", "id");
 
 -- Audit events are append-only. Corrections must be written as new events.
 CREATE FUNCTION prevent_audit_log_mutation()

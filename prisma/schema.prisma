@@ -218,7 +218,9 @@ model AuditLog {
   metadata Json?
 
   @@index([createdAt, id])
-  @@index([entityType, entityId, createdAt])
-  @@index([actorId, createdAt])
-  @@index([batchId])
+  @@index([entityType, entityId, createdAt, id])
+  @@index([actorId, createdAt, id])
+  @@index([batchId, createdAt, id])
+  @@index([action, createdAt, id])
+  @@index([actorEmail, createdAt, id])
 }
