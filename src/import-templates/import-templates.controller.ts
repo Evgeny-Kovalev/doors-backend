@@ -40,14 +40,14 @@ export class ImportTemplatesController {
 		return this.importTemplatesService.findById(id);
 	}
 
-	@Public()
+	@Admin()
 	@ApiCreatedResponse({ type: ImportTemplateDto })
 	@Post('/')
 	async create(@Body() dto: ImportTemplateCreateDto): Promise<ImportTemplateDto> {
 		return this.importTemplatesService.create(dto);
 	}
 
-	@Public()
+	@Admin()
 	@ApiOkResponse({ type: ImportTemplateDto })
 	@Patch('/:id')
 	async update(
@@ -57,7 +57,7 @@ export class ImportTemplatesController {
 		return this.importTemplatesService.update(id, dto);
 	}
 
-	@Public()
+	@Admin()
 	@ApiOkResponse({ type: ImportTemplateDto })
 	@Delete('/:id')
 	async delete(@Param('id', ParseIntPipe) id: number): Promise<ImportTemplateDto> {

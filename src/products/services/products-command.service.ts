@@ -3,6 +3,7 @@ import {
 	BadRequestException,
 	ConflictException,
 	Injectable,
+	InternalServerErrorException,
 	Logger,
 	NotFoundException,
 } from '@nestjs/common';
@@ -18,6 +19,13 @@ import { Prisma } from '@/app/generated/prisma';
 import { PRODUCT_DETAIL_INCLUDE } from '../../shared/product-include';
 import { ProductsQueryService } from './products-query.service';
 import { FilesService } from '@/app/files/files.service';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
+import { AuditLogWriteError } from '@/app/audit-log/audit-log.error';
+
+type ProductAuditOptions = {
+	batchId?: string;
+	metadata?: Prisma.InputJsonObject;
+};
 
 @Injectable()
 export class ProductsCommandService {
@@ -26,11 +34,15 @@ export class ProductsCommandService {
 		private readonly attributesService: AttributesService,
 		private readonly productsQueryService: ProductsQueryService,
 		private readonly filesService: FilesService,
+		private readonly auditLogService: AuditLogService,
 	) {}
 
 	private readonly logger = new Logger(ProductsCommandService.name);
 
-	async createOne(dto: ProductCreateDto): Promise<ProductDto> {
+	async createOne(
+		dto: ProductCreateDto,
+		auditOptions: ProductAuditOptions = {},
+	): Promise<ProductDto> {
 		try {
 			const {
 				name,
@@ -54,14 +66,27 @@ export class ProductsCommandService {
 				params: { connect: paramIds.map((id) => ({ id })) },
 			};
 
-			const product: ProductDto = await this.prismaService.product.create({
-				data: productData,
-				include: PRODUCT_DETAIL_INCLUDE,
+			const product = await this.prismaService.$transaction(async (tx) => {
+				const createdProduct: ProductDto = await tx.product.create({
+					data: productData,
+					include: PRODUCT_DETAIL_INCLUDE,
+				});
+				await this.auditLogService.record(tx, {
+					action: 'product.created',
+					entityType: 'product',
+					entityId: createdProduct.id,
+					entityLabel: createdProduct.slug || createdProduct.name,
+					...auditOptions,
+				});
+				return createdProduct;
 			});
 			this.logger.log(`Created product: ${product.name}`);
 			return product;
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist product audit log');
+			}
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
 				throw new ConflictException('Product with this slug already exists');
 			}
@@ -73,6 +98,7 @@ export class ProductsCommandService {
 		slug: string,
 		dto: ProductUpdateDto & { categorySlug?: string },
 		image?: Express.Multer.File,
+		auditOptions: ProductAuditOptions = {},
 	): Promise<ProductDto> {
 		try {
 			const product = await this.productsQueryService.getBySlug(slug, {
@@ -108,37 +134,50 @@ export class ProductsCommandService {
 				image,
 			});
 
-			const updatedProduct: ProductDto = await this.prismaService.product.update({
-				where: { id: product.id },
-				data: {
-					// slug: name && slugify(name, { lower: true }),
-					name,
-					description,
-					imgUrl: uploadedImgUrl ?? imgUrl,
-					isVisible,
-					productType,
-					category: categoryId ? { connect: { id: categoryId } } : undefined,
-					params: newParams ? { set: newParams } : undefined,
-					variants:
-						price || price === null || discountPrice || discountPrice === null
-							? {
-									updateMany: {
-										data: {
-											price,
-											discountPrice,
+			const updatedProduct = await this.prismaService.$transaction(async (tx) => {
+				const result: ProductDto = await tx.product.update({
+					where: { id: product.id },
+					data: {
+						// slug: name && slugify(name, { lower: true }),
+						name,
+						description,
+						imgUrl: uploadedImgUrl ?? imgUrl,
+						isVisible,
+						productType,
+						category: categoryId ? { connect: { id: categoryId } } : undefined,
+						params: newParams ? { set: newParams } : undefined,
+						variants:
+							price || price === null || discountPrice || discountPrice === null
+								? {
+										updateMany: {
+											data: {
+												price,
+												discountPrice,
+											},
+											where: {
+												productId: product.id,
+											},
 										},
-										where: {
-											productId: product.id,
-										},
-									},
-								}
-							: undefined,
-				},
-				include: PRODUCT_DETAIL_INCLUDE,
+									}
+								: undefined,
+					},
+					include: PRODUCT_DETAIL_INCLUDE,
+				});
+				await this.auditLogService.record(tx, {
+					action: 'product.updated',
+					entityType: 'product',
+					entityId: result.id,
+					entityLabel: result.slug || result.name,
+					...auditOptions,
+				});
+				return result;
 			});
 			return updatedProduct;
 		} catch (e) {
 			if (e instanceof NotFoundException || e instanceof BadRequestException) throw e;
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist product audit log');
+			}
 			this.logger.error(e);
 			throw new BadRequestException('Cannot update product');
 		}
@@ -170,9 +209,10 @@ export class ProductsCommandService {
 
 	async updateMany(dto: ProductBulkUpdateDto): Promise<ProductDto[]> {
 		const results: ProductDto[] = [];
+		const batchId = this.auditLogService.createBatchId();
 		for (const item of dto.items) {
 			const { slug, ...updateDto } = item;
-			results.push(await this.update(slug, updateDto));
+			results.push(await this.update(slug, updateDto, undefined, { batchId }));
 		}
 		return results;
 	}
@@ -180,12 +220,24 @@ export class ProductsCommandService {
 	async delete(id: number): Promise<ProductDto> {
 		try {
 			await this.productsQueryService.getById(id);
-			return await this.prismaService.product.delete({
-				where: { id },
-				include: PRODUCT_DETAIL_INCLUDE,
+			return await this.prismaService.$transaction(async (tx) => {
+				const deletedProduct = await tx.product.delete({
+					where: { id },
+					include: PRODUCT_DETAIL_INCLUDE,
+				});
+				await this.auditLogService.record(tx, {
+					action: 'product.deleted',
+					entityType: 'product',
+					entityId: deletedProduct.id,
+					entityLabel: deletedProduct.slug || deletedProduct.name,
+				});
+				return deletedProduct;
 			});
 		} catch (e) {
 			if (e instanceof NotFoundException) throw e;
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist product audit log');
+			}
 			this.logger.error(e);
 			throw new BadRequestException('Product deletion error');
 		}

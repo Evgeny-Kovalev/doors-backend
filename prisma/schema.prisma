@@ -201,3 +201,24 @@ model News {
   type          NewsType
   markdownUrl   String
 }
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  actorId    Int?
+  actorEmail String?
+
+  entityType  String
+  entityId    String
+  entityLabel String?
+
+  action   String
+  batchId  String? @db.Uuid
+  metadata Json?
+
+  @@index([createdAt, id])
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([batchId])
+}

@@ -12,3 +12,4 @@ export * from './tg-bot';
 export * from './tags';
 export * from './news';
 export * from './seo';
+export * from './audit-log';

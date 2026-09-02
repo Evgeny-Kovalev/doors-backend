@@ -2,10 +2,15 @@ import { User } from '@/app/generated/prisma';
 import { PrismaService } from './../prisma/prisma.service';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserCreateDto } from './dto';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
+import { AuditLogWriteError } from '@/app/audit-log/audit-log.error';
 
 @Injectable()
 export class UsersService {
-	constructor(private readonly prismaService: PrismaService) {}
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly auditLogService: AuditLogService,
+	) {}
 
 	private readonly logger = new Logger(UsersService.name);
 
@@ -18,14 +23,24 @@ export class UsersService {
 
 	async createOne({ email, password }: UserCreateDto): Promise<User> {
 		try {
-			return await this.prismaService.user.create({
-				data: {
-					email,
-					password,
-				},
+			return await this.prismaService.$transaction(async (tx) => {
+				const user = await tx.user.create({
+					data: {
+						email,
+						password,
+					},
+				});
+				await this.auditLogService.record(tx, {
+					action: 'user.created',
+					entityType: 'user',
+					entityId: user.id,
+					entityLabel: user.email,
+				});
+				return user;
 			});
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) throw e;
 			throw new BadRequestException('Cannot create the user');
 		}
 	}

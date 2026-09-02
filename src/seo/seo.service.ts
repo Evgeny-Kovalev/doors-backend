@@ -16,10 +16,14 @@ import {
 	SeoTemplateUpdateDto,
 } from './dto';
 import { SEO_RESOLVER_REGISTRY } from './strategies/registry';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
 
 @Injectable()
 export class SeoService {
-	constructor(private readonly prismaService: PrismaService) {}
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly auditLogService: AuditLogService,
+	) {}
 
 	async getTemplates(): Promise<SeoTemplateDto[]> {
 		const templates = await Promise.all(
@@ -41,9 +45,18 @@ export class SeoService {
 		this.validateTemplate(entityType, dto.titleTemplate);
 		this.validateTemplate(entityType, dto.descriptionTemplate);
 
-		const template = await this.prismaService.seoTemplate.update({
-			where: { entityType },
-			data: dto,
+		const template = await this.prismaService.$transaction(async (tx) => {
+			const updated = await tx.seoTemplate.update({
+				where: { entityType },
+				data: dto,
+			});
+			await this.auditLogService.record(tx, {
+				action: 'seo_template.updated',
+				entityType: 'seo_template',
+				entityId: entityType,
+				entityLabel: entityType,
+			});
+			return updated;
 		});
 
 		return {
@@ -102,16 +115,33 @@ export class SeoService {
 		const description = dto.description?.trim() || null;
 
 		if (!title && !description) {
-			await this.prismaService.seoMetadata.deleteMany({
-				where: { entityType, entityKey },
+			await this.prismaService.$transaction(async (tx) => {
+				await tx.seoMetadata.deleteMany({
+					where: { entityType, entityKey },
+				});
+				await this.auditLogService.record(tx, {
+					action: 'seo_metadata.deleted',
+					entityType: 'seo_metadata',
+					entityId: `${entityType}:${entityKey}`,
+					entityLabel: `${entityType} / ${entityKey}`,
+				});
 			});
 			return { title: null, description: null };
 		}
 
-		const metadata = await this.prismaService.seoMetadata.upsert({
-			where: { entityType_entityKey: { entityType, entityKey } },
-			create: { entityType, entityKey, title, description },
-			update: { title, description },
+		const metadata = await this.prismaService.$transaction(async (tx) => {
+			const updated = await tx.seoMetadata.upsert({
+				where: { entityType_entityKey: { entityType, entityKey } },
+				create: { entityType, entityKey, title, description },
+				update: { title, description },
+			});
+			await this.auditLogService.record(tx, {
+				action: 'seo_metadata.updated',
+				entityType: 'seo_metadata',
+				entityId: `${entityType}:${entityKey}`,
+				entityLabel: `${entityType} / ${entityKey}`,
+			});
+			return updated;
 		});
 
 		return {

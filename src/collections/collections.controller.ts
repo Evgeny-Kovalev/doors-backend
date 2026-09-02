@@ -33,9 +33,7 @@ export class CollectionsController {
 	@Public()
 	@Get()
 	@ApiOkResponse({ type: [CollectionListItemDto] })
-	async findAll(
-		@GetCurrentUser() user?: JwtPayload,
-	): Promise<CollectionListItemDto[]> {
+	async findAll(@GetCurrentUser() user?: JwtPayload): Promise<CollectionListItemDto[]> {
 		return this.collectionsService.findAll(visibilityOptionsForUser(user));
 	}
 

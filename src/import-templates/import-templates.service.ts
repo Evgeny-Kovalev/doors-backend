@@ -13,10 +13,15 @@ import {
 	type ImportTemplate,
 	type ImportTemplateUpdateType,
 } from '@/contracts';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
+import { AuditLogWriteError } from '@/app/audit-log/audit-log.error';
 
 @Injectable()
 export class ImportTemplatesService {
-	constructor(private readonly prismaService: PrismaService) {}
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly auditLogService: AuditLogService,
+	) {}
 
 	private readonly logger = new Logger(ImportTemplatesService.name);
 
@@ -43,18 +48,28 @@ export class ImportTemplatesService {
 
 	async create(dto: ImportTemplateCreateType): Promise<ImportTemplate> {
 		try {
-			const row = await this.prismaService.importTemplate.create({
-				data: {
-					slug: dto.slug,
-					name: dto.name,
-					info: dto.info,
-					paramsKeysInDoc: dto.paramsKeysInDoc,
-					attributesKeysInDoc: dto.attributesKeysInDoc,
-				},
+			const row = await this.prismaService.$transaction(async (tx) => {
+				const template = await tx.importTemplate.create({
+					data: {
+						slug: dto.slug,
+						name: dto.name,
+						info: dto.info,
+						paramsKeysInDoc: dto.paramsKeysInDoc,
+						attributesKeysInDoc: dto.attributesKeysInDoc,
+					},
+				});
+				await this.auditLogService.record(tx, {
+					action: 'import_template.created',
+					entityType: 'import_template',
+					entityId: template.id,
+					entityLabel: template.slug || template.name,
+				});
+				return template;
 			});
 			return this.toDto(row);
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) throw e;
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
 				throw new BadRequestException(
 					'Import template with this slug already exists',
@@ -67,19 +82,29 @@ export class ImportTemplatesService {
 	async update(id: number, dto: ImportTemplateUpdateType): Promise<ImportTemplate> {
 		await this.findById(id);
 		try {
-			const row = await this.prismaService.importTemplate.update({
-				where: { id },
-				data: {
-					slug: dto.slug,
-					name: dto.name,
-					info: dto.info,
-					paramsKeysInDoc: dto.paramsKeysInDoc,
-					attributesKeysInDoc: dto.attributesKeysInDoc,
-				},
+			const row = await this.prismaService.$transaction(async (tx) => {
+				const template = await tx.importTemplate.update({
+					where: { id },
+					data: {
+						slug: dto.slug,
+						name: dto.name,
+						info: dto.info,
+						paramsKeysInDoc: dto.paramsKeysInDoc,
+						attributesKeysInDoc: dto.attributesKeysInDoc,
+					},
+				});
+				await this.auditLogService.record(tx, {
+					action: 'import_template.updated',
+					entityType: 'import_template',
+					entityId: template.id,
+					entityLabel: template.slug || template.name,
+				});
+				return template;
 			});
 			return this.toDto(row);
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) throw e;
 			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
 				throw new BadRequestException(
 					'Import template with this slug already exists',
@@ -91,9 +116,19 @@ export class ImportTemplatesService {
 
 	async delete(id: number): Promise<ImportTemplate> {
 		try {
-			const row = await this.prismaService.importTemplate.delete({ where: { id } });
+			const row = await this.prismaService.$transaction(async (tx) => {
+				const template = await tx.importTemplate.delete({ where: { id } });
+				await this.auditLogService.record(tx, {
+					action: 'import_template.deleted',
+					entityType: 'import_template',
+					entityId: template.id,
+					entityLabel: template.slug || template.name,
+				});
+				return template;
+			});
 			return this.toDto(row);
-		} catch {
+		} catch (e) {
+			if (e instanceof AuditLogWriteError) throw e;
 			throw new NotFoundException('Import template with this id not found');
 		}
 	}

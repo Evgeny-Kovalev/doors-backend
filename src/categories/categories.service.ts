@@ -15,16 +15,16 @@ import {
 import { Category, SeoEntityType } from '@/app/generated/prisma';
 import { SeoService } from '@/app/seo/seo.service';
 import slugify from 'slugify';
-import {
-	VisibilityOptions,
-	visibleOnlyWhere,
-} from '@/app/shared/visibility';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
+import { AuditLogWriteError } from '@/app/audit-log/audit-log.error';
+import { VisibilityOptions, visibleOnlyWhere } from '@/app/shared/visibility';
 
 @Injectable()
 export class CategoriesService {
 	constructor(
 		private readonly prismaService: PrismaService,
 		private readonly seoService: SeoService,
+		private readonly auditLogService: AuditLogService,
 	) {}
 
 	private readonly logger = new Logger(CategoriesService.name);
@@ -53,10 +53,7 @@ export class CategoriesService {
 		return category;
 	}
 
-	async getBySlug(
-		slug: string,
-		options: VisibilityOptions = {},
-	): Promise<CategoryDto> {
+	async getBySlug(slug: string, options: VisibilityOptions = {}): Promise<CategoryDto> {
 		const category = await this.prismaService.category.findFirst({
 			where: {
 				slug,
@@ -97,21 +94,31 @@ export class CategoriesService {
 			: null;
 
 		try {
-			const createdCategory = await this.prismaService.category.create({
-				data: {
-					slug: slugify(name, { lower: true }),
-					name,
-					description,
-					imgUrl,
-					isVisible,
-					parentCategoryId: parentId,
-					categoryType,
-					markdownUrl,
-				},
+			const createdCategory = await this.prismaService.$transaction(async (tx) => {
+				const category = await tx.category.create({
+					data: {
+						slug: slugify(name, { lower: true }),
+						name,
+						description,
+						imgUrl,
+						isVisible,
+						parentCategoryId: parentId,
+						categoryType,
+						markdownUrl,
+					},
+				});
+				await this.auditLogService.record(tx, {
+					action: 'category.created',
+					entityType: 'category',
+					entityId: category.id,
+					entityLabel: category.slug,
+				});
+				return category;
 			});
 			return createdCategory;
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) throw e;
 			throw new BadRequestException('Cannot create the category');
 		}
 	}
@@ -130,22 +137,32 @@ export class CategoriesService {
 		} = dto;
 
 		try {
-			const updatedCategory = await this.prismaService.category.update({
-				data: {
-					slug: slug || (name && slugify(name, { lower: true })),
-					name,
-					description,
-					imgUrl,
-					markdownUrl,
-					isVisible,
-					parentCategoryId,
-					order,
-				},
-				where: { id: categoryId },
+			const updatedCategory = await this.prismaService.$transaction(async (tx) => {
+				const category = await tx.category.update({
+					data: {
+						slug: slug || (name && slugify(name, { lower: true })),
+						name,
+						description,
+						imgUrl,
+						markdownUrl,
+						isVisible,
+						parentCategoryId,
+						order,
+					},
+					where: { id: categoryId },
+				});
+				await this.auditLogService.record(tx, {
+					action: 'category.updated',
+					entityType: 'category',
+					entityId: category.id,
+					entityLabel: category.slug,
+				});
+				return category;
 			});
 			return updatedCategory;
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) throw e;
 			throw new BadRequestException('Cannot update the category');
 		}
 	}
@@ -153,9 +170,19 @@ export class CategoriesService {
 	async delete(categoryId: number): Promise<CategoryDto> {
 		await this.getById(categoryId);
 		try {
-			return await this.prismaService.category.delete({ where: { id: categoryId } });
+			return await this.prismaService.$transaction(async (tx) => {
+				const category = await tx.category.delete({ where: { id: categoryId } });
+				await this.auditLogService.record(tx, {
+					action: 'category.deleted',
+					entityType: 'category',
+					entityId: category.id,
+					entityLabel: category.slug,
+				});
+				return category;
+			});
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) throw e;
 			throw new BadRequestException('Cannot delete category');
 		}
 	}

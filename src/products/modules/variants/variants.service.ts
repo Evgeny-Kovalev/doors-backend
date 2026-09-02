@@ -16,6 +16,14 @@ import {
 } from './variant.dto';
 import { FilesService } from '@/app/files/files.service';
 import { VARIANT_INCLUDE } from '@/app/shared/product-include';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
+import { AuditLogWriteError } from '@/app/audit-log/audit-log.error';
+
+type VariantAuditOptions = {
+	batchId?: string;
+};
+
+type VariantCreateAuditPolicy = { audit: true; batchId?: string } | { audit: false };
 
 @Injectable()
 export class VariantsService {
@@ -23,6 +31,7 @@ export class VariantsService {
 		private readonly prismaService: PrismaService,
 		private readonly attributesService: AttributesService,
 		private readonly filesService: FilesService,
+		private readonly auditLogService: AuditLogService,
 	) {}
 
 	private readonly logger = new Logger(VariantsService.name);
@@ -52,7 +61,26 @@ export class VariantsService {
 		return variant;
 	}
 
-	async createOne(productId: number, dto: VariantCreateDto): Promise<VariantDto> {
+	async createOne(
+		productId: number,
+		dto: VariantCreateDto,
+		options: VariantAuditOptions = {},
+	): Promise<VariantDto> {
+		return this.createWithAuditPolicy(productId, dto, {
+			audit: true,
+			batchId: options.batchId,
+		});
+	}
+
+	async createFromImport(productId: number, dto: VariantCreateDto): Promise<VariantDto> {
+		return this.createWithAuditPolicy(productId, dto, { audit: false });
+	}
+
+	private async createWithAuditPolicy(
+		productId: number,
+		dto: VariantCreateDto,
+		auditPolicy: VariantCreateAuditPolicy,
+	): Promise<VariantDto> {
 		await this.ensureProductExists(productId);
 
 		const {
@@ -70,8 +98,8 @@ export class VariantsService {
 			typeof sourceId === 'string' && sourceId.trim() === '' ? null : sourceId;
 
 		try {
-			const createdVariant: VariantDto =
-				await this.prismaService.productVariant.create({
+			const createdVariant = await this.prismaService.$transaction(async (tx) => {
+				const result: VariantDto = await tx.productVariant.create({
 					data: {
 						sourceId: normalizedSourceId ?? null,
 						imgBackUrl,
@@ -87,18 +115,33 @@ export class VariantsService {
 					},
 					include: VARIANT_INCLUDE,
 				});
+				if (auditPolicy.audit) {
+					await this.auditLogService.record(tx, {
+						action: 'variant.created',
+						entityType: 'variant',
+						entityId: result.id,
+						entityLabel: result.sourceId || `Variant ${result.id}`,
+						batchId: auditPolicy.batchId,
+					});
+				}
+				return result;
+			});
 			this.logger.log(`Created variant id: ${createdVariant.id}`);
 			return createdVariant;
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist variant audit log');
+			}
 			throw new InternalServerErrorException('Cannot create the variant');
 		}
 	}
 
 	async createMany(dto: VariantBulkCreateDto): Promise<VariantDto[]> {
 		const results: VariantDto[] = [];
+		const batchId = this.auditLogService.createBatchId();
 		for (const item of dto.items) {
-			results.push(await this.createOne(item.productId, item));
+			results.push(await this.createOne(item.productId, item, { batchId }));
 		}
 		return results;
 	}
@@ -111,6 +154,7 @@ export class VariantsService {
 			imageFront?: Express.Multer.File;
 			imageBack?: Express.Multer.File;
 		},
+		options: VariantAuditOptions = {},
 	): Promise<VariantDto> {
 		const variant = await this.getById(variantId);
 		const {
@@ -143,22 +187,35 @@ export class VariantsService {
 		});
 
 		try {
-			const updatedVariant = await this.prismaService.productVariant.update({
-				where: { id: variantId },
-				data: {
-					imgUrl: uploadedImages.imgUrl ?? imgUrl,
-					imgFrontUrl: uploadedImages.imgFrontUrl ?? imgFrontUrl,
-					imgBackUrl: uploadedImages.imgBackUrl ?? imgBackUrl,
-					price,
-					discountPrice,
-					attributes: newAttributes ? { set: newAttributes } : undefined,
-					tags: tags ? { set: tags } : undefined,
-				},
-				include: VARIANT_INCLUDE,
+			const updatedVariant = await this.prismaService.$transaction(async (tx) => {
+				const result = await tx.productVariant.update({
+					where: { id: variantId },
+					data: {
+						imgUrl: uploadedImages.imgUrl ?? imgUrl,
+						imgFrontUrl: uploadedImages.imgFrontUrl ?? imgFrontUrl,
+						imgBackUrl: uploadedImages.imgBackUrl ?? imgBackUrl,
+						price,
+						discountPrice,
+						attributes: newAttributes ? { set: newAttributes } : undefined,
+						tags: tags ? { set: tags } : undefined,
+					},
+					include: VARIANT_INCLUDE,
+				});
+				await this.auditLogService.record(tx, {
+					action: 'variant.updated',
+					entityType: 'variant',
+					entityId: result.id,
+					entityLabel: result.sourceId || `Variant ${result.id}`,
+					batchId: options.batchId,
+				});
+				return result;
 			});
 			return updatedVariant;
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist variant audit log');
+			}
 			throw new BadRequestException('Cannot update the product variant');
 		}
 	}
@@ -222,9 +279,10 @@ export class VariantsService {
 
 	async updateMany(dto: VariantBulkUpdateDto): Promise<VariantDto[]> {
 		const results: VariantDto[] = [];
+		const batchId = this.auditLogService.createBatchId();
 		for (const item of dto.items) {
 			const { id, ...updateDto } = item;
-			results.push(await this.update(id, updateDto));
+			results.push(await this.update(id, updateDto, undefined, { batchId }));
 		}
 		return results;
 	}
@@ -232,12 +290,24 @@ export class VariantsService {
 	async deleteById(id: number): Promise<VariantDto> {
 		await this.getById(id);
 		try {
-			return this.prismaService.productVariant.delete({
-				where: { id },
-				include: VARIANT_INCLUDE,
+			return this.prismaService.$transaction(async (tx) => {
+				const deletedVariant = await tx.productVariant.delete({
+					where: { id },
+					include: VARIANT_INCLUDE,
+				});
+				await this.auditLogService.record(tx, {
+					action: 'variant.deleted',
+					entityType: 'variant',
+					entityId: deletedVariant.id,
+					entityLabel: deletedVariant.sourceId || `Variant ${deletedVariant.id}`,
+				});
+				return deletedVariant;
 			});
 		} catch (e) {
 			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist variant audit log');
+			}
 			throw new InternalServerErrorException('Cannot delete the product variant');
 		}
 	}

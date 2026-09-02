@@ -18,6 +18,7 @@ import { HttpExceptionFilter } from './http-exception.filter';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { SeoModule } from './seo/seo.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AuditLogModule } from './audit-log/audit-log.module';
 
 @Module({
 	imports: [
@@ -48,6 +49,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 		NewsModule,
 		SeoModule,
 		ImportTemplatesModule,
+		AuditLogModule,
 	],
 	providers: [
 		{

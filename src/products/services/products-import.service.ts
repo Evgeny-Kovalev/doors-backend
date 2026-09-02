@@ -16,6 +16,7 @@ import { TagsService } from '@/app/tags/tags.service';
 import { ImportTemplatesService } from '@/app/import-templates/import-templates.service';
 import { groupBy, mapWithConcurrency } from '@/app/utils';
 import type { ImportTemplateConfig, ProductImportEvent } from '@/contracts';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
 
 const VARIANT_CREATE_CONCURRENCY = 5;
 
@@ -31,6 +32,7 @@ export class ProductsImportService {
 		private readonly prismaService: PrismaService,
 		private readonly tagsService: TagsService,
 		private readonly importTemplatesService: ImportTemplatesService,
+		private readonly auditLogService: AuditLogService,
 	) {}
 
 	private readonly logger = new Logger(ProductsImportService.name);
@@ -70,6 +72,7 @@ export class ProductsImportService {
 
 		const allProducts = Object.values(groupedProducts);
 		const total = allProducts.length;
+		const batchId = this.auditLogService.createBatchId();
 
 		this.logger.log(
 			'Grouped products names:',
@@ -99,9 +102,10 @@ export class ProductsImportService {
 				mainVariantIndex,
 			});
 
-			const createdProduct = await this.productsCommandService.createOne({
-				...productDto,
-			});
+			const createdProduct = await this.productsCommandService.createOne(
+				{ ...productDto },
+				{ batchId, metadata: { source: 'import' } },
+			);
 
 			const productVariantsDtos = await this.getVariantDtosFromFile({
 				product: createdProduct,
@@ -113,7 +117,8 @@ export class ProductsImportService {
 			await mapWithConcurrency(
 				productVariantsDtos,
 				VARIANT_CREATE_CONCURRENCY,
-				(variantDto) => this.variantsService.createOne(createdProduct.id, variantDto),
+				(variantDto) =>
+					this.variantsService.createFromImport(createdProduct.id, variantDto),
 			);
 
 			const mainVariantImgUrl = productVariantsDtos[mainVariantIndex]?.imgUrl;
@@ -141,6 +146,26 @@ export class ProductsImportService {
 		}
 
 		this.logger.log(`Created products length: ${createdProducts.length}`);
+		try {
+			await this.prismaService.$transaction((tx) =>
+				this.auditLogService.record(tx, {
+					action: 'products.imported',
+					entityType: 'product_import',
+					entityId: batchId,
+					entityLabel: `${createdProducts.length} products`,
+					batchId,
+					metadata: {
+						total,
+						created: createdProducts.length,
+						productIds: createdProducts.map(({ id }) => id),
+						partial: false,
+					},
+				}),
+			);
+		} catch (error) {
+			// Per product audit events are authoritative; this event is only a summary
+			this.logger.error('Cannot persist product import audit summary', error);
+		}
 		yield {
 			type: 'done',
 			products: createdProducts,

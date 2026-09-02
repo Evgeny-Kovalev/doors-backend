@@ -168,9 +168,7 @@ export class ProductsController {
 		};
 
 		try {
-			for await (const event of this.productsService.importFromFile(dto, {
-				file,
-			})) {
+			for await (const event of this.productsService.importFromFile(dto, { file })) {
 				writeEvent(event);
 			}
 		} catch (error) {

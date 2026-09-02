@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { SeoService } from './seo.service';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { SeoEntityType } from '@/app/generated/prisma';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
 
 describe('SeoService', () => {
 	let service: SeoService;
@@ -19,7 +20,11 @@ describe('SeoService', () => {
 	beforeEach(async () => {
 		jest.clearAllMocks();
 		const module: TestingModule = await Test.createTestingModule({
-			providers: [SeoService, { provide: PrismaService, useValue: prisma }],
+			providers: [
+				SeoService,
+				{ provide: PrismaService, useValue: prisma },
+				{ provide: AuditLogService, useValue: { record: jest.fn() } },
+			],
 		}).compile();
 
 		service = module.get(SeoService);

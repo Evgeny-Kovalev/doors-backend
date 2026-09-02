@@ -1,10 +1,11 @@
 import {
 	BadRequestException,
 	Injectable,
+	InternalServerErrorException,
 	Logger,
 	NotFoundException,
 } from '@nestjs/common';
-import { Attribute, AttributeValue } from '@/app/generated/prisma';
+import type { Attribute, AttributeValue, Prisma } from '@/app/generated/prisma';
 import { PrismaService } from '@/app/prisma/prisma.service';
 import { ProductVariantFromFile } from '@/app/products/types';
 import {
@@ -15,12 +16,58 @@ import {
 	AttributeValueDto,
 	AttributeValueUpdateDto,
 } from './dto';
+import { AuditLogService } from '@/app/audit-log/audit-log.service';
+import { AuditLogWriteError } from '@/app/audit-log/audit-log.error';
+
+type AttributePrismaClient = Pick<Prisma.TransactionClient, 'attribute'>;
 
 @Injectable()
 export class AttributesService {
-	constructor(private readonly prismaService: PrismaService) {}
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly auditLogService: AuditLogService,
+	) {}
 
 	private readonly logger = new Logger(AttributesService.name);
+
+	private async findOrCreate(
+		client: AttributePrismaClient,
+		dto: AttributeCreateDto,
+	): Promise<{ attribute: AttributeDto; created: boolean }> {
+		const existing = await client.attribute.findFirst({
+			where: {
+				key: { value: dto.key.value },
+				value: { value: dto.value.value },
+			},
+			include: { key: true, value: true },
+		});
+		if (existing) return { attribute: existing, created: false };
+
+		const attribute = await client.attribute.create({
+			data: {
+				key: {
+					connectOrCreate: {
+						where: { value: dto.key.value },
+						create: {
+							value: dto.key.value,
+							label: dto.key.label,
+						},
+					},
+				},
+				value: {
+					connectOrCreate: {
+						where: { value: dto.value.value },
+						create: {
+							value: dto.value.value,
+							imgUrl: dto.value.imgUrl,
+						},
+					},
+				},
+			},
+			include: { key: true, value: true },
+		});
+		return { attribute, created: true };
+	}
 
 	async findAll(): Promise<AttributeDto[]> {
 		return await this.prismaService.attribute.findMany({
@@ -29,7 +76,26 @@ export class AttributesService {
 	}
 
 	async create(dto: AttributeCreateDto): Promise<AttributeDto> {
-		return this.getOrCreateOne(dto);
+		try {
+			return await this.prismaService.$transaction(async (tx) => {
+				const { attribute, created } = await this.findOrCreate(tx, dto);
+				if (created) {
+					await this.auditLogService.record(tx, {
+						action: 'attribute.created',
+						entityType: 'attribute',
+						entityId: attribute.id,
+						entityLabel: `${attribute.key.label}: ${attribute.value.value}`,
+					});
+				}
+				return attribute;
+			});
+		} catch (e) {
+			this.logger.error(e);
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist attribute audit log');
+			}
+			throw new BadRequestException('Cannot get/create the attribute');
+		}
 	}
 
 	async getOneById(id: number): Promise<Attribute | null> {
@@ -59,9 +125,8 @@ export class AttributesService {
 
 	async getOrCreateOne(dto: AttributeCreateDto): Promise<AttributeDto> {
 		try {
-			const existing = await this.getOne(dto.key.value, dto.value.value);
-			if (existing) return existing;
-			return await this.createOne(dto);
+			const { attribute } = await this.findOrCreate(this.prismaService, dto);
+			return attribute;
 		} catch (e) {
 			this.logger.error(e);
 			throw new BadRequestException('Cannot get/create the attribute');
@@ -111,42 +176,6 @@ export class AttributesService {
 		}, []);
 	}
 
-	async createOne(dto: AttributeCreateDto): Promise<AttributeDto> {
-		try {
-			const newAttribute: AttributeDto = await this.prismaService.attribute.create({
-				data: {
-					key: {
-						connectOrCreate: {
-							where: {
-								value: dto.key.value,
-							},
-							create: {
-								value: dto.key.value,
-								label: dto.key.label,
-							},
-						},
-					},
-					value: {
-						connectOrCreate: {
-							where: {
-								value: dto.value.value,
-							},
-							create: {
-								value: dto.value.value,
-								imgUrl: dto.value.imgUrl,
-							},
-						},
-					},
-				},
-				include: { key: true, value: true },
-			});
-			return newAttribute;
-		} catch (e) {
-			this.logger.error(e);
-			throw new BadRequestException('Cannot create the attribute');
-		}
-	}
-
 	async isExist(key: string): Promise<boolean> {
 		return !!(await this.prismaService.attribute.findFirst({
 			where: { key: { value: key } },
@@ -154,12 +183,21 @@ export class AttributesService {
 	}
 
 	async updateKey(id: number, dto: AttributeKeyUpdateDto): Promise<AttributeKeyDto> {
-		return await this.prismaService.attributeKey.update({
-			where: { id },
-			data: {
-				value: dto.value,
-				label: dto.label,
-			},
+		return await this.prismaService.$transaction(async (tx) => {
+			const key = await tx.attributeKey.update({
+				where: { id },
+				data: {
+					value: dto.value,
+					label: dto.label,
+				},
+			});
+			await this.auditLogService.record(tx, {
+				action: 'attribute_key.updated',
+				entityType: 'attribute_key',
+				entityId: key.id,
+				entityLabel: key.label || key.value,
+			});
+			return key;
 		});
 	}
 
@@ -167,22 +205,43 @@ export class AttributesService {
 		id: number,
 		dto: AttributeValueUpdateDto,
 	): Promise<AttributeValueDto> {
-		return await this.prismaService.attributeValue.update({
-			where: { id },
-			data: {
-				value: dto.value,
-				imgUrl: dto.imgUrl,
-			},
+		return await this.prismaService.$transaction(async (tx) => {
+			const value = await tx.attributeValue.update({
+				where: { id },
+				data: {
+					value: dto.value,
+					imgUrl: dto.imgUrl,
+				},
+			});
+			await this.auditLogService.record(tx, {
+				action: 'attribute_value.updated',
+				entityType: 'attribute_value',
+				entityId: value.id,
+				entityLabel: value.value,
+			});
+			return value;
 		});
 	}
 
 	async delete(id: number): Promise<AttributeDto> {
 		try {
-			return await this.prismaService.attribute.delete({
-				where: { id },
-				include: { key: true, value: true },
+			return await this.prismaService.$transaction(async (tx) => {
+				const attribute = await tx.attribute.delete({
+					where: { id },
+					include: { key: true, value: true },
+				});
+				await this.auditLogService.record(tx, {
+					action: 'attribute.deleted',
+					entityType: 'attribute',
+					entityId: attribute.id,
+					entityLabel: `${attribute.key.label}: ${attribute.value.value}`,
+				});
+				return attribute;
 			});
-		} catch {
+		} catch (e) {
+			if (e instanceof AuditLogWriteError) {
+				throw new InternalServerErrorException('Cannot persist attribute audit log');
+			}
 			throw new NotFoundException('Attribute with this id not found');
 		}
 	}
