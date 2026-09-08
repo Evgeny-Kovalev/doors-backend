@@ -62,9 +62,12 @@ export const AuditLogSchema = z.object({
 	actorId: z.number().int().nullable(),
 	actorEmail: z.email().nullable(),
 	action: AuditActionSchema,
+
 	entityType: AuditEntityTypeSchema,
 	entityId: z.string(),
 	entityLabel: z.string().nullable(),
+	entitySlug: z.string().nullable(),
+
 	batchId: z.uuid().nullable(),
 	metadata: z.record(z.string(), z.unknown()).nullable(),
 });

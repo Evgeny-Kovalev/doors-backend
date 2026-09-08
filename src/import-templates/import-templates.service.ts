@@ -62,7 +62,8 @@ export class ImportTemplatesService {
 					action: 'import_template.created',
 					entityType: 'import_template',
 					entityId: template.id,
-					entityLabel: template.slug || template.name,
+					entityLabel: template.name,
+					entitySlug: template.slug,
 				});
 				return template;
 			});
@@ -97,7 +98,8 @@ export class ImportTemplatesService {
 					action: 'import_template.updated',
 					entityType: 'import_template',
 					entityId: template.id,
-					entityLabel: template.slug || template.name,
+					entityLabel: template.name,
+					entitySlug: template.slug,
 				});
 				return template;
 			});
@@ -122,7 +124,8 @@ export class ImportTemplatesService {
 					action: 'import_template.deleted',
 					entityType: 'import_template',
 					entityId: template.id,
-					entityLabel: template.slug || template.name,
+					entityLabel: template.name,
+					entitySlug: template.slug,
 				});
 				return template;
 			});

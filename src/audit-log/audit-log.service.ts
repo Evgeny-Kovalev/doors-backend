@@ -11,17 +11,14 @@ import {
 	type AuditLogCursor,
 } from './audit-log.cursor';
 import { AuditLogWriteError } from './audit-log.error';
-import type {
-	AuditLogDto,
-	AuditLogListQueryDto,
-	AuditLogListResponseDto,
-} from './dto';
+import type { AuditLogDto, AuditLogListQueryDto, AuditLogListResponseDto } from './dto';
 
 export type AuditEventInput = {
 	action: AuditAction;
 	entityType: AuditEntityType;
 	entityId: string | number;
 	entityLabel?: string | null;
+	entitySlug?: string | null;
 	batchId?: string;
 	metadata?: Prisma.InputJsonObject;
 };
@@ -44,6 +41,7 @@ export class AuditLogService {
 					entityType: event.entityType,
 					entityId: event.entityId.toString(),
 					entityLabel: event.entityLabel,
+					entitySlug: event.entitySlug,
 					batchId: event.batchId,
 					metadata: event.metadata,
 				},
@@ -82,9 +80,7 @@ export class AuditLogService {
 			? this.cursorBoundary(decodedCursor, direction)
 			: undefined;
 		const rows = await this.prisma.auditLog.findMany({
-			where: requestedBoundary
-				? { AND: [baseWhere, requestedBoundary] }
-				: baseWhere,
+			where: requestedBoundary ? { AND: [baseWhere, requestedBoundary] } : baseWhere,
 			orderBy:
 				direction === 'newer'
 					? [{ createdAt: 'asc' }, { id: 'asc' }]
@@ -173,6 +169,7 @@ export class AuditLogService {
 		entityType: string;
 		entityId: string;
 		entityLabel: string | null;
+		entitySlug: string | null;
 		batchId: string | null;
 		metadata: Prisma.JsonValue | null;
 	}): AuditLogDto {

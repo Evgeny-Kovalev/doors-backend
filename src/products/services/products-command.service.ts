@@ -75,7 +75,8 @@ export class ProductsCommandService {
 					action: 'product.created',
 					entityType: 'product',
 					entityId: createdProduct.id,
-					entityLabel: createdProduct.slug || createdProduct.name,
+					entityLabel: createdProduct.name,
+					entitySlug: createdProduct.slug,
 					...auditOptions,
 				});
 				return createdProduct;
@@ -167,7 +168,8 @@ export class ProductsCommandService {
 					action: 'product.updated',
 					entityType: 'product',
 					entityId: result.id,
-					entityLabel: result.slug || result.name,
+					entityLabel: result.name,
+					entitySlug: result.slug,
 					...auditOptions,
 				});
 				return result;
@@ -229,7 +231,8 @@ export class ProductsCommandService {
 					action: 'product.deleted',
 					entityType: 'product',
 					entityId: deletedProduct.id,
-					entityLabel: deletedProduct.slug || deletedProduct.name,
+					entityLabel: deletedProduct.name,
+					entitySlug: deletedProduct.slug,
 				});
 				return deletedProduct;
 			});

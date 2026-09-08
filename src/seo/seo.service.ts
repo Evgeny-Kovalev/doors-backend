@@ -5,7 +5,7 @@ import {
 	type SeoTemplateVariables,
 	type SeoTemplateVariable,
 } from '@/contracts';
-import { SeoEntityType } from '@/app/generated/prisma';
+import { Prisma, SeoEntityType } from '@/app/generated/prisma';
 import { PrismaService } from '@/app/prisma/prisma.service';
 
 import {
@@ -116,6 +116,7 @@ export class SeoService {
 
 		if (!title && !description) {
 			await this.prismaService.$transaction(async (tx) => {
+				const entityLabel = await this.getEntityLabel(tx, entityType, entityKey);
 				await tx.seoMetadata.deleteMany({
 					where: { entityType, entityKey },
 				});
@@ -123,13 +124,15 @@ export class SeoService {
 					action: 'seo_metadata.deleted',
 					entityType: 'seo_metadata',
 					entityId: `${entityType}:${entityKey}`,
-					entityLabel: `${entityType} / ${entityKey}`,
+					entityLabel,
+					entitySlug: entityKey,
 				});
 			});
 			return { title: null, description: null };
 		}
 
 		const metadata = await this.prismaService.$transaction(async (tx) => {
+			const entityLabel = await this.getEntityLabel(tx, entityType, entityKey);
 			const updated = await tx.seoMetadata.upsert({
 				where: { entityType_entityKey: { entityType, entityKey } },
 				create: { entityType, entityKey, title, description },
@@ -139,7 +142,8 @@ export class SeoService {
 				action: 'seo_metadata.updated',
 				entityType: 'seo_metadata',
 				entityId: `${entityType}:${entityKey}`,
-				entityLabel: `${entityType} / ${entityKey}`,
+				entityLabel,
+				entitySlug: entityKey,
 			});
 			return updated;
 		});
@@ -154,6 +158,24 @@ export class SeoService {
 		return this.prismaService.seoTemplate.findUniqueOrThrow({
 			where: { entityType },
 		});
+	}
+
+	private async getEntityLabel(
+		tx: Prisma.TransactionClient,
+		entityType: SeoEntityType,
+		entitySlug: string,
+	): Promise<string> {
+		const entity =
+			entityType === SeoEntityType.product
+				? await tx.product.findUnique({
+						where: { slug: entitySlug },
+						select: { name: true },
+					})
+				: await tx.category.findUnique({
+						where: { slug: entitySlug },
+						select: { name: true },
+					});
+		return entity?.name ?? entitySlug;
 	}
 
 	private renderTemplate<T extends SeoEntityType>(

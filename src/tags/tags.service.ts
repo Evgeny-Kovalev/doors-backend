@@ -53,7 +53,7 @@ export class TagsService {
 					action: 'tag.created',
 					entityType: 'tag',
 					entityId: tag.id,
-					entityLabel: tag.key || tag.label,
+					entityLabel: tag.label,
 				});
 				return tag;
 			});
@@ -78,7 +78,7 @@ export class TagsService {
 					action: 'tag.updated',
 					entityType: 'tag',
 					entityId: tag.id,
-					entityLabel: tag.key || tag.label,
+					entityLabel: tag.label,
 				});
 				return tag;
 			});
@@ -96,7 +96,7 @@ export class TagsService {
 					action: 'tag.deleted',
 					entityType: 'tag',
 					entityId: tag.id,
-					entityLabel: tag.key || tag.label,
+					entityLabel: tag.label,
 				});
 				return tag;
 			});

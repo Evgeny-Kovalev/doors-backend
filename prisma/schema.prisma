@@ -212,6 +212,7 @@ model AuditLog {
   entityType  String
   entityId    String
   entityLabel String?
+  entitySlug  String?
 
   action   String
   batchId  String? @db.Uuid

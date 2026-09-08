@@ -111,7 +111,8 @@ export class CategoriesService {
 					action: 'category.created',
 					entityType: 'category',
 					entityId: category.id,
-					entityLabel: category.slug,
+					entityLabel: category.name,
+					entitySlug: category.slug,
 				});
 				return category;
 			});
@@ -155,7 +156,8 @@ export class CategoriesService {
 					action: 'category.updated',
 					entityType: 'category',
 					entityId: category.id,
-					entityLabel: category.slug,
+					entityLabel: category.name,
+					entitySlug: category.slug,
 				});
 				return category;
 			});
@@ -176,7 +178,8 @@ export class CategoriesService {
 					action: 'category.deleted',
 					entityType: 'category',
 					entityId: category.id,
-					entityLabel: category.slug,
+					entityLabel: category.name,
+					entitySlug: category.slug,
 				});
 				return category;
 			});

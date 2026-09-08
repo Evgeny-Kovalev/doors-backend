@@ -19,6 +19,7 @@ describe('AuditLogService', () => {
 			entityType: string;
 			entityId: string;
 			entityLabel: string | null;
+			entitySlug: string | null;
 			batchId: string | null;
 			metadata: Record<string, unknown> | null;
 		}> = {},
@@ -31,6 +32,7 @@ describe('AuditLogService', () => {
 		entityType: 'product',
 		entityId: '42',
 		entityLabel: 'classic',
+		entitySlug: 'classic',
 		batchId: null,
 		metadata: null,
 		...overrides,
@@ -69,7 +71,8 @@ describe('AuditLogService', () => {
 					action: 'product.updated',
 					entityType: 'product',
 					entityId: 42,
-					entityLabel: 'classic',
+					entityLabel: 'Classic',
+					entitySlug: 'classic',
 				},
 			);
 		});
@@ -81,7 +84,8 @@ describe('AuditLogService', () => {
 				action: 'product.updated',
 				entityType: 'product',
 				entityId: '42',
-				entityLabel: 'classic',
+				entityLabel: 'Classic',
+				entitySlug: 'classic',
 				batchId: undefined,
 				metadata: undefined,
 			},
@@ -112,6 +116,7 @@ describe('AuditLogService', () => {
 			data: expect.objectContaining({
 				entityId: '123',
 				entityLabel: null,
+				entitySlug: undefined,
 				batchId: undefined,
 				metadata,
 			}),
@@ -333,6 +338,7 @@ describe('AuditLogService', () => {
 			actorId: null,
 			actorEmail: null,
 			entityLabel: null,
+			entitySlug: null,
 			metadata: { imported: 12 },
 		});
 		const findUnique = jest.fn().mockResolvedValue(row);
