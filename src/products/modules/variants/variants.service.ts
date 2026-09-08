@@ -25,6 +25,11 @@ type VariantAuditOptions = {
 
 type VariantCreateAuditPolicy = { audit: true; batchId?: string } | { audit: false };
 
+const VARIANT_AUDIT_INCLUDE = {
+	...VARIANT_INCLUDE,
+	product: { select: { slug: true } },
+};
+
 @Injectable()
 export class VariantsService {
 	constructor(
@@ -99,7 +104,7 @@ export class VariantsService {
 
 		try {
 			const createdVariant = await this.prismaService.$transaction(async (tx) => {
-				const result: VariantDto = await tx.productVariant.create({
+				const { product, ...result } = await tx.productVariant.create({
 					data: {
 						sourceId: normalizedSourceId ?? null,
 						imgBackUrl,
@@ -113,14 +118,15 @@ export class VariantsService {
 							: undefined,
 						product: { connect: { id: productId } },
 					},
-					include: VARIANT_INCLUDE,
+					include: VARIANT_AUDIT_INCLUDE,
 				});
 				if (auditPolicy.audit) {
 					await this.auditLogService.record(tx, {
 						action: 'variant.created',
 						entityType: 'variant',
 						entityId: result.id,
-						entityLabel: result.sourceId || `Variant ${result.id}`,
+						entityLabel: `Variant ${result.id}`,
+						entitySlug: product?.slug ?? null,
 						batchId: auditPolicy.batchId,
 					});
 				}
@@ -188,7 +194,7 @@ export class VariantsService {
 
 		try {
 			const updatedVariant = await this.prismaService.$transaction(async (tx) => {
-				const result = await tx.productVariant.update({
+				const { product, ...updatedVariant } = await tx.productVariant.update({
 					where: { id: variantId },
 					data: {
 						imgUrl: uploadedImages.imgUrl ?? imgUrl,
@@ -199,16 +205,17 @@ export class VariantsService {
 						attributes: newAttributes ? { set: newAttributes } : undefined,
 						tags: tags ? { set: tags } : undefined,
 					},
-					include: VARIANT_INCLUDE,
+					include: VARIANT_AUDIT_INCLUDE,
 				});
 				await this.auditLogService.record(tx, {
 					action: 'variant.updated',
 					entityType: 'variant',
-					entityId: result.id,
-					entityLabel: result.sourceId || `Variant ${result.id}`,
+					entityId: updatedVariant.id,
+					entityLabel: `Variant ${updatedVariant.id}`,
+					entitySlug: product?.slug ?? null,
 					batchId: options.batchId,
 				});
-				return result;
+				return updatedVariant;
 			});
 			return updatedVariant;
 		} catch (e) {
@@ -291,15 +298,16 @@ export class VariantsService {
 		await this.getById(id);
 		try {
 			return this.prismaService.$transaction(async (tx) => {
-				const deletedVariant = await tx.productVariant.delete({
+				const { product, ...deletedVariant } = await tx.productVariant.delete({
 					where: { id },
-					include: VARIANT_INCLUDE,
+					include: VARIANT_AUDIT_INCLUDE,
 				});
 				await this.auditLogService.record(tx, {
 					action: 'variant.deleted',
 					entityType: 'variant',
 					entityId: deletedVariant.id,
-					entityLabel: deletedVariant.sourceId || `Variant ${deletedVariant.id}`,
+					entityLabel: `Variant ${deletedVariant.id}`,
+					entitySlug: product?.slug ?? null,
 				});
 				return deletedVariant;
 			});
