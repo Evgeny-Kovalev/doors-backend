@@ -46,29 +46,7 @@ jobs:
               cache-from: type=gha
               cache-to: type=gha,mode=max
 
-         - name: Deploy via SSH
-           uses: appleboy/ssh-action@v1.2.0
-           env:
-              GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              GHCR_USER: ${{ github.actor }}
-              IMAGE_TAG: ${{ github.sha }}
-           with:
-              host: ${{ secrets.SSH_HOST }}
-              username: ${{ secrets.SSH_USER }}
-              key: ${{ secrets.SSH_PRIVATE_KEY }}
-              port: ${{ secrets.SSH_PORT || '22' }}
-              envs: GHCR_TOKEN,GHCR_USER,IMAGE_TAG
-              script_stop: true
-              script: |
-                 set -euo pipefail
-                 cd "${{ secrets.DEPLOY_PATH }}"
-                 git fetch --all
-                 git checkout main
-                 git reset --hard origin/main
-                 echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-                 export IMAGE_TAG="${IMAGE_TAG}"
-                 docker compose pull api
-                 docker compose run --rm api npx prisma migrate deploy
-                 docker compose up -d api
-                 docker image prune -af
-                 docker logout ghcr.io
+         - name: Deploy via Coolify
+           run: |
+              curl --fail --show-error --request POST "${{ secrets.COOLIFY_WEBHOOK }}" \
+                 --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
